@@ -1,0 +1,21 @@
+# Java / Maven
+backend/target/
+backend/.idea/
+backend/*.iml
+
+# React / Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# VS Code
+.vscode/
+
+# Environment / secrets
+.env
+.env.*
+application-local.properties
+
+# OS
+Thumbs.db
+.DS_Store
