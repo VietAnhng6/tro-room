@@ -19,7 +19,11 @@ public class JwtService {
             30 * 60 * 1000;
 
     private final SecretKey secretKey =
-            Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+        Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+
+public SecretKey getSecretKey() {
+    return secretKey;
+}
 
     public String generateAccessToken(User user) {
 

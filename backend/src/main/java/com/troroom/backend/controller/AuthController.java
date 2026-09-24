@@ -95,4 +95,25 @@ public ResponseEntity<?> logout(
                 .body(e.getMessage());
     }
 }
+@GetMapping("/me")
+public ResponseEntity<?> me(
+        org.springframework.security.core.Authentication authentication) {
+
+    if (authentication == null || !authentication.isAuthenticated()) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body("Chưa đăng nhập");
+    }
+
+    User user = (User) authentication.getPrincipal();
+
+    return ResponseEntity.ok(
+            java.util.Map.of(
+                    "id", user.getId(),
+                    "name", user.getName(),
+                    "phone", user.getPhone(),
+                    "role", user.getRole().name(),
+                    "active", user.isActive()
+            )
+    );
+}
 }

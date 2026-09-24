@@ -61,6 +61,9 @@ public AuthService(
        if (user == null) {
     throw new RuntimeException("Thông tin đăng nhập không chính xác");
 }
+if (!user.isActive()) {
+    throw new RuntimeException("Tài khoản đang bị khóa");
+}
 
 if (user.getLockedUntil() != null
         && user.getLockedUntil().isAfter(java.time.LocalDateTime.now())) {
@@ -95,10 +98,11 @@ userRepository.save(user);
         RefreshToken refreshToken =
         refreshTokenService.createRefreshToken(user);
 
-        return new LoginResponse(
+     return new LoginResponse(
         accessToken,
         refreshToken.getToken(),
-        user.getRole().name()
+        user.getRole().name(),
+        user.isMustChangePassword()
         );
     }
     public LoginResponse refreshAccessToken(String token) {
@@ -106,15 +110,41 @@ userRepository.save(user);
     RefreshToken refreshToken =
             refreshTokenService.getValidRefreshToken(token);
 
-    User user = refreshToken.getUser();
+   User user = refreshToken.getUser();
 
-    String newAccessToken =
-            jwtService.generateAccessToken(user);
-
-    return new LoginResponse(
-            newAccessToken,
-            refreshToken.getToken(),
-            user.getRole().name()
-    );
+if (!user.isActive()) {
+    throw new RuntimeException("Tài khoản đang bị khóa");
 }
+
+String newAccessToken =
+        jwtService.generateAccessToken(user);
+
+   return new LoginResponse(
+    newAccessToken,
+    refreshToken.getToken(),
+    user.getRole().name(),
+    user.isMustChangePassword()
+    )  ;
+    }  
+    public void changePassword(
+        Long userId,
+        String currentPassword,
+        String newPassword
+) {
+    User user = userRepository.findById(userId)
+            .orElseThrow(() ->
+                    new RuntimeException("Không tìm thấy tài khoản"));
+
+    if (!passwordEncoder.matches(
+            currentPassword,
+            user.getPassword()
+    )) {
+        throw new RuntimeException("Mật khẩu hiện tại không chính xác");
+    }
+
+    user.setPassword(passwordEncoder.encode(newPassword));
+    user.setMustChangePassword(false);
+
+    userRepository.save(user);
+    } 
 }

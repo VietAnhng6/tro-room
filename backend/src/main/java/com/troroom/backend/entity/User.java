@@ -21,7 +21,10 @@ public class User {
     private String name;
 
     @NotBlank
-    @Pattern(regexp = "^0\\d{9}$", message = "Số điện thoại phải có 10 chữ số và bắt đầu bằng 0")
+    @Pattern(
+        regexp = "^0\\d{9}$",
+        message = "Số điện thoại phải có 10 chữ số và bắt đầu bằng 0"
+    )
     @Column(unique = true, nullable = false, length = 10)
     private String phone;
 
@@ -37,10 +40,19 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role = Role.TENANT;
+
     @Column(nullable = false)
     private int failedLoginAttempts = 0;
 
     private LocalDateTime lockedUntil;
+
+    // S1-03: trạng thái tài khoản
+    @Column(nullable = false)
+    private boolean active = true;
+
+    // S1-03: bắt buộc đổi mật khẩu khi đăng nhập lần đầu
+    @Column(nullable = false)
+    private boolean mustChangePassword = false;
 
     public enum Role {
         TENANT,
@@ -95,9 +107,10 @@ public class User {
     public void setRole(Role role) {
         this.role = role;
     }
+
     public int getFailedLoginAttempts() {
-    return failedLoginAttempts;
-}
+        return failedLoginAttempts;
+    }
 
     public void setFailedLoginAttempts(int failedLoginAttempts) {
         this.failedLoginAttempts = failedLoginAttempts;
@@ -109,5 +122,21 @@ public class User {
 
     public void setLockedUntil(LocalDateTime lockedUntil) {
         this.lockedUntil = lockedUntil;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
     }
 }
