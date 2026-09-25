@@ -98,6 +98,34 @@ public ResponseEntity<?> logout(
                 .body(e.getMessage());
     }
 }
+@PostMapping("/change-password")
+public ResponseEntity<?> changePassword(
+        @Valid @RequestBody com.troroom.backend.dto.ChangePasswordRequest request,
+        org.springframework.security.core.Authentication authentication) {
+
+    if (authentication == null || !authentication.isAuthenticated()) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body("Chưa đăng nhập");
+    }
+
+    User user = (User) authentication.getPrincipal();
+
+    try {
+        authService.changePassword(
+                user.getId(),
+                request.getCurrentPassword(),
+                request.getNewPassword()
+        );
+
+        return ResponseEntity.ok("Đổi mật khẩu thành công");
+
+    } catch (RuntimeException e) {
+        return ResponseEntity
+                .badRequest()
+                .body(e.getMessage());
+    }
+}
 @GetMapping("/me")
 public ResponseEntity<?> me(
         org.springframework.security.core.Authentication authentication) {
