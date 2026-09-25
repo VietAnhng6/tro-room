@@ -18,13 +18,16 @@ public class AuthController {
 
     private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
+    private final com.troroom.backend.service.PermissionService permissionService;
 
-    public AuthController(
+public AuthController(
         AuthService authService,
-        RefreshTokenService refreshTokenService
+        RefreshTokenService refreshTokenService,
+        com.troroom.backend.service.PermissionService permissionService
 ) {
     this.authService = authService;
     this.refreshTokenService = refreshTokenService;
+    this.permissionService = permissionService;
 }
 
     @PostMapping("/register")
@@ -107,13 +110,15 @@ public ResponseEntity<?> me(
     User user = (User) authentication.getPrincipal();
 
     return ResponseEntity.ok(
-            java.util.Map.of(
-                    "id", user.getId(),
-                    "name", user.getName(),
-                    "phone", user.getPhone(),
-                    "role", user.getRole().name(),
-                    "active", user.isActive()
-            )
+        java.util.Map.of(
+                "id", user.getId(),
+                "name", user.getName(),
+                "phone", user.getPhone(),
+                "role", user.getRole().name(),
+                "active", user.isActive(),
+                "permissions",
+                permissionService.getPermissions(user.getRole())
+        )
     );
 }
 }

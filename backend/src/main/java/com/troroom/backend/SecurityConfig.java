@@ -1,6 +1,7 @@
 package com.troroom.backend;
 
 import com.troroom.backend.security.JwtAuthenticationFilter;
+import com.troroom.backend.security.PermissionAuthorizationManager;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,10 +16,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final PermissionAuthorizationManager permissionAuthorizationManager;
 
     public SecurityConfig(
-            JwtAuthenticationFilter jwtAuthenticationFilter) {
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            PermissionAuthorizationManager permissionAuthorizationManager) {
+
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.permissionAuthorizationManager =
+                permissionAuthorizationManager;
     }
 
     @Bean
@@ -33,7 +39,6 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
 
-            // JWT → không dùng session của server
             .sessionManagement(session ->
                 session.sessionCreationPolicy(
                     SessionCreationPolicy.STATELESS
@@ -42,7 +47,7 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                // API không cần đăng nhập
+                // Không cần đăng nhập
                 .requestMatchers(
                     "/api/auth/register",
                     "/api/auth/login",
@@ -51,16 +56,27 @@ public class SecurityConfig {
                     "/error"
                 ).permitAll()
 
-                // API Admin → bắt buộc role ADMIN
+                // Quyền được kiểm tra từ DB
                 .requestMatchers("/api/admin/**")
-                .hasRole("ADMIN")
+                .access(permissionAuthorizationManager)
 
-                // Các API còn lại → phải đăng nhập
+                .requestMatchers("/api/buildings/**")
+                .access(permissionAuthorizationManager)
+
+                .requestMatchers("/api/rooms/**")
+                .access(permissionAuthorizationManager)
+
+                .requestMatchers("/api/services/**")
+                .access(permissionAuthorizationManager)
+
+                .requestMatchers("/api/profile/**")
+                .access(permissionAuthorizationManager)
+
+                // Các API khác phải đăng nhập
                 .anyRequest()
                 .authenticated()
             )
 
-            // Chạy JWT Filter trước filter đăng nhập mặc định
             .addFilterBefore(
                 jwtAuthenticationFilter,
                 UsernamePasswordAuthenticationFilter.class
