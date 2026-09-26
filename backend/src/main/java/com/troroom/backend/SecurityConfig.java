@@ -71,9 +71,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/services/**")
                 .access(permissionAuthorizationManager)
 
-                .requestMatchers("/api/profile/**")
-                .access(permissionAuthorizationManager)
-
+                .requestMatchers("/api/profile/**").authenticated()
+                .requestMatchers("/api/auth/me").authenticated()
                 // Các API khác phải đăng nhập
                 .anyRequest()
                 .authenticated()

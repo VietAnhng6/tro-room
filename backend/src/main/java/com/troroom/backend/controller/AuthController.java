@@ -148,5 +148,6 @@ public ResponseEntity<?> me(
                 permissionService.getPermissions(user.getRole())
         )
     );
-}
+    }
+
 }
