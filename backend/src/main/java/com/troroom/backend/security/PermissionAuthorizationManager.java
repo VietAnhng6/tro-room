@@ -47,13 +47,26 @@ public class PermissionAuthorizationManager
             return new AuthorizationDecision(true);
         }
 
-        boolean allowed =
-                permissionService.hasPermission(
-                        user.getRole(),
-                        permission
-                );
+       boolean allowed =
+        permissionService.hasPermission(
+                user.getRole(),
+                permission
+        );
 
-        return new AuthorizationDecision(allowed);
+    System.out.println(
+        "AUTH DEBUG -> URI: "
+        + context.getRequest().getRequestURI()
+        + " | METHOD: "
+        + context.getRequest().getMethod()
+        + " | ROLE: "
+        + user.getRole()
+        + " | PERMISSION: "
+        + permission
+        + " | ALLOWED: "
+        + allowed
+    );
+
+    return new AuthorizationDecision(allowed);
     }
 
     private String getPermission(String uri) {
