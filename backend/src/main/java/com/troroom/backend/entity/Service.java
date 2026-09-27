@@ -5,13 +5,23 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "services")
 public class Service {
-
+    public enum CalculationMethod {
+    BY_METER,
+    BY_PERSON,
+    FIXED_ROOM
+}
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
     private String name;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CalculationMethod calculationMethod;
+
+    @Column(nullable = false)
+    private String unit;
 
     @Column(nullable = false)
     private long price;
@@ -40,6 +50,21 @@ public class Service {
     public void setName(String name) {
         this.name = name;
     }
+    public CalculationMethod getCalculationMethod() {
+    return calculationMethod;
+}
+
+public void setCalculationMethod(CalculationMethod calculationMethod) {
+    this.calculationMethod = calculationMethod;
+}
+
+public String getUnit() {
+    return unit;
+}
+
+public void setUnit(String unit) {
+    this.unit = unit;
+}
 
     public long getPrice() {
         return price;

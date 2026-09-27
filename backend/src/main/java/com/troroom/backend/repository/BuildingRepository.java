@@ -15,6 +15,13 @@ public interface BuildingRepository extends JpaRepository<Building, Long> {
             String name
     );
 
+    List<Building> findByLandlordAndNameContainingIgnoreCaseOrLandlordAndAddressContainingIgnoreCase(
+            User landlord1,
+            String name,
+            User landlord2,
+            String address
+    );
+
     List<Building> findByManager(User manager);
 
     List<Building> findByActive(boolean active);

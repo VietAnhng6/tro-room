@@ -32,31 +32,31 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-   @Bean
+    @Bean
     public SecurityFilterChain securityFilterChain(
-        HttpSecurity http) throws Exception {
+            HttpSecurity http) throws Exception {
 
-    http
-        .cors(cors -> {})
-        .csrf(csrf -> csrf.disable())
+        http
+            .cors(cors -> {})
+            .csrf(csrf -> csrf.disable())
 
-        .sessionManagement(session ->
-            session.sessionCreationPolicy(
-                SessionCreationPolicy.STATELESS
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(
+                    SessionCreationPolicy.STATELESS
+                )
             )
-        )
 
             .authorizeHttpRequests(auth -> auth
 
-            .requestMatchers(
+                .requestMatchers(
                     "/api/auth/register",
-                "/api/auth/login",
-                "/api/auth/refresh",
-                "/api/auth/logout",
-                "/api/auth/forgot-password",
-                "/api/auth/reset-password/**",
-                "/error"
-            ).permitAll()
+                    "/api/auth/login",
+                    "/api/auth/refresh",
+                    "/api/auth/logout",
+                    "/api/auth/forgot-password",
+                    "/api/auth/reset-password/**",
+                    "/error"
+                ).permitAll()
 
                 // Quyền được kiểm tra từ DB
                 .requestMatchers("/api/admin/**")
@@ -71,8 +71,16 @@ public class SecurityConfig {
                 .requestMatchers("/api/services/**")
                 .access(permissionAuthorizationManager)
 
-                .requestMatchers("/api/profile/**").authenticated()
-                .requestMatchers("/api/auth/me").authenticated()
+                // Audit Log: chỉ ADMIN được xem
+                .requestMatchers("/api/audit-logs/**")
+                .hasRole("ADMIN")
+
+                .requestMatchers("/api/profile/**")
+                .authenticated()
+
+                .requestMatchers("/api/auth/me")
+                .authenticated()
+
                 // Các API khác phải đăng nhập
                 .anyRequest()
                 .authenticated()

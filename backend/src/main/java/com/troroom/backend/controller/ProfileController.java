@@ -9,12 +9,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import javax.imageio.ImageIO;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
 @RestController
@@ -148,38 +150,93 @@ public class ProfileController {
     }
 
     private String saveImage(MultipartFile file, String type)
-            throws IOException {
+        throws IOException {
 
-        String contentType = file.getContentType();
+    String contentType = file.getContentType();
 
-        if (!"image/jpeg".equals(contentType)
-                && !"image/png".equals(contentType)) {
-            throw new IllegalArgumentException(
-                    "Ảnh phải có định dạng JPG hoặc PNG"
-            );
-        }
-
-        if (file.getSize() > 5 * 1024 * 1024) {
-            throw new IllegalArgumentException(
-                    "Ảnh không được vượt quá 5MB"
-            );
-        }
-
-        String extension =
-                "image/png".equals(contentType) ? ".png" : ".jpg";
-
-        String filename =
-                System.currentTimeMillis()
-                        + "_" + type + extension;
-
-        Path target = uploadDir.resolve(filename);
-
-        Files.copy(
-                file.getInputStream(),
-                target,
-                StandardCopyOption.REPLACE_EXISTING
+    if (!"image/jpeg".equals(contentType)
+            && !"image/png".equals(contentType)) {
+        throw new IllegalArgumentException(
+                "Ảnh phải có định dạng JPG hoặc PNG"
         );
+    }
 
+    if (file.getSize() > 5 * 1024 * 1024) {
+        throw new IllegalArgumentException(
+                "Ảnh không được vượt quá 5MB"
+        );
+    }
+
+    BufferedImage originalImage =
+            ImageIO.read(file.getInputStream());
+
+    if (originalImage == null) {
+        throw new IllegalArgumentException(
+                "Không thể đọc ảnh"
+        );
+    }
+
+    int originalWidth = originalImage.getWidth();
+    int originalHeight = originalImage.getHeight();
+
+    int newWidth = originalWidth;
+    int newHeight = originalHeight;
+
+    // Nếu ảnh rộng hơn 1600px thì resize
+    if (originalWidth > 1600) {
+        newWidth = 1600;
+        newHeight =
+                (int) Math.round(
+                        (double) originalHeight
+                                * newWidth
+                                / originalWidth
+                );
+    }
+
+    BufferedImage resizedImage =
+            new BufferedImage(
+                    newWidth,
+                    newHeight,
+                    BufferedImage.TYPE_INT_RGB
+            );
+
+    Graphics2D graphics =
+            resizedImage.createGraphics();
+
+    graphics.drawImage(
+            originalImage.getScaledInstance(
+                    newWidth,
+                    newHeight,
+                    Image.SCALE_SMOOTH
+            ),
+            0,
+            0,
+            null
+    );
+
+    graphics.dispose();
+
+    String extension =
+            "image/png".equals(contentType)
+                    ? ".png"
+                    : ".jpg";
+
+    String filename =
+            System.currentTimeMillis()
+                    + "_" + type + extension;
+
+    Path target = uploadDir.resolve(filename);
+
+    String format =
+            "image/png".equals(contentType)
+                    ? "png"
+                    : "jpg";
+
+    ImageIO.write(
+            resizedImage,
+            format,
+            target.toFile()
+    );
         return target.toString();
     }
 }
