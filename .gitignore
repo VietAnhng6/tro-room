@@ -1,21 +1,33 @@
-# Java / Maven
-backend/target/
-backend/.idea/
-backend/*.iml
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
 
-# React / Node
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
 
-# VS Code
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
 .vscode/
-
-# Environment / secrets
-.env
-.env.*
-application-local.properties
-
-# OS
-Thumbs.db
-.DS_Store
