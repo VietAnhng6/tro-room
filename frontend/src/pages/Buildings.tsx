@@ -336,7 +336,74 @@ function Buildings() {
       )
     }
   }
+  const handleActivate = async (building: Building) => {
+  if (!window.confirm(
+    `Bạn có chắc muốn hoạt động lại "${building.name}"?`
+  )) {
+    return
+  }
 
+  const accessToken = localStorage.getItem('accessToken')
+
+  if (!accessToken) {
+    window.location.href = '/'
+    return
+  }
+
+  try {
+    setMessage('')
+    setError('')
+
+    const response = await fetch(
+      `http://localhost:8080/api/buildings/${building.id}/activate`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    )
+
+    const text = await response.text()
+
+    let data: { message?: string } = {}
+
+    try {
+      data = text ? JSON.parse(text) : {}
+    } catch {
+      // response không phải JSON
+    }
+
+    if (response.status === 401) {
+      localStorage.clear()
+      window.location.href = '/'
+      return
+    }
+
+    if (response.status === 403) {
+      setError('Bạn không có quyền hoạt động lại tòa nhà.')
+      return
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+        text ||
+        'Không thể hoạt động lại tòa nhà.'
+      )
+    }
+
+    setMessage('Đã hoạt động lại tòa nhà.')
+
+    await loadBuildings()
+  } catch (err) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : 'Có lỗi xảy ra.'
+    )
+  }
+}
   const handleSearch = async () => {
     await loadBuildings()
   }
@@ -720,7 +787,12 @@ function Buildings() {
                           🟢 {building.vacantCount || 0} phòng trống
                         </span>
                       </div>
-
+                        {(building.roomCount || 0) === 0 && (
+                        <div style={styles.noRoom}>
+                         Chưa có phòng nào
+                          </div>
+                        )}    
+                        
                       {building.managerName && (
                         <div style={styles.manager}>
                           👤 Manager:{' '}
@@ -748,16 +820,22 @@ function Buildings() {
                       Sửa
                     </button>
 
-                    {building.active && (
-                      <button
-                        onClick={() =>
-                          handleDeactivate(building)
-                        }
-                        style={styles.deactivateButton}
-                      >
-                        Ngừng hoạt động
-                      </button>
-                    )}
+                    <button
+  onClick={() => {
+    if (building.active) {
+      handleDeactivate(building)
+    } else {
+      handleActivate(building)
+    }
+  }}
+  style={
+    building.active
+      ? styles.deactivateButton
+      : styles.activateButton
+  }
+>
+  {building.active ? 'Ngừng hoạt động' : 'Hoạt động lại'}
+</button>
                   </div>
                 </div>
               ))}
@@ -780,7 +858,16 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif',
   },
-
+  activateButton: {
+  border: '1px solid #bbf7d0',
+  background: '#f0fdf4',
+  color: '#16a34a',
+  borderRadius: 8,
+  padding: '8px 13px',
+  cursor: 'pointer',
+  fontWeight: 650,
+  whiteSpace: 'nowrap',
+},
   container: {
     width: '100%',
     maxWidth: 1180,
@@ -1167,6 +1254,12 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#64748b',
     fontSize: 12,
   },
+  noRoom: {
+  marginTop: 8,
+  color: '#94a3b8',
+  fontSize: 12,
+  fontStyle: 'italic',
+  },
 
   actions: {
     display: 'flex',
@@ -1175,7 +1268,16 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     flexShrink: 0,
   },
-
+  addRoomButton: {
+  border: '1px solid #bfdbfe',
+  background: '#eff6ff',
+  color: '#2563eb',
+  borderRadius: 8,
+  padding: '8px 13px',
+  cursor: 'pointer',
+  fontWeight: 650,
+  whiteSpace: 'nowrap',
+  },
   editButton: {
     border: '1px solid #bfdbfe',
     background: '#eff6ff',

@@ -344,7 +344,58 @@ public class BuildingController {
                 )
         );
     }
+    /*
+ * =========================================================
+ * HOẠT ĐỘNG LẠI TÒA NHÀ
+ * Chỉ LANDLORD được thực hiện
+ * =========================================================
+ */
+@PutMapping("/{id}/activate")
+public ResponseEntity<?> activateBuilding(
+        Authentication authentication,
+        @PathVariable Long id
+) {
 
+    User landlord = (User) authentication.getPrincipal();
+
+    if (!"LANDLORD".equals(landlord.getRole().name())) {
+        return ResponseEntity.status(403)
+                .body(Map.of(
+                        "message",
+                        "Chỉ chủ trọ mới được hoạt động lại tòa nhà"
+                ));
+    }
+
+    Building building = buildingRepository.findById(id)
+            .orElse(null);
+
+    if (building == null) {
+        return ResponseEntity.notFound().build();
+    }
+
+    if (building.getLandlord() == null
+            || !building.getLandlord()
+                    .getId()
+                    .equals(landlord.getId())) {
+
+        return ResponseEntity.status(403)
+                .body(Map.of(
+                        "message",
+                        "Bạn không có quyền hoạt động lại tòa nhà này"
+                ));
+    }
+
+    building.setActive(true);
+
+    buildingRepository.save(building);
+
+    return ResponseEntity.ok(
+            Map.of(
+                    "message",
+                    "Đã hoạt động lại tòa nhà"
+            )
+    );
+}
     /*
      * =========================================================
      * XEM DANH SÁCH TÒA NHÀ

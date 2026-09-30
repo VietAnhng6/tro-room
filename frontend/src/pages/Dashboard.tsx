@@ -1,13 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
 
 type Role = 'ADMIN' | 'LANDLORD' | 'MANAGER' | 'TENANT' | string
+function roleLabel(role: Role) {
+  const labels: Record<string, string> = {
+    ADMIN: 'ADMIN',
+    LANDLORD: 'Chủ nhà',
+    MANAGER: 'Quản lý',
+    TENANT: 'Người thuê',
+  }
 
+  return labels[role] || role
+}
 function Dashboard() {
   const [role, setRole] = useState<Role>('TENANT')
-
+  const [username, setUsername] = useState('')
   useEffect(() => {
-    setRole(localStorage.getItem('role') || 'TENANT')
-  }, [])
+  setRole(localStorage.getItem('role') || 'TENANT')
+  setUsername(localStorage.getItem('username') || '')
+}, [])
 
   const permissions = useMemo(() => {
     if (role === 'ADMIN') {
@@ -82,12 +92,27 @@ function Dashboard() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-          <span style={{
-            padding: '7px 12px', borderRadius: 999, background: '#eff6ff',
-            color: '#2563eb', fontSize: 12, fontWeight: 700,
-          }}>{role}</span>
-          <button onClick={handleLogout} style={{
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+  <span style={{
+    color: '#334155',
+    fontSize: 13,
+    fontWeight: 600,
+  }}>
+    👤 {username || 'Tài khoản'}
+  </span>
+
+  <span style={{
+    padding: '7px 12px',
+    borderRadius: 999,
+    background: '#eff6ff',
+    color: '#2563eb',
+    fontSize: 12,
+    fontWeight: 700,
+  }}>
+    {roleLabel(role)}
+  </span>
+
+  <button onClick={handleLogout} style={{
             border: '1px solid #e2e8f0', background: '#fff', color: '#475569',
             padding: '8px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 13,
           }}>Đăng xuất</button>
