@@ -1,13 +1,14 @@
 import { useState } from 'react'
-
 function Register() {
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [message, setMessage] = useState('')
-  const [loading, setLoading] = useState(false)
+const [name, setName] = useState('')
+const [phone, setPhone] = useState('')
+const [email, setEmail] = useState('')
+const [password, setPassword] = useState('')
+const [showPassword, setShowPassword] = useState(false)
+const [message, setMessage] = useState('')
+const [loading, setLoading] = useState(false)
+const [otpStep, setOtpStep] = useState(false)
+const [otp, setOtp] = useState('')
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,7 +49,54 @@ function Register() {
         throw new Error(data || 'Đăng ký thất bại')
       }
 
-      setMessage('Đăng ký thành công! Bạn có thể đăng nhập.')
+      setMessage('Mã xác minh đã được gửi tới email Gmail của bạn.')
+      setOtpStep(true)
+      
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'Có lỗi xảy ra. Vui lòng thử lại.'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+    const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!/^\d{6}$/.test(otp)) {
+      setMessage('Mã OTP phải gồm 6 chữ số.')
+      return
+    }
+
+    setLoading(true)
+    setMessage('')
+
+    try {
+      const response = await fetch(
+        'http://localhost:8080/api/auth/verify-email',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            otp,
+          }),
+        }
+      )
+
+      const data = await response.text()
+
+      if (!response.ok) {
+        throw new Error(data || 'Xác minh email thất bại')
+      }
+
+      setMessage('Xác minh email thành công! Bạn có thể đăng nhập.')
+      setOtp('')
+      setOtpStep(false)
       setName('')
       setPhone('')
       setEmail('')
@@ -63,7 +111,6 @@ function Register() {
       setLoading(false)
     }
   }
-
   return (
     <div className="register-page">
       <div className="background-circle circle-one"></div>
@@ -91,7 +138,31 @@ function Register() {
             <h2>Tạo tài khoản ✨</h2>
             <p>Điền thông tin để bắt đầu sử dụng TroRoom</p>
           </div>
+          {otpStep ? (
+  <form onSubmit={handleVerifyOtp}>
+    <h2>Xác minh email</h2>
 
+    <p>
+      Mã OTP đã được gửi tới:
+      <br />
+      <strong>{email}</strong>
+    </p>
+
+    <input
+      type="text"
+      value={otp}
+      onChange={(e) => setOtp(e.target.value)}
+      placeholder="Nhập mã OTP 6 số"
+      maxLength={6}
+      inputMode="numeric"
+      required
+    />
+
+    <button type="submit" disabled={loading}>
+      {loading ? 'Đang xác minh...' : 'Xác minh email'}
+    </button>
+  </form>
+    ) : (
           <form onSubmit={handleRegister}>
 
             <div className="form-group">
@@ -188,7 +259,7 @@ function Register() {
             </button>
 
           </form>
-
+    )}
           {message && (
             <div
               className={

@@ -28,11 +28,23 @@ function Login() {
         }
       )
 
-      const data = await response.json()
+      const contentType = response.headers.get('content-type') || ''
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Thông tin đăng nhập không chính xác')
-      }
+  if (!response.ok) {
+  if (contentType.includes('application/json')) {
+    const data = await response.json()
+    throw new Error(
+      data.message || 'Thông tin đăng nhập không chính xác'
+    )
+  }
+
+  const message = await response.text()
+  throw new Error(
+    message || 'Thông tin đăng nhập không chính xác'
+  )
+  }
+
+  const data = await response.json()
 
       localStorage.setItem('accessToken', data.accessToken)
     localStorage.setItem('refreshToken', data.refreshToken)

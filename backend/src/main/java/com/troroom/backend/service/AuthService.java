@@ -8,7 +8,10 @@ import com.troroom.backend.entity.User;
 import com.troroom.backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import com.troroom.backend.entity.EmailVerification;
+import com.troroom.backend.repository.EmailVerificationRepository;
+import java.time.LocalDateTime;
+import java.util.Random;
 @Service
 public class AuthService {
 
@@ -16,40 +19,135 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
-
-public AuthService(
+    private final EmailVerificationRepository emailVerificationRepository;
+    private final EmailVerificationService emailVerificationService;
+    public AuthService(
         UserRepository userRepository,
         PasswordEncoder passwordEncoder,
         JwtService jwtService,
-        RefreshTokenService refreshTokenService
-) {
+        RefreshTokenService refreshTokenService,
+        EmailVerificationRepository emailVerificationRepository,
+        EmailVerificationService emailVerificationService
+    ) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
     this.jwtService = jwtService;
     this.refreshTokenService = refreshTokenService;
-}
-
-    public User register(RegisterRequest request) {
-        if (userRepository.existsByPhone(request.getPhone())) {
-            throw new RuntimeException("Số điện thoại đã được sử dụng");
-        }
-
-        if (request.getEmail() != null
-                && !request.getEmail().isBlank()
-                && userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email đã được sử dụng");
-        }
-
-        User user = new User();
-        user.setName(request.getName());
-        user.setPhone(request.getPhone());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(User.Role.TENANT);
-
-        return userRepository.save(user);
+    this.emailVerificationRepository = emailVerificationRepository;
+    this.emailVerificationService = emailVerificationService;
     }
 
+    public void register(RegisterRequest request) {
+
+    if (userRepository.existsByPhone(request.getPhone())) {
+        throw new RuntimeException("Số điện thoại đã được sử dụng");
+    }
+
+    if (request.getEmail() == null
+            || request.getEmail().isBlank()) {
+        throw new RuntimeException("Email không được để trống");
+    }
+
+    if (!request.getEmail().toLowerCase().endsWith("@gmail.com")) {
+        throw new RuntimeException(
+                "Chỉ chấp nhận email Gmail (@gmail.com)"
+        );
+    }
+
+    if (userRepository.existsByEmail(request.getEmail())) {
+        throw new RuntimeException("Email đã được sử dụng");
+    }
+
+    String otp = String.format(
+            "%06d",
+            new Random().nextInt(1_000_000)
+    );
+
+    EmailVerification verification =
+            emailVerificationRepository
+                    .findTopByEmailOrderByCreatedAtDesc(
+                            request.getEmail()
+                    )
+                    .orElse(new EmailVerification());
+
+    verification.setEmail(request.getEmail());
+    verification.setName(request.getName());
+    verification.setPhone(request.getPhone());
+
+    // Lưu mật khẩu đã mã hóa, không lưu mật khẩu gốc
+    verification.setPassword(
+            passwordEncoder.encode(request.getPassword())
+    );
+
+    verification.setOtp(otp);
+    verification.setCreatedAt(LocalDateTime.now());
+    verification.setExpiresAt(
+            LocalDateTime.now().plusMinutes(5)
+    );
+
+    emailVerificationRepository.save(verification);
+
+    emailVerificationService.sendOtp(
+        request.getEmail(),
+        otp
+    );
+    }
+    public void verifyEmail(String email, String otp) {
+
+    EmailVerification verification =
+            emailVerificationRepository
+                    .findTopByEmailOrderByCreatedAtDesc(email)
+                    .orElseThrow(() ->
+                            new RuntimeException(
+                                    "Không tìm thấy mã xác minh"
+                            ));
+
+    if (verification.getExpiresAt()
+            .isBefore(LocalDateTime.now())) {
+
+        throw new RuntimeException(
+                "Mã xác minh đã hết hạn"
+        );
+    }
+
+    if (!verification.getOtp().equals(otp)) {
+        throw new RuntimeException(
+                "Mã xác minh không chính xác"
+        );
+    }
+
+    // Kiểm tra lại lần cuối trước khi tạo tài khoản
+    if (userRepository.existsByEmail(verification.getEmail())) {
+        throw new RuntimeException(
+                "Email đã được sử dụng"
+        );
+    }
+
+    if (userRepository.existsByPhone(verification.getPhone())) {
+        throw new RuntimeException(
+                "Số điện thoại đã được sử dụng"
+        );
+    }
+
+    User user = new User();
+
+    user.setName(verification.getName());
+    user.setPhone(verification.getPhone());
+    user.setEmail(verification.getEmail());
+
+    // Mật khẩu trong EmailVerification đã được mã hóa
+    user.setPassword(verification.getPassword());
+
+    user.setRole(User.Role.TENANT);
+    user.setActive(true);
+    user.setMustChangePassword(false);
+    user.setFailedLoginAttempts(0);
+
+    userRepository.save(user);
+
+    // Xác minh thành công -> xóa mã OTP
+    emailVerificationRepository.delete(verification);
+    }
     public LoginResponse login(LoginRequest request) {
 
         User user = userRepository.findByPhone(request.getIdentifier())
