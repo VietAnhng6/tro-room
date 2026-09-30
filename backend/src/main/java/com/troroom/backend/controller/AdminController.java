@@ -13,7 +13,7 @@ import com.troroom.backend.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.data.domain.Sort;
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
@@ -116,8 +116,11 @@ public ResponseEntity<?> getUsers(
 
     try {
         // Mỗi trang tối đa 20 tài khoản
-        Pageable pageable = PageRequest.of(page, 20);
-
+        Pageable pageable = PageRequest.of(
+        page,
+        20,
+        Sort.by(Sort.Direction.ASC, "id")
+        );
       Page<AdminUserResponse> users =
         adminService.getUsers(
                 role,

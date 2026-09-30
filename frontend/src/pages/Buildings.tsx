@@ -40,9 +40,6 @@ function Buildings() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-
-  const token = localStorage.getItem('accessToken')
-
   useEffect(() => {
     loadBuildings()
   }, [])
