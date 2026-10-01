@@ -1,5 +1,6 @@
 import Login from './pages/Login'
 import Register from './pages/Register'
+import SearchRooms from './pages/SearchRooms'
 import ResetPassword from './pages/ResetPassword'
 import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
@@ -286,6 +287,12 @@ function App() {
   /*
    * Public routes
    */
+
+  // S2-04: tìm kiếm phòng - không cần đăng nhập
+  if (path === '/search-rooms') {
+    return <SearchRooms />
+  }
+
   if (path === '/register') {
     return <Register />
   }
