@@ -68,7 +68,7 @@ function ForgotPassword() {
           </div>
 
           <div className="forgot-icon">
-            🔑
+            
           </div>
 
           <div className="forgot-header">
@@ -87,7 +87,7 @@ function ForgotPassword() {
               </label>
 
               <div className="input-wrapper">
-                <span className="input-icon">✉️</span>
+                <span className="input-icon"></span>
 
                 <input
                   id="email"
@@ -151,9 +151,9 @@ function ForgotPassword() {
           justify-content: center;
           background: linear-gradient(
             135deg,
-            #eff6ff 0%,
-            #f8fafc 45%,
-            #eef2ff 100%
+            #ced9e7 0%,
+            #d1dde9 45%,
+            #d1d8ee 100%
           );
           font-family:
             Inter,

@@ -508,20 +508,22 @@ function Rooms() {
             gap: 12,
           }}
         >
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm theo mã phòng..."
-            style={{
-              flex: '1 1 240px',
-              minWidth: 220,
-              border: '1px solid #cbd5e1',
-              borderRadius: 10,
-              padding: '11px 13px',
-              outline: 'none',
-              fontSize: 14,
-            }}
-          />
+       <input
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  placeholder="Tìm theo mã phòng..."
+  style={{
+    flex: '1 1 240px',
+    minWidth: 220,
+    border: '1px solid #cbd5e1',
+    borderRadius: 10,
+    padding: '11px 13px',
+    outline: 'none',
+    fontSize: 14,
+    background: '#ffffff',
+    color: '#0f172a',
+  }}
+/>
 
           <select
             value={buildingId}
@@ -614,7 +616,7 @@ function Rooms() {
         marginBottom: 12,
       }}
     >
-      🏠
+      
     </div>
 
     <div
@@ -832,7 +834,7 @@ function Rooms() {
       }}
     >
       <div style={{ fontWeight: 800, marginBottom: 5 }}>
-        🏢 {building.name}
+        {building.name}
       </div>
 
       <div

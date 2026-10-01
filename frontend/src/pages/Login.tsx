@@ -30,31 +30,31 @@ function Login() {
 
       const contentType = response.headers.get('content-type') || ''
 
-  if (!response.ok) {
-  if (contentType.includes('application/json')) {
-    const data = await response.json()
-    throw new Error(
-      data.message || 'Thông tin đăng nhập không chính xác'
-    )
-  }
+      if (!response.ok) {
+        if (contentType.includes('application/json')) {
+          const data = await response.json()
+          throw new Error(
+            data.message || 'Thông tin đăng nhập không chính xác'
+          )
+        }
 
-  const message = await response.text()
-  throw new Error(
-    message || 'Thông tin đăng nhập không chính xác'
-  )
-  }
+        const message = await response.text()
+        throw new Error(
+          message || 'Thông tin đăng nhập không chính xác'
+        )
+      }
 
-  const data = await response.json()
+      const data = await response.json()
 
       localStorage.setItem('accessToken', data.accessToken)
-    localStorage.setItem('refreshToken', data.refreshToken)
-    localStorage.setItem('role', data.role)
+      localStorage.setItem('refreshToken', data.refreshToken)
+      localStorage.setItem('role', data.role)
 
-    setMessage('Đăng nhập thành công!')
+      setMessage('Đăng nhập thành công!')
 
-    setTimeout(() => {
-    window.location.href = '/dashboard'
-    }, 500)
+      setTimeout(() => {
+        window.location.href = '/dashboard'
+      }, 500)
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -92,7 +92,7 @@ function Login() {
         {/* Form */}
         <div className="login-card">
           <div className="login-header">
-            <h2>Chào mừng trở lại 👋</h2>
+            <h2>Chào mừng trở lại</h2>
             <p>Đăng nhập để tiếp tục sử dụng TroRoom</p>
           </div>
 
@@ -103,8 +103,6 @@ function Login() {
               </label>
 
               <div className="input-wrapper">
-                <span className="input-icon">👤</span>
-
                 <input
                   id="identifier"
                   type="text"
@@ -128,8 +126,6 @@ function Login() {
               </div>
 
               <div className="input-wrapper">
-                <span className="input-icon">🔒</span>
-
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
@@ -142,11 +138,44 @@ function Login() {
                 <button
                   type="button"
                   className="show-password"
-                  onClick={() =>
-                    setShowPassword(!showPassword)
-                  }
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
-                  {showPassword ? '🙈' : '👁️'}
+                  {showPassword ? (
+                    /* Icon Mắt ẩn (gạch chéo) */
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                      <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                      <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                      <line x1="2" x2="22" y1="2" y2="22" />
+                    </svg>
+                  ) : (
+                    /* Icon Mắt hiện (mở) */
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
                 </button>
               </div>
             </div>
@@ -363,20 +392,13 @@ function Login() {
           position: relative;
           display: flex;
           align-items: center;
-        }
-
-        .input-icon {
-          position: absolute;
-          left: 14px;
-          font-size: 16px;
-          z-index: 1;
-          opacity: 0.75;
+          width: 100%;
         }
 
         .input-wrapper input {
           width: 100%;
           height: 48px;
-          padding: 0 44px;
+          padding: 0 42px 0 16px;
           border: 1px solid #dbe2ea;
           border-radius: 11px;
           outline: none;
@@ -400,16 +422,23 @@ function Login() {
         .show-password {
           position: absolute;
           right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
           border: none;
           background: transparent;
           cursor: pointer;
-          font-size: 16px;
+          color: #64748b;
           padding: 6px;
-          opacity: 0.7;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          transition: color 0.2s ease, background-color 0.2s ease;
         }
 
         .show-password:hover {
-          opacity: 1;
+          color: #1e293b;
+          background-color: #f1f5f9;
         }
 
         .login-button {
