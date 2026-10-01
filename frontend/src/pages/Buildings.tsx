@@ -718,7 +718,7 @@ function Buildings() {
           {buildings.length === 0 ? (
             <div style={styles.empty}>
               <div style={styles.emptyIcon}>
-                🏢
+                
               </div>
 
               <strong>
@@ -747,7 +747,7 @@ function Buildings() {
                   <div style={styles.buildingMain}>
 
                     <div style={styles.buildingIcon}>
-                      🏢
+                      
                     </div>
 
                     <div style={styles.buildingInfo}>
@@ -771,20 +771,20 @@ function Buildings() {
                       </div>
 
                       <p style={styles.address}>
-                        📍 {building.address}
+                        {building.address}
                       </p>
 
                       <div style={styles.metaRow}>
                         <span>
-                          🏢 {building.floors} tầng
+                          {building.floors} tầng
                         </span>
 
                         <span>
-                          🚪 {building.roomCount || 0} phòng
+                          {building.roomCount || 0} phòng
                         </span>
 
                         <span>
-                          🟢 {building.vacantCount || 0} phòng trống
+                          {building.vacantCount || 0} phòng trống
                         </span>
                       </div>
                         {(building.roomCount || 0) === 0 && (
@@ -795,7 +795,7 @@ function Buildings() {
                         
                       {building.managerName && (
                         <div style={styles.manager}>
-                          👤 Manager:{' '}
+                           Manager:{' '}
                           <strong>
                             {building.managerName}
                           </strong>
@@ -804,7 +804,7 @@ function Buildings() {
 
                       {building.note && (
                         <div style={styles.note}>
-                          📝 {building.note}
+                          {building.note}
                         </div>
                       )}
                     </div>
@@ -996,7 +996,7 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
   },
 
-  searchInput: {
+searchInput: {
     flex: 1,
     height: 44,
     border: '1px solid #cbd5e1',
@@ -1005,6 +1005,8 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     outline: 'none',
     boxSizing: 'border-box',
+    background: '#ffffff', // Màu nền trắng sáng
+    color: '#0f172a',      // Màu chữ tối rõ nét
   },
 
   searchButton: {
@@ -1087,7 +1089,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
   },
 
-  input: {
+input: {
     width: '100%',
     height: 44,
     border: '1px solid #cbd5e1',
@@ -1096,6 +1098,8 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     outline: 'none',
     boxSizing: 'border-box',
+    background: '#ffffff', // Thêm nền trắng
+    color: '#0f172a',      // Thêm màu chữ tối rõ nét
   },
 
   hint: {

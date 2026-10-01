@@ -216,7 +216,7 @@ function Admin() {
                 fontSize: 28,
               }}
             >
-              🛡️ Quản trị tài khoản
+              Quản trị tài khoản
             </h1>
 
             <p

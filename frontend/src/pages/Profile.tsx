@@ -510,7 +510,7 @@ function Profile() {
 
   {idFront && (
   <div style={styles.fileName}>
-    📄 {idFront.name}
+    {idFront.name}
   </div>
   )}
 
@@ -542,7 +542,7 @@ function Profile() {
 
   {idBack && (
   <div style={styles.fileName}>
-    📄 {idBack.name}
+    {idBack.name}
   </div>
   )}
 
@@ -697,7 +697,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
   },
 
-  input: {
+ input: {
     width: '100%',
     height: 46,
     padding: '0 13px',
@@ -706,6 +706,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     outline: 'none',
     boxSizing: 'border-box',
+    background: '#ffffff', // Ép màu nền trắng tươi
+    color: '#0f172a',      // Màu chữ tối rõ nét
+    colorScheme: 'light',  // Ép picker ngày sinh hiển thị giao diện sáng
   },
 
   maskedBox: {
@@ -729,13 +732,16 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.5,
   },
 
-  fileInput: {
+fileInput: {
     width: '100%',
     padding: 10,
-    border: '1px dashed #94a3b8',
+    border: '1px dashed #cbd5e1',
     borderRadius: 10,
-    background: '#f8fafc',
+    background: '#f8fafc', // Nền xám nhạt nhẹ nhàng
+    color: '#334155',      // Màu chữ tối
     boxSizing: 'border-box',
+    cursor: 'pointer',
+    colorScheme: 'light',  // Ép button chọn file hiển thị giao diện sáng
   },
 
   fileName: {

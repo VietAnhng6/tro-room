@@ -18,48 +18,50 @@ function Dashboard() {
   const [username, setUsername] = useState('')
   const [buildingCount, setBuildingCount] = useState(0)
   const [roomCount, setRoomCount] = useState(0)
+
   useEffect(() => {
     setRole(localStorage.getItem('role') || 'TENANT')
     setUsername(localStorage.getItem('username') || '')
   }, [])
+
   useEffect(() => {
-  const loadDashboardStats = async () => {
-    const token = localStorage.getItem('accessToken')
+    const loadDashboardStats = async () => {
+      const token = localStorage.getItem('accessToken')
 
-    if (!token || (role !== 'LANDLORD' && role !== 'MANAGER')) {
-      return
-    }
-
-    try {
-      const [buildingsRes, roomsRes] = await Promise.all([
-        fetch('http://localhost:8080/api/buildings', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }),
-        fetch('http://localhost:8080/api/rooms', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }),
-      ])
-
-      if (buildingsRes.ok) {
-        const buildings = await buildingsRes.json()
-        setBuildingCount(buildings.length)
+      if (!token || (role !== 'LANDLORD' && role !== 'MANAGER')) {
+        return
       }
 
-      if (roomsRes.ok) {
-        const rooms = await roomsRes.json()
-        setRoomCount(rooms.length)
-      }
-    } catch (error) {
-      console.error('Không thể tải thống kê Dashboard:', error)
-    }
-  }
+      try {
+        const [buildingsRes, roomsRes] = await Promise.all([
+          fetch('http://localhost:8080/api/buildings', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+          fetch('http://localhost:8080/api/rooms', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+        ])
 
-  loadDashboardStats()
-}, [role])
+        if (buildingsRes.ok) {
+          const buildings = await buildingsRes.json()
+          setBuildingCount(buildings.length)
+        }
+
+        if (roomsRes.ok) {
+          const rooms = await roomsRes.json()
+          setRoomCount(rooms.length)
+        }
+      } catch (error) {
+        console.error('Không thể tải thống kê Dashboard:', error)
+      }
+    }
+
+    loadDashboardStats()
+  }, [role])
 
   const permissions = useMemo(() => {
     if (role === 'ADMIN') {
@@ -143,63 +145,63 @@ function Dashboard() {
   const actions = [
     {
       key: 'dashboard',
-      icon: '🏠',
+      icon: '',
       title: 'Tổng quan',
       enabled: true,
       path: '/dashboard',
     },
     {
       key: 'building',
-      icon: '🏢',
+      icon: '',
       title: 'Quản lý tòa nhà',
       enabled: permissions.building,
       path: '/buildings',
     },
     {
       key: 'room',
-      icon: '🚪',
+      icon: '',
       title: 'Quản lý phòng',
       enabled: permissions.room,
       path: '/rooms',
     },
     {
       key: 'tenant',
-      icon: '👥',
+      icon: '',
       title: 'Người thuê',
       enabled: permissions.tenant,
       path: '/tenants',
     },
     {
       key: 'contract',
-      icon: '📄',
+      icon: '',
       title: 'Hợp đồng',
       enabled: permissions.contract,
       path: '/contracts',
     },
     {
       key: 'service',
-      icon: '⚡',
+      icon: '',
       title: 'Dịch vụ',
       enabled: permissions.service,
       path: '/services',
     },
     {
       key: 'profile',
-      icon: '👤',
+      icon: '',
       title: 'Hồ sơ',
       enabled: permissions.profile,
       path: '/profile',
     },
     {
       key: 'audit',
-      icon: '🧾',
+      icon: '',
       title: 'Nhật ký hệ thống',
       enabled: permissions.audit,
       path: '/audit-logs',
     },
     {
       key: 'admin',
-      icon: '🛡️',
+      icon: '',
       title: 'Quản trị tài khoản',
       enabled: permissions.admin,
       path: '/admin',
@@ -207,7 +209,7 @@ function Dashboard() {
   ]
 
   return (
-        <div
+    <div
       style={{
         height: '100vh',
         overflow: 'hidden',
@@ -219,7 +221,7 @@ function Dashboard() {
       }}
     >
       {/* ================= SIDEBAR ================= */}
-            <aside
+      <aside
         style={{
           width: 250,
           height: '100vh',
@@ -374,7 +376,7 @@ function Dashboard() {
                 whiteSpace: 'nowrap',
               }}
             >
-              👤 {username || 'Tài khoản'}
+              {username || 'Tài khoản'}
             </div>
 
             <span
@@ -397,34 +399,36 @@ function Dashboard() {
             style={{
               width: '100%',
               height: 42,
-              border: '1px solid #e2e8f0',
-              background: '#fff',
-              color: '#475569',
+              border: 'none',
+              background: '#1081b9',
+              color: '#fff',
               borderRadius: 8,
               cursor: 'pointer',
               fontSize: 13,
               fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)',
             }}
           >
-            🚪 Đăng xuất
+            Đăng xuất
           </button>
         </div>
       </aside>
 
       {/* ================= MAIN ================= */}
-    <div
-   style={{
-    flex: 1,
-    height: '100vh',
-    overflowY: 'auto',
-    overflowX: 'hidden',
-    boxSizing: 'border-box',
-    backgroundImage: "linear-gradient(rgba(255,255,255,0.45), rgba(255,255,255,0.45)), url('/tro-room-bg.png')",
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundAttachment: 'fixed',
-  }}
-  >
+      <div
+        style={{
+          flex: 1,
+          height: '100vh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          boxSizing: 'border-box',
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.45), rgba(255,255,255,0.45)), url('/tro-room-bg.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }}
+      >
         {/* HEADER */}
         <header
           style={{
@@ -473,7 +477,7 @@ function Dashboard() {
                 fontWeight: 600,
               }}
             >
-              👤 {username || 'Tài khoản'}
+              {username || 'Tài khoản'}
             </span>
 
             <span
@@ -492,15 +496,14 @@ function Dashboard() {
         </header>
 
         {/* CONTENT */}
-                <main
-                  style={{
-                    width: '100%',
-                    minHeight: 'calc(100vh - 82px)',
-                    padding: '20px',
-                    boxSizing: 'border-box',
-                  }}
-                >
-          
+        <main
+          style={{
+            width: '100%',
+            minHeight: 'calc(100vh - 82px)',
+            padding: '20px',
+            boxSizing: 'border-box',
+          }}
+        >
           {/* TITLE */}
           <div style={{ marginBottom: 28 }}>
             <h1
@@ -528,17 +531,16 @@ function Dashboard() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns:
-                'repeat(4, minmax(0, 1fr))',
+              gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
               gap: 18,
               width: '100%',
             }}
           >
             {[
-              ['🏢', 'Tòa nhà', String(buildingCount)],
-              ['🚪', 'Phòng trọ', String(roomCount)],
-              ['👥', 'Người thuê', '0'],
-              ['💰', 'Doanh thu tháng', '0 ₫'],
+              ['', 'Tòa nhà', String(buildingCount)],
+              ['', 'Phòng trọ', String(roomCount)],
+              ['', 'Người thuê', '0'],
+              ['', 'Doanh thu tháng', '0 ₫'],
             ].map(([icon, title, value]) => (
               <div
                 key={title}
@@ -553,8 +555,7 @@ function Dashboard() {
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow:
-                    '0 4px 12px rgba(15,23,42,.035)',
+                  boxShadow: '0 4px 12px rgba(15,23,42,.035)',
                 }}
               >
                 <div
@@ -616,8 +617,7 @@ function Dashboard() {
                 lineHeight: 1.6,
               }}
             >
-              Sử dụng thanh chức năng bên trái để truy cập
-              các chức năng mà tài khoản của bạn được phép sử dụng.
+              Sử dụng thanh chức năng bên trái để truy cập các chức năng mà tài khoản của bạn được phép sử dụng.
             </div>
           </div>
         </main>
