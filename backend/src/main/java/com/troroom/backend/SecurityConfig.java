@@ -1,3 +1,4 @@
+
 package com.troroom.backend;
 
 import com.troroom.backend.security.JwtAuthenticationFilter;
@@ -5,6 +6,7 @@ import com.troroom.backend.security.PermissionAuthorizationManager;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -59,6 +61,10 @@ public class SecurityConfig {
                     "/error"
                 ).permitAll()
 
+                .requestMatchers("/api/public/**").permitAll()
+
+                .requestMatchers(HttpMethod.GET, "/api/room-images/*").permitAll()
+
                 // Quyền được kiểm tra từ DB
                 .requestMatchers("/api/admin/**")
                 .access(permissionAuthorizationManager)
@@ -70,6 +76,10 @@ public class SecurityConfig {
                 .access(permissionAuthorizationManager)
 
                 .requestMatchers("/api/services/**")
+                .access(permissionAuthorizationManager)
+
+                
+                .requestMatchers("/api/listings/**")
                 .access(permissionAuthorizationManager)
 
                 // Audit Log: chỉ ADMIN được xem

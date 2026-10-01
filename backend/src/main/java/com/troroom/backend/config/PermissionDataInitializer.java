@@ -41,6 +41,11 @@ public class PermissionDataInitializer {
                     User.Role.LANDLORD,
                     "SERVICE_MANAGE"
             );
+                        addIfNotExists(
+                    repository,
+                    User.Role.LANDLORD,
+                    "LISTING_MANAGE"
+            );
 
             // MANAGER
             addIfNotExists(
