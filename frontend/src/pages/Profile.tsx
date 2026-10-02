@@ -18,7 +18,8 @@ function Profile() {
 
   const [idFront, setIdFront] = useState<File | null>(null)
   const [idBack, setIdBack] = useState<File | null>(null)
-
+  const [idFrontImageSrc, setIdFrontImageSrc] = useState('')
+  const [idBackImageSrc, setIdBackImageSrc] = useState('')
   const [idFrontUrl, setIdFrontUrl] = useState('')
   const [idBackUrl, setIdBackUrl] = useState('')
 
@@ -88,7 +89,72 @@ function Profile() {
 
     loadProfile()
   }, [])
+  useEffect(() => {
+  let frontObjectUrl = ''
+  let backObjectUrl = ''
 
+  const loadImages = async () => {
+    const accessToken = localStorage.getItem('accessToken')
+
+    if (!accessToken) {
+      return
+    }
+
+    try {
+      if (idFrontUrl) {
+        const response = await fetch(
+          'http://localhost:8080/api/profile/id-image/front',
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        )
+
+        if (!response.ok) {
+          throw new Error('Không thể tải ảnh CCCD mặt trước.')
+        }
+
+        const blob = await response.blob()
+        frontObjectUrl = URL.createObjectURL(blob)
+        setIdFrontImageSrc(frontObjectUrl)
+      }
+
+      if (idBackUrl) {
+        const response = await fetch(
+          'http://localhost:8080/api/profile/id-image/back',
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        )
+
+        if (!response.ok) {
+          throw new Error('Không thể tải ảnh CCCD mặt sau.')
+        }
+
+        const blob = await response.blob()
+        backObjectUrl = URL.createObjectURL(blob)
+        setIdBackImageSrc(backObjectUrl)
+      }
+    } catch (err) {
+      console.error('Lỗi tải ảnh CCCD:', err)
+    }
+  }
+
+  loadImages()
+
+  return () => {
+    if (frontObjectUrl) {
+      URL.revokeObjectURL(frontObjectUrl)
+    }
+
+    if (backObjectUrl) {
+      URL.revokeObjectURL(backObjectUrl)
+    }
+  }
+  }, [idFrontUrl, idBackUrl])
   const validateFile = (file: File | null) => {
     if (!file) {
       return true
@@ -431,54 +497,72 @@ function Profile() {
           </p>
 
           {/* MẶT TRƯỚC */}
-          <label style={styles.label}>
-            CCCD mặt trước
-          </label>
+  <label style={styles.label}>
+  CCCD mặt trước
+  </label>
 
-          <input
-            type="file"
-            accept="image/jpeg,image/png"
-            onChange={handleFrontFileChange}
-            style={styles.fileInput}
-          />
+  <input
+  type="file"
+  accept="image/jpeg,image/png"
+  onChange={handleFrontFileChange}
+  style={styles.fileInput}
+  />
 
-          {idFront && (
-            <div style={styles.fileName}>
-              📄 {idFront.name}
-            </div>
-          )}
+  {idFront && (
+  <div style={styles.fileName}>
+    📄 {idFront.name}
+  </div>
+  )}
 
-          {idFrontUrl && !idFront && (
-            <div style={styles.currentFile}>
-              ✓ Đã có ảnh CCCD mặt trước
-            </div>
-          )}
+  {idFrontUrl && !idFront && idFrontImageSrc && (
+  <>
+    <div style={styles.currentFile}>
+      ✓ Đã có ảnh CCCD mặt trước
+    </div>
 
-          {/* MẶT SAU */}
-          <label style={styles.label}>
-            CCCD mặt sau
-          </label>
+    <img
+    src={idFrontImageSrc}
+    alt="CCCD mặt trước"
+    style={styles.idImage}
+  />
+  </>
+  )}
 
-          <input
-            type="file"
-            accept="image/jpeg,image/png"
-            onChange={handleBackFileChange}
-            style={styles.fileInput}
-          />
+  {/* MẶT SAU */}
+  <label style={styles.label}>
+  CCCD mặt sau
+  </label>
 
-          {idBack && (
-            <div style={styles.fileName}>
-              📄 {idBack.name}
-            </div>
-          )}
+  <input
+  type="file"
+  accept="image/jpeg,image/png"
+  onChange={handleBackFileChange}
+  style={styles.fileInput}
+  />
 
-          {idBackUrl && !idBack && (
-            <div style={styles.currentFile}>
-              ✓ Đã có ảnh CCCD mặt sau
-            </div>
-          )}
-        </div>
+  {idBack && (
+  <div style={styles.fileName}>
+    📄 {idBack.name}
+  </div>
+  )}
 
+  {idBackUrl && !idBack && idBackImageSrc && (
+  <>
+    <div style={styles.currentFile}>
+      ✓ Đã có ảnh CCCD mặt sau
+    </div>
+
+    <img
+  src={idBackImageSrc}
+  alt="CCCD mặt sau"
+  style={styles.idImage}
+  />
+  </>
+  )}
+
+  </div>
+
+  {/* SAVE */}
         {/* SAVE */}
         <button
           onClick={handleSave}
@@ -664,6 +748,17 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 7,
     color: '#047857',
     fontSize: 12,
+  },
+  idImage: {
+  display: 'block',
+  width: 'auto',
+  maxWidth: '100%',
+  maxHeight: 320,
+  objectFit: 'contain',
+  margin: '10px auto 0',
+  borderRadius: 10,
+  border: '1px solid #e2e8f0',
+  background: '#f8fafc',
   },
 
   button: {

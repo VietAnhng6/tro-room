@@ -210,23 +210,6 @@ function Forbidden() {
   )
 }
 
-/*
- * Kiểm tra đã đăng nhập chưa
- */
-function Protected({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const token = localStorage.getItem('accessToken')
-
-  if (!token) {
-    window.location.href = '/'
-    return null
-  }
-
-  return <>{children}</>
-}
 
 /*
  * Kiểm tra quyền truy cập route theo role
