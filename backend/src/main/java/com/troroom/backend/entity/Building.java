@@ -16,6 +16,9 @@ public class Building {
     @Column(nullable = false)
     private String address;
 
+    @Column(length = 100)
+    private String district;
+
     @Column(nullable = false)
     private int floors;
 
@@ -54,6 +57,14 @@ public class Building {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getDistrict() {
+        return district;
+    }
+
+    public void setDistrict(String district) {
+        this.district = district;
     }
 
     public int getFloors() {
