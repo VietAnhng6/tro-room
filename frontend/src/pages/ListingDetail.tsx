@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const API = 'http://localhost:8080'
 
@@ -33,10 +33,26 @@ type ListingDetailData = {
   estimatedFirstMonthCost: number
 }
 
+type Notice = {
+  type: 'success' | 'error' | 'info'
+  text: string
+  requestCode?: string
+}
 
 const money = (value: number) =>
   `${new Intl.NumberFormat('vi-VN').format(value)} đ`
 
+function vietnamDate(daysFromToday = 0) {
+  const today = new Date()
+  const base = new Date(today.toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }))
+  base.setHours(0, 0, 0, 0)
+  base.setDate(base.getDate() + daysFromToday)
+
+  const year = base.getFullYear()
+  const month = String(base.getMonth() + 1).padStart(2, '0')
+  const day = String(base.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 function methodLabel(method: string, unit: string) {
   switch (method) {
@@ -53,9 +69,18 @@ function methodLabel(method: string, unit: string) {
 
 function ListingDetail() {
   const listingId = Number(window.location.pathname.split('/').pop())
+  const today = useMemo(() => vietnamDate(), [])
+  const maxDate = useMemo(() => vietnamDate(60), [])
+
   const [listing, setListing] = useState<ListingDetailData | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
+  const [requestType, setRequestType] = useState<'VIEWING' | 'RENT_NOW'>('VIEWING')
+  const [desiredDate, setDesiredDate] = useState('')
+  const [expectedPeople, setExpectedPeople] = useState('1')
+  const [message, setMessage] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [notice, setNotice] = useState<Notice | null>(null)
 
   useEffect(() => {
     if (!Number.isFinite(listingId)) {
@@ -84,6 +109,102 @@ function ListingDetail() {
 
     return () => controller.abort()
   }, [listingId])
+
+  const submitRequest = async () => {
+    setNotice(null)
+
+    const token = localStorage.getItem('accessToken')
+    const role = localStorage.getItem('role')
+
+    if (!token) {
+      setNotice({
+        type: 'info',
+        text: 'Vui lòng đăng nhập tài khoản Khách thuê để gửi yêu cầu.',
+      })
+      return
+    }
+
+    if (role && role !== 'TENANT') {
+      setNotice({
+        type: 'error',
+        text: 'Chỉ tài khoản Khách thuê mới được gửi yêu cầu xem phòng hoặc thuê ngay.',
+      })
+      return
+    }
+
+    if (!desiredDate) {
+      setNotice({ type: 'error', text: 'Vui lòng chọn ngày mong muốn.' })
+      return
+    }
+
+    if (desiredDate < today || desiredDate > maxDate) {
+      setNotice({
+        type: 'error',
+        text: 'Ngày mong muốn phải từ hôm nay đến tối đa 60 ngày tới.',
+      })
+      return
+    }
+
+    const people = Number(expectedPeople)
+    if (!Number.isInteger(people) || people < 1) {
+      setNotice({ type: 'error', text: 'Số người dự kiến ở phải lớn hơn 0.' })
+      return
+    }
+
+    if (listing && people > listing.maxPeople) {
+      setNotice({
+        type: 'error',
+        text: `Số người vượt giới hạn của phòng: tối đa ${listing.maxPeople} người.`,
+      })
+      return
+    }
+
+    setSubmitting(true)
+
+    try {
+      const response = await fetch(
+        `${API}/api/public/listings/${listingId}/requests`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: requestType,
+            desiredDate,
+            expectedPeople: people,
+            message: message.trim(),
+          }),
+        },
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (response.ok) {
+        setNotice({
+          type: 'success',
+          text: 'Yêu cầu đã được gửi thành công.',
+          requestCode: data.requestCode,
+        })
+        setDesiredDate('')
+        setMessage('')
+        return
+      }
+
+      setNotice({
+        type: response.status === 409 ? 'error' : 'error',
+        text: data.message || 'Không thể gửi yêu cầu. Vui lòng kiểm tra lại thông tin.',
+      })
+    } catch {
+      setNotice({
+        type: 'error',
+        text: 'Không thể kết nối máy chủ. Hãy kiểm tra Backend đang chạy.',
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   if (loading) {
     return <div style={styles.center}>Đang tải chi tiết tin đăng...</div>
@@ -207,6 +328,97 @@ function ListingDetail() {
           </p>
         </section>
 
+        <section style={styles.card}>
+          <div style={styles.sectionHeader}>
+            <div>
+              <h2 style={styles.sectionTitle}>Gửi yêu cầu</h2>
+              <p style={styles.muted}>Bạn cần đăng nhập tài khoản Khách thuê để gửi yêu cầu.</p>
+            </div>
+          </div>
+
+          <div style={styles.formGrid}>
+            <label style={styles.field}>
+              <span style={styles.label}>Loại yêu cầu</span>
+              <select
+                style={styles.input}
+                value={requestType}
+                onChange={(event) => setRequestType(event.target.value as 'VIEWING' | 'RENT_NOW')}
+              >
+                <option value="VIEWING">Xem phòng</option>
+                <option value="RENT_NOW">Thuê ngay</option>
+              </select>
+            </label>
+
+            <label style={styles.field}>
+              <span style={styles.label}>Ngày mong muốn</span>
+              <input
+                style={styles.input}
+                type="date"
+                min={today}
+                max={maxDate}
+                value={desiredDate}
+                onChange={(event) => setDesiredDate(event.target.value)}
+              />
+            </label>
+
+            <label style={styles.field}>
+              <span style={styles.label}>Số người dự kiến ở</span>
+              <input
+                style={styles.input}
+                type="number"
+                min={1}
+                max={listing.maxPeople}
+                value={expectedPeople}
+                onChange={(event) => setExpectedPeople(event.target.value)}
+                aria-describedby="people-limit"
+              />
+              <small id="people-limit" style={styles.helper}>
+                Tối đa {listing.maxPeople} người theo giới hạn phòng.
+              </small>
+            </label>
+          </div>
+
+          <label style={styles.field}>
+            <span style={styles.label}>Lời nhắn</span>
+            <textarea
+              style={styles.textarea}
+              rows={5}
+              maxLength={1000}
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              placeholder="Ví dụ: Tôi muốn xem phòng vào buổi chiều..."
+            />
+            <small style={styles.helper}>{message.length}/1000 ký tự</small>
+          </label>
+
+          <button
+            style={{ ...styles.submitButton, opacity: submitting ? 0.7 : 1 }}
+            onClick={submitRequest}
+            disabled={submitting}
+          >
+            {submitting ? 'Đang gửi...' : 'Gửi yêu cầu'}
+          </button>
+
+          {notice && (
+            <div
+              style={{
+                ...styles.notice,
+                ...(notice.type === 'success'
+                  ? styles.successNotice
+                  : notice.type === 'error'
+                    ? styles.errorNotice
+                    : styles.infoNotice),
+              }}
+            >
+              <strong>{notice.text}</strong>
+              {notice.requestCode && (
+                <div style={styles.codeBox}>
+                  Mã yêu cầu: <span>{notice.requestCode}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
       </main>
     </div>
   )
@@ -385,6 +597,89 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#64748b',
     fontSize: 13,
     lineHeight: 1.6,
+  },
+  sectionHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  formGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: 14,
+    marginTop: 16,
+  },
+  field: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+    marginBottom: 14,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: 800,
+    color: '#475569',
+  },
+  input: {
+    width: '100%',
+    boxSizing: 'border-box',
+    height: 44,
+    border: '1px solid #cbd5e1',
+    borderRadius: 10,
+    padding: '0 12px',
+    fontSize: 14,
+    background: '#fff',
+  },
+  textarea: {
+    width: '100%',
+    boxSizing: 'border-box',
+    border: '1px solid #cbd5e1',
+    borderRadius: 10,
+    padding: 12,
+    resize: 'vertical',
+    fontSize: 14,
+    lineHeight: 1.5,
+    fontFamily: 'inherit',
+  },
+  helper: {
+    color: '#64748b',
+    fontSize: 12,
+  },
+  submitButton: {
+    width: '100%',
+    border: 0,
+    borderRadius: 10,
+    padding: '13px 18px',
+    background: '#2563eb',
+    color: '#fff',
+    fontWeight: 800,
+    cursor: 'pointer',
+  },
+  notice: {
+    marginTop: 14,
+    padding: 14,
+    borderRadius: 12,
+    lineHeight: 1.55,
+  },
+  successNotice: {
+    background: '#ecfdf3',
+    color: '#166534',
+  },
+  errorNotice: {
+    background: '#fef2f2',
+    color: '#b91c1c',
+  },
+  infoNotice: {
+    background: '#eff6ff',
+    color: '#1d4ed8',
+  },
+  codeBox: {
+    marginTop: 8,
+    display: 'inline-block',
+    padding: '8px 10px',
+    borderRadius: 8,
+    background: 'rgba(255,255,255,0.7)',
+    fontWeight: 800,
   },
   errorTitle: {
     marginTop: 0,

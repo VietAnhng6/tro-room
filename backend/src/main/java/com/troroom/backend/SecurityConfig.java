@@ -61,7 +61,8 @@ public class SecurityConfig {
                     "/error"
                 ).permitAll()
 
-                .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/public/listings/*/requests").authenticated()
 
                 .requestMatchers(HttpMethod.GET, "/api/room-images/*").permitAll()
 
