@@ -119,7 +119,29 @@ function SearchRooms() {
   }
 
   return (
-    <div style={styles.page}>
+    <>
+      <style>{`
+        .s2-search-page { overflow-x: hidden; }
+        .s2-search-filter-grid, .s2-search-room-grid { min-width: 0; }
+        .s2-search-page .s2-search-filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .s2-search-page .s2-search-room-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        @media (max-width: 900px) {
+          .s2-search-page .s2-search-filter-grid, .s2-search-page .s2-search-room-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+        }
+        @media (max-width: 600px) {
+          .s2-search-page .s2-search-filter-card { padding: 16px !important; }
+          .s2-search-page .s2-search-filter-grid, .s2-search-page .s2-search-room-grid { grid-template-columns: 1fr !important; }
+          .s2-search-page h1 { font-size: 26px !important; }
+          .s2-search-page .s2-search-filter-card, .s2-search-page .s2-search-room-card { width: 100%; }
+        }
+        @media (max-width: 360px) {
+          .s2-search-page { padding: 16px 8px !important; }
+          .s2-search-page .s2-search-filter-card { padding: 12px !important; }
+          .s2-search-page .s2-search-actions { flex-wrap: wrap; }
+          .s2-search-page .s2-search-button { flex: 1 1 140px; }
+        }
+      `}</style>
+      <div style={styles.page} className="s2-search-page">
       <div style={styles.container}>
         <header style={styles.header}>
           <h1 style={styles.title}>Tìm phòng trọ</h1>
@@ -128,15 +150,15 @@ function SearchRooms() {
           </p>
         </header>
 
-        <section style={styles.filterCard}>
-          <div style={styles.filterGrid}>
+        <section style={styles.filterCard} className="s2-search-filter-card">
+          <div style={styles.filterGrid} className="s2-search-filter-grid">
             <div style={styles.field}>
               <label style={styles.label}>Quận</label>
               <input
                 style={styles.input}
                 value={district}
                 onChange={(e) => setDistrict(e.target.value)}
-                placeholder="Ví dụ: Dong Da"
+                placeholder="Ví dụ: Đống Đa"
               />
             </div>
 
@@ -218,9 +240,10 @@ function SearchRooms() {
             </div>
           </div>
 
-          <div style={styles.actions}>
+          <div style={styles.actions} className="s2-search-actions">
             <button
               style={styles.searchButton}
+              className="s2-search-button"
               onClick={() => searchRooms(0)}
             >
               Tìm kiếm
@@ -228,6 +251,7 @@ function SearchRooms() {
 
             <button
               style={styles.clearButton}
+              className="s2-search-button"
               onClick={clearFilters}
             >
               Xóa bộ lọc
@@ -261,14 +285,36 @@ function SearchRooms() {
                 <p>
                   Hãy thử mở rộng khoảng giá hoặc diện tích để có thêm kết quả.
                 </p>
+                <button
+                  style={styles.clearButton}
+                  onClick={() => {
+                    setMinRent('')
+                    setMaxRent('')
+                    setMinArea('')
+                    setMaxArea('')
+                    searchRooms(0)
+                  }}
+                >
+                  Mở rộng bộ lọc giá và diện tích
+                </button>
               </div>
             ) : (
               <>
-                <div style={styles.roomGrid}>
+                <div style={styles.roomGrid} className="s2-search-room-grid">
                   {result.content.map((room) => (
                     <article
                       key={room.id}
-                      style={styles.roomCard}
+                      className="s2-search-room-card"
+                      style={{ ...styles.roomCard, cursor: 'pointer' }}
+                      onClick={() => { window.location.href = `/listing/${room.id}` }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          window.location.href = `/listing/${room.id}`
+                        }
+                      }}
+                      role="link"
+                      tabIndex={0}
                     >
                       <div style={styles.roomCode}>
                         Phòng {room.roomCode}
@@ -311,6 +357,10 @@ function SearchRooms() {
                       <div style={styles.address}>
                         {room.address}
                       </div>
+
+                      <div style={styles.detailAction}>
+                        Xem chi tiết →
+                      </div>
                     </article>
                   ))}
                 </div>
@@ -343,7 +393,8 @@ function SearchRooms() {
           </>
         )}
       </div>
-    </div>
+      </div>
+    </>
   )
 }
 
@@ -504,6 +555,13 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 5,
     color: '#64748b',
     fontSize: 13,
+  },
+
+  detailAction: {
+    marginTop: 16,
+    fontWeight: 800,
+    color: '#2563eb',
+    fontSize: 14,
   },
 
   message: {

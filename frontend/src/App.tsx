@@ -1,6 +1,7 @@
 import Login from './pages/Login'
 import Register from './pages/Register'
 import SearchRooms from './pages/SearchRooms'
+import ListingDetail from './pages/ListingDetail'
 import ResetPassword from './pages/ResetPassword'
 import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
@@ -291,6 +292,11 @@ function App() {
   // S2-04: tìm kiếm phòng - không cần đăng nhập
   if (path === '/search-rooms') {
     return <SearchRooms />
+  }
+
+  // S2-05/S2-06: chi tiết tin và gửi yêu cầu
+  if (path.startsWith('/listing/')) {
+    return <ListingDetail />
   }
 
   if (path === '/register') {
