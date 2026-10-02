@@ -26,25 +26,27 @@ import java.time.LocalDateTime;
         }
 )
 public class RentalRequest {
-<<<<<<< HEAD
-=======
-    public enum Type { VIEWING, RENT_NOW }
-    // OPEN = Mới, SCHEDULED = Đã hẹn lịch, ACCEPTED = Đã duyệt, REJECTED = Từ chối, CANCELLED = Đã huỷ
-    public enum Status { OPEN, SCHEDULED, ACCEPTED, REJECTED, CANCELLED, COMPLETED }
-    public enum RejectReason { ALREADY_RENTED, PEOPLE_MISMATCH, UNREACHABLE, OTHER }
->>>>>>> 39ebb7a (feat(S2-07,S2-08): step 1 data model)
 
     public enum Type {
         VIEWING,
         RENT_NOW
     }
 
+    // OPEN = Mới, SCHEDULED = Đã hẹn lịch, ACCEPTED = Đã duyệt, REJECTED = Từ chối, CANCELLED = Đã huỷ
     public enum Status {
         OPEN,
+        SCHEDULED,
         ACCEPTED,
         REJECTED,
         CANCELLED,
         COMPLETED
+    }
+
+    public enum RejectReason {
+        ALREADY_RENTED,
+        PEOPLE_MISMATCH,
+        UNREACHABLE,
+        OTHER
     }
 
     @Id
@@ -66,7 +68,6 @@ public class RentalRequest {
     @Column(nullable = false, length = 20)
     private Type type;
 
-<<<<<<< HEAD
     @Column(name = "desired_date", nullable = false)
     private LocalDate desiredDate;
 
@@ -83,17 +84,20 @@ public class RentalRequest {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    // S2-08: thông tin xử lý yêu cầu của Chủ nhà
+    @Column(name = "scheduled_at")
+    private LocalDateTime scheduledAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reject_reason", length = 30)
+    private RejectReason rejectReason;
+
+    @Column(name = "reject_note", columnDefinition = "TEXT")
+    private String rejectNote;
+
     public RentalRequest() {
     }
 
-=======
-    @Column(name = "scheduled_at") private LocalDateTime scheduledAt;
-    @Enumerated(EnumType.STRING) @Column(name = "reject_reason", length = 30)
-    private RejectReason rejectReason;
-    @Column(name = "reject_note", columnDefinition = "TEXT") private String rejectNote;
-
-    public RentalRequest() {}
->>>>>>> 39ebb7a (feat(S2-07,S2-08): step 1 data model)
     public Long getId() { return id; }
     public String getRequestCode() { return requestCode; }
     public void setRequestCode(String requestCode) { this.requestCode = requestCode; }
