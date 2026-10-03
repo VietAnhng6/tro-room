@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
 import ComingSoon from './pages/ComingSoon'
 import Buildings from './pages/Buildings'
+import BuildingServices from './pages/BuildingServices'
 import Rooms from './pages/Rooms'
 import Services from './pages/Services'
 import AuditLogs from './pages/AuditLogs'
@@ -340,6 +341,15 @@ function App() {
     return (
       <ProtectedRoute path={path}>
         <Buildings />
+      </ProtectedRoute>
+    )
+  }
+
+  // S2-10: cấu hình điện nước cho từng toà nhà
+  if (path.startsWith('/building-services/')) {
+    return (
+      <ProtectedRoute path="/buildings">
+        <BuildingServices />
       </ProtectedRoute>
     )
   }
