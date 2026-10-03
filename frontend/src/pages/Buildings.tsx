@@ -821,6 +821,19 @@ function Buildings() {
                     </button>
 
                     <button
+                      onClick={() => {
+                        window.location.href =
+                          '/building-services/' +
+                          building.id +
+                          '?name=' +
+                          encodeURIComponent(building.name)
+                      }}
+                      style={styles.serviceButton}
+                    >
+                      ⚡ Điện nước
+                    </button>
+
+                    <button
   onClick={() => {
     if (building.active) {
       handleDeactivate(building)
@@ -1290,6 +1303,17 @@ input: {
     padding: '8px 13px',
     cursor: 'pointer',
     fontWeight: 650,
+  },
+
+  serviceButton: {
+    border: '1px solid #fcd34d',
+    background: '#fffbeb',
+    color: '#b45309',
+    borderRadius: 8,
+    padding: '8px 13px',
+    cursor: 'pointer',
+    fontWeight: 650,
+    whiteSpace: 'nowrap',
   },
 
   deactivateButton: {
