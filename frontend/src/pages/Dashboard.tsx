@@ -185,6 +185,13 @@ function Dashboard() {
       path: '/landlord/requests',
     },
     {
+      key: 'myRequests',
+      icon: '',
+      title: 'Yêu cầu của tôi',
+      enabled: role === 'TENANT',
+      path: '/my-requests',
+    },
+    {
       key: 'tenant',
       icon: '',
       title: 'Người thuê',

@@ -5,6 +5,7 @@ import com.troroom.backend.entity.RentalRequest;
 import com.troroom.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface RentalRequestRepository extends JpaRepository<RentalRequest, Long> {
@@ -16,4 +17,6 @@ public interface RentalRequestRepository extends JpaRepository<RentalRequest, Lo
     );
 
     boolean existsByRequestCode(String requestCode);
+
+    List<RentalRequest> findByTenantOrderByCreatedAtDesc(User tenant);
 }

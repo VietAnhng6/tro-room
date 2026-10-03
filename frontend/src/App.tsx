@@ -14,6 +14,7 @@ import Rooms from './pages/Rooms'
 import Services from './pages/Services'
 import AuditLogs from './pages/AuditLogs'
 import Admin from './pages/Admin'
+import MyRequests from './pages/MyRequests'
 
 /*
  * Trang 403
@@ -253,6 +254,7 @@ function hasRouteAccess(path: string, role: string | null) {
     TENANT: [
       '/dashboard',
       '/profile',
+      '/my-requests',
     ],
   }
 
@@ -389,6 +391,13 @@ function App() {
     return (
       <ProtectedRoute path={path}>
         <LandlordRequests />
+      </ProtectedRoute>
+    )
+  }
+  if (path === '/my-requests') {
+    return (
+      <ProtectedRoute path={path}>
+        <MyRequests />
       </ProtectedRoute>
     )
   }
