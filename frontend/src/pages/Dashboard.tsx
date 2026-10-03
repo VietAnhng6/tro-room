@@ -18,7 +18,7 @@ function Dashboard() {
   const [username, setUsername] = useState('')
   const [buildingCount, setBuildingCount] = useState(0)
   const [roomCount, setRoomCount] = useState(0)
-
+  const [pendingRequests, setPendingRequests] = useState(0)
   useEffect(() => {
     setRole(localStorage.getItem('role') || 'TENANT')
     setUsername(localStorage.getItem('username') || '')
@@ -62,7 +62,20 @@ function Dashboard() {
 
     loadDashboardStats()
   }, [role])
+   // S2-07: số yêu cầu thuê chưa xử lý hiện trên menu của Chủ nhà
+   useEffect(() => {
+     const token = localStorage.getItem('accessToken')
+     if (!token || role !== 'LANDLORD') return
 
+     fetch('http://localhost:8080/api/landlord/requests/pending-count', {
+       headers: { Authorization: `Bearer ${token}` },
+     })
+       .then((res) => (res.ok ? res.json() : null))
+       .then((data) => {
+         if (data) setPendingRequests(data.count)
+       })
+       .catch(() => {})
+   }, [role])
   const permissions = useMemo(() => {
     if (role === 'ADMIN') {
       return {
@@ -163,6 +176,13 @@ function Dashboard() {
       title: 'Quản lý phòng',
       enabled: permissions.room,
       path: '/rooms',
+    },
+        {
+      key: 'request',
+      icon: '',
+      title: 'Yêu cầu thuê',
+      enabled: role === 'LANDLORD',
+      path: '/landlord/requests',
     },
     {
       key: 'tenant',
@@ -345,6 +365,28 @@ function Dashboard() {
                   </span>
 
                   <span>{item.title}</span>
+                  
+                  {item.key === 'request' && pendingRequests > 0 && (
+                    <span
+                      style={{
+                        marginLeft: 'auto',
+                        minWidth: 20,
+                        height: 20,
+                        padding: '0 6px',
+                        borderRadius: 10,
+                        background: '#ef4444',
+                        color: '#ffffff',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {pendingRequests}
+                    </span>
+                  )}
                 </button>
               )
             })}

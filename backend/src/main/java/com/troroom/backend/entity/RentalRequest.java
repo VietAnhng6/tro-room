@@ -26,6 +26,13 @@ import java.time.LocalDateTime;
         }
 )
 public class RentalRequest {
+<<<<<<< HEAD
+=======
+    public enum Type { VIEWING, RENT_NOW }
+    // OPEN = Mới, SCHEDULED = Đã hẹn lịch, ACCEPTED = Đã duyệt, REJECTED = Từ chối, CANCELLED = Đã huỷ
+    public enum Status { OPEN, SCHEDULED, ACCEPTED, REJECTED, CANCELLED, COMPLETED }
+    public enum RejectReason { ALREADY_RENTED, PEOPLE_MISMATCH, UNREACHABLE, OTHER }
+>>>>>>> 39ebb7a (feat(S2-07,S2-08): step 1 data model)
 
     public enum Type {
         VIEWING,
@@ -59,6 +66,7 @@ public class RentalRequest {
     @Column(nullable = false, length = 20)
     private Type type;
 
+<<<<<<< HEAD
     @Column(name = "desired_date", nullable = false)
     private LocalDate desiredDate;
 
@@ -78,6 +86,14 @@ public class RentalRequest {
     public RentalRequest() {
     }
 
+=======
+    @Column(name = "scheduled_at") private LocalDateTime scheduledAt;
+    @Enumerated(EnumType.STRING) @Column(name = "reject_reason", length = 30)
+    private RejectReason rejectReason;
+    @Column(name = "reject_note", columnDefinition = "TEXT") private String rejectNote;
+
+    public RentalRequest() {}
+>>>>>>> 39ebb7a (feat(S2-07,S2-08): step 1 data model)
     public Long getId() { return id; }
     public String getRequestCode() { return requestCode; }
     public void setRequestCode(String requestCode) { this.requestCode = requestCode; }
@@ -97,4 +113,10 @@ public class RentalRequest {
     public void setStatus(Status status) { this.status = status; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getScheduledAt() { return scheduledAt; }
+    public void setScheduledAt(LocalDateTime scheduledAt) { this.scheduledAt = scheduledAt; }
+    public RejectReason getRejectReason() { return rejectReason; }
+    public void setRejectReason(RejectReason rejectReason) { this.rejectReason = rejectReason; }
+    public String getRejectNote() { return rejectNote; }
+    public void setRejectNote(String rejectNote) { this.rejectNote = rejectNote; }
 }

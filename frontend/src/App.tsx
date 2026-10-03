@@ -2,6 +2,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import SearchRooms from './pages/SearchRooms'
 import ListingDetail from './pages/ListingDetail'
+import LandlordRequests from './pages/LandlordRequests'
 import ResetPassword from './pages/ResetPassword'
 import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
@@ -237,6 +238,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/buildings',
       '/rooms',
       '/services',
+      '/landlord/requests',
     ],
 
     MANAGER: [
@@ -373,7 +375,13 @@ function App() {
       </ProtectedRoute>
     )
   }
-
+  if (path === '/landlord/requests') {
+    return (
+      <ProtectedRoute path={path}>
+        <LandlordRequests />
+      </ProtectedRoute>
+    )
+  }
   /*
    * Các chức năng chưa triển khai
    */
