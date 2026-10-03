@@ -61,7 +61,7 @@ function Dashboard() {
     }
 
     loadDashboardStats()
-  }, [role])Restart TS Server
+  }, [role])
    // S2-07: số yêu cầu thuê chưa xử lý hiện trên menu của Chủ nhà
    useEffect(() => {
      const token = localStorage.getItem('accessToken')

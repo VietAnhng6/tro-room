@@ -238,6 +238,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/buildings',
       '/rooms',
       '/services',
+      '/landlord/requests',
     ],
 
     MANAGER: [
@@ -374,7 +375,13 @@ function App() {
       </ProtectedRoute>
     )
   }
-
+  if (path === '/landlord/requests') {
+    return (
+      <ProtectedRoute path={path}>
+        <LandlordRequests />
+      </ProtectedRoute>
+    )
+  }
   /*
    * Các chức năng chưa triển khai
    */
