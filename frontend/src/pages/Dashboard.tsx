@@ -11,15 +11,15 @@ function Dashboard() {
 
   const permissions = useMemo(() => {
     if (role === 'ADMIN') {
-    return { building: false, room: false, tenant: true, contract: true, service: false, profile: true, audit: true, admin: true }
+    return { building: false, room: false, tenant: true, contract: true, service: false, profile: true, audit: true, admin: true, myRequests: false }
     }
     if (role === 'LANDLORD') {
-      return { building: true, room: true, tenant: false, contract: false, service: true, profile: true, audit: false, admin: false }
+      return { building: true, room: true, tenant: false, contract: false, service: true, profile: true, audit: false, admin: false, myRequests: false }
     }
     if (role === 'MANAGER') {
-      return { building: true, room: true, tenant: false, contract: false, service: true, profile: true, audit: false, admin: false }
+      return { building: true, room: true, tenant: false, contract: false, service: true, profile: true, audit: false, admin: false, myRequests: false }
     }
-    return { building: false, room: false, tenant: false, contract: false, service: false, profile: true, audit: false, admin: false }
+    return { building: false, room: false, tenant: false, contract: false, service: false, profile: true, audit: false, admin: false, myRequests: true }
   }, [role])
 
   const handleLogout = () => {
@@ -54,6 +54,7 @@ function Dashboard() {
     { key: 'contract', icon: '📄', title: 'Hợp đồng', enabled: permissions.contract, path: '/contracts' },
     { key: 'service', icon: '⚡', title: 'Dịch vụ', enabled: permissions.service, path: '/services' },
     { key: 'profile', icon: '👤', title: 'Hồ sơ', enabled: permissions.profile, path: '/profile' },
+    { key: 'myRequests', icon: '📋', title: 'Yêu cầu của tôi', enabled: permissions.myRequests, path: '/my-requests' },
     { key: 'audit', icon: '🧾', title: 'Nhật ký hệ thống', enabled: permissions.audit, path: '/audit-logs' },
     { key: 'admin', icon: '🛡️', title: 'Quản trị tài khoản', enabled: permissions.admin, path: '/admin' },
   ]
