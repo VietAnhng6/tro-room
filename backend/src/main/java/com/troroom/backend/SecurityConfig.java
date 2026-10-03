@@ -81,14 +81,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/me")
                 .authenticated()
 
-                // S2-09: tin đăng và yêu cầu thuê
-                // role check nằm trong controller (như /api/profile)
-                .requestMatchers("/api/listings/**")
-                .authenticated()
-
-                .requestMatchers("/api/rental-requests/**")
-                .authenticated()
-
                 // Các API khác phải đăng nhập
                 .anyRequest()
                 .authenticated()

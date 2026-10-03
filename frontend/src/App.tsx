@@ -10,8 +10,6 @@ import Rooms from './pages/Rooms'
 import Services from './pages/Services'
 import AuditLogs from './pages/AuditLogs'
 import Admin from './pages/Admin'
-import MyRequests from './pages/MyRequests'
-import ListingDetail from './pages/ListingDetail'
 function Forbidden() {
   return (
     <div style={{
@@ -177,24 +175,6 @@ if (path === '/admin') {
   return (
     <Protected>
       <Admin />
-    </Protected>
-  )
-}
-
-  /*
-   * S2-09 - Yêu cầu thuê của khách
-   */
-if (path === '/my-requests') {
-  return (
-    <Protected>
-      <MyRequests />
-    </Protected>
-  )
-}
-if (path === '/listing') {
-  return (
-    <Protected>
-      <ListingDetail />
     </Protected>
   )
 }
