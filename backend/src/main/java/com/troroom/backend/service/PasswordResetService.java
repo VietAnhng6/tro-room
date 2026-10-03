@@ -129,6 +129,8 @@ public class PasswordResetService {
 
         userRepository.save(user);
 
+        refreshTokenService.revokeAllByUser(user);
+
         // Token chỉ được sử dụng một lần
         resetToken.setUsed(true);
         tokenRepository.save(resetToken);

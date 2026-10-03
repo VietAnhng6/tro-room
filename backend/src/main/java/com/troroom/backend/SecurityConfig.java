@@ -1,3 +1,4 @@
+
 package com.troroom.backend;
 
 import com.troroom.backend.security.JwtAuthenticationFilter;
@@ -5,6 +6,7 @@ import com.troroom.backend.security.PermissionAuthorizationManager;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -55,8 +57,14 @@ public class SecurityConfig {
                     "/api/auth/logout",
                     "/api/auth/forgot-password",
                     "/api/auth/reset-password/**",
+                    "/api/auth/verify-email",
                     "/error"
                 ).permitAll()
+
+                .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/public/listings/*/requests").authenticated()
+
+                .requestMatchers(HttpMethod.GET, "/api/room-images/*").permitAll()
 
                 // Quyền được kiểm tra từ DB
                 .requestMatchers("/api/admin/**")
@@ -71,6 +79,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/services/**")
                 .access(permissionAuthorizationManager)
 
+                
+                .requestMatchers("/api/listings/**")
+                .access(permissionAuthorizationManager)
+
                 // Audit Log: chỉ ADMIN được xem
                 .requestMatchers("/api/audit-logs/**")
                 .hasRole("ADMIN")
@@ -79,14 +91,6 @@ public class SecurityConfig {
                 .authenticated()
 
                 .requestMatchers("/api/auth/me")
-                .authenticated()
-
-                // S2-09: tin đăng và yêu cầu thuê
-                // role check nằm trong controller (như /api/profile)
-                .requestMatchers("/api/listings/**")
-                .authenticated()
-
-                .requestMatchers("/api/rental-requests/**")
                 .authenticated()
 
                 // Các API khác phải đăng nhập

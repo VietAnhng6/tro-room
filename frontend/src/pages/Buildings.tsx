@@ -40,7 +40,6 @@ function Buildings() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-
   useEffect(() => {
     loadBuildings()
   }, [])
@@ -337,7 +336,74 @@ function Buildings() {
       )
     }
   }
+  const handleActivate = async (building: Building) => {
+  if (!window.confirm(
+    `Bạn có chắc muốn hoạt động lại "${building.name}"?`
+  )) {
+    return
+  }
 
+  const accessToken = localStorage.getItem('accessToken')
+
+  if (!accessToken) {
+    window.location.href = '/'
+    return
+  }
+
+  try {
+    setMessage('')
+    setError('')
+
+    const response = await fetch(
+      `http://localhost:8080/api/buildings/${building.id}/activate`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    )
+
+    const text = await response.text()
+
+    let data: { message?: string } = {}
+
+    try {
+      data = text ? JSON.parse(text) : {}
+    } catch {
+      // response không phải JSON
+    }
+
+    if (response.status === 401) {
+      localStorage.clear()
+      window.location.href = '/'
+      return
+    }
+
+    if (response.status === 403) {
+      setError('Bạn không có quyền hoạt động lại tòa nhà.')
+      return
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+        text ||
+        'Không thể hoạt động lại tòa nhà.'
+      )
+    }
+
+    setMessage('Đã hoạt động lại tòa nhà.')
+
+    await loadBuildings()
+  } catch (err) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : 'Có lỗi xảy ra.'
+    )
+  }
+}
   const handleSearch = async () => {
     await loadBuildings()
   }
@@ -652,7 +718,7 @@ function Buildings() {
           {buildings.length === 0 ? (
             <div style={styles.empty}>
               <div style={styles.emptyIcon}>
-                🏢
+                
               </div>
 
               <strong>
@@ -681,7 +747,7 @@ function Buildings() {
                   <div style={styles.buildingMain}>
 
                     <div style={styles.buildingIcon}>
-                      🏢
+                      
                     </div>
 
                     <div style={styles.buildingInfo}>
@@ -705,26 +771,31 @@ function Buildings() {
                       </div>
 
                       <p style={styles.address}>
-                        📍 {building.address}
+                        {building.address}
                       </p>
 
                       <div style={styles.metaRow}>
                         <span>
-                          🏢 {building.floors} tầng
+                          {building.floors} tầng
                         </span>
 
                         <span>
-                          🚪 {building.roomCount || 0} phòng
+                          {building.roomCount || 0} phòng
                         </span>
 
                         <span>
-                          🟢 {building.vacantCount || 0} phòng trống
+                          {building.vacantCount || 0} phòng trống
                         </span>
                       </div>
-
+                        {(building.roomCount || 0) === 0 && (
+                        <div style={styles.noRoom}>
+                         Chưa có phòng nào
+                          </div>
+                        )}    
+                        
                       {building.managerName && (
                         <div style={styles.manager}>
-                          👤 Manager:{' '}
+                           Manager:{' '}
                           <strong>
                             {building.managerName}
                           </strong>
@@ -733,7 +804,7 @@ function Buildings() {
 
                       {building.note && (
                         <div style={styles.note}>
-                          📝 {building.note}
+                          {building.note}
                         </div>
                       )}
                     </div>
@@ -749,16 +820,35 @@ function Buildings() {
                       Sửa
                     </button>
 
-                    {building.active && (
-                      <button
-                        onClick={() =>
-                          handleDeactivate(building)
-                        }
-                        style={styles.deactivateButton}
-                      >
-                        Ngừng hoạt động
-                      </button>
-                    )}
+                    <button
+                      onClick={() => {
+                        window.location.href =
+                          '/building-services/' +
+                          building.id +
+                          '?name=' +
+                          encodeURIComponent(building.name)
+                      }}
+                      style={styles.serviceButton}
+                    >
+                      ⚡ Điện nước
+                    </button>
+
+                    <button
+  onClick={() => {
+    if (building.active) {
+      handleDeactivate(building)
+    } else {
+      handleActivate(building)
+    }
+  }}
+  style={
+    building.active
+      ? styles.deactivateButton
+      : styles.activateButton
+  }
+>
+  {building.active ? 'Ngừng hoạt động' : 'Hoạt động lại'}
+</button>
                   </div>
                 </div>
               ))}
@@ -781,7 +871,16 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif',
   },
-
+  activateButton: {
+  border: '1px solid #bbf7d0',
+  background: '#f0fdf4',
+  color: '#16a34a',
+  borderRadius: 8,
+  padding: '8px 13px',
+  cursor: 'pointer',
+  fontWeight: 650,
+  whiteSpace: 'nowrap',
+},
   container: {
     width: '100%',
     maxWidth: 1180,
@@ -910,7 +1009,7 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
   },
 
-  searchInput: {
+searchInput: {
     flex: 1,
     height: 44,
     border: '1px solid #cbd5e1',
@@ -919,6 +1018,8 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     outline: 'none',
     boxSizing: 'border-box',
+    background: '#ffffff', // Màu nền trắng sáng
+    color: '#0f172a',      // Màu chữ tối rõ nét
   },
 
   searchButton: {
@@ -1001,7 +1102,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
   },
 
-  input: {
+input: {
     width: '100%',
     height: 44,
     border: '1px solid #cbd5e1',
@@ -1010,6 +1111,8 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     outline: 'none',
     boxSizing: 'border-box',
+    background: '#ffffff', // Thêm nền trắng
+    color: '#0f172a',      // Thêm màu chữ tối rõ nét
   },
 
   hint: {
@@ -1168,6 +1271,12 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#64748b',
     fontSize: 12,
   },
+  noRoom: {
+  marginTop: 8,
+  color: '#94a3b8',
+  fontSize: 12,
+  fontStyle: 'italic',
+  },
 
   actions: {
     display: 'flex',
@@ -1176,7 +1285,16 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     flexShrink: 0,
   },
-
+  addRoomButton: {
+  border: '1px solid #bfdbfe',
+  background: '#eff6ff',
+  color: '#2563eb',
+  borderRadius: 8,
+  padding: '8px 13px',
+  cursor: 'pointer',
+  fontWeight: 650,
+  whiteSpace: 'nowrap',
+  },
   editButton: {
     border: '1px solid #bfdbfe',
     background: '#eff6ff',
@@ -1185,6 +1303,17 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '8px 13px',
     cursor: 'pointer',
     fontWeight: 650,
+  },
+
+  serviceButton: {
+    border: '1px solid #fcd34d',
+    background: '#fffbeb',
+    color: '#b45309',
+    borderRadius: 8,
+    padding: '8px 13px',
+    cursor: 'pointer',
+    fontWeight: 650,
+    whiteSpace: 'nowrap',
   },
 
   deactivateButton: {

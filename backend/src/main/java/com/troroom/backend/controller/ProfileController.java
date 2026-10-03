@@ -4,7 +4,10 @@ import com.troroom.backend.entity.TenantProfile;
 import com.troroom.backend.entity.User;
 import com.troroom.backend.repository.TenantProfileRepository;
 import com.troroom.backend.repository.UserRepository;
-
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -68,37 +71,118 @@ public class ProfileController {
                 "idBackUrl", profile.getIdBackUrl() == null ? "" : profile.getIdBackUrl()
         ));
     }
+        @GetMapping("/id-image/{side}")
+public ResponseEntity<?> getMyIdImage(
+        Authentication authentication,
+        @PathVariable String side
+) throws IOException {
 
-    @GetMapping("/admin/{userId}")
-    public ResponseEntity<?> getTenantProfileForAdmin(
-            Authentication authentication,
-            @PathVariable Long userId) {
+    User user = (User) authentication.getPrincipal();
 
-        User admin = (User) authentication.getPrincipal();
+    TenantProfile profile = profileRepository
+            .findByUser(user)
+            .orElse(null);
 
-        if (!"ADMIN".equals(admin.getRole().name())) {
-            return ResponseEntity.status(403)
-                    .body(Map.of("message", "Bạn không có quyền xem hồ sơ này"));
-        }
-
-        TenantProfile profile = profileRepository
-                .findByUserId(userId)
-                .orElse(null);
-
-        if (profile == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(Map.of(
-                "dateOfBirth", profile.getDateOfBirth(),
-                "citizenId", profile.getCitizenId(),
-                "hometown", profile.getHometown(),
-                "job", profile.getJob(),
-                "idFrontUrl", profile.getIdFrontUrl() == null ? "" : profile.getIdFrontUrl(),
-                "idBackUrl", profile.getIdBackUrl() == null ? "" : profile.getIdBackUrl()
-        ));
+    if (profile == null) {
+        return ResponseEntity.notFound().build();
     }
 
+    String imagePath;
+
+    if ("front".equalsIgnoreCase(side)) {
+        imagePath = profile.getIdFrontUrl();
+    } else if ("back".equalsIgnoreCase(side)) {
+        imagePath = profile.getIdBackUrl();
+    } else {
+        return ResponseEntity.badRequest()
+                .body(Map.of("message", "Loại ảnh CCCD không hợp lệ"));
+    }
+
+    if (imagePath == null || imagePath.isBlank()) {
+        return ResponseEntity.notFound().build();
+    }
+
+    Path path = Paths.get(imagePath);
+
+    if (!Files.exists(path)) {
+        return ResponseEntity.notFound().build();
+    }
+
+    byte[] imageBytes = Files.readAllBytes(path);
+
+    String contentType = Files.probeContentType(path);
+
+    if (contentType == null) {
+        contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+    }
+
+    return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType(contentType))
+            .header(
+                    HttpHeaders.CONTENT_DISPOSITION,
+                    "inline; filename=\"" + path.getFileName() + "\""
+            )
+            .body(new ByteArrayResource(imageBytes));
+}
+@GetMapping("/admin/{userId}/id-image/{side}")
+public ResponseEntity<?> getIdImage(
+        Authentication authentication,
+        @PathVariable Long userId,
+        @PathVariable String side
+) throws IOException {
+
+    User admin = (User) authentication.getPrincipal();
+
+    if (!"ADMIN".equals(admin.getRole().name())) {
+        return ResponseEntity.status(403)
+                .body(Map.of("message", "Bạn không có quyền xem ảnh CCCD"));
+    }
+
+    TenantProfile profile = profileRepository
+            .findByUserId(userId)
+            .orElse(null);
+
+    if (profile == null) {
+        return ResponseEntity.notFound().build();
+    }
+
+    String imagePath;
+
+    if ("front".equalsIgnoreCase(side)) {
+        imagePath = profile.getIdFrontUrl();
+    } else if ("back".equalsIgnoreCase(side)) {
+        imagePath = profile.getIdBackUrl();
+    } else {
+        return ResponseEntity.badRequest()
+                .body(Map.of("message", "Loại ảnh CCCD không hợp lệ"));
+    }
+
+    if (imagePath == null || imagePath.isBlank()) {
+        return ResponseEntity.notFound().build();
+    }
+
+    Path path = Paths.get(imagePath);
+
+    if (!Files.exists(path)) {
+        return ResponseEntity.notFound().build();
+    }
+
+    byte[] imageBytes = Files.readAllBytes(path);
+
+    String contentType = Files.probeContentType(path);
+
+    if (contentType == null) {
+        contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+    }
+
+    return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType(contentType))
+            .header(
+                    HttpHeaders.CONTENT_DISPOSITION,
+                    "inline; filename=\"" + path.getFileName() + "\""
+            )
+            .body(new ByteArrayResource(imageBytes));
+        }
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<?> saveProfile(
             Authentication authentication,

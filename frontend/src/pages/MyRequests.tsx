@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 
 type RequestStatus =
-  | 'NEW'
+  | 'OPEN'
   | 'SCHEDULED'
-  | 'APPROVED'
+  | 'ACCEPTED'
   | 'REJECTED'
   | 'CANCELLED'
+  | 'COMPLETED'
+
+type RequestType = 'VIEWING' | 'RENT_NOW'
 
 type RentalRequest = {
   id: number
@@ -15,7 +18,7 @@ type RentalRequest = {
   roomId: number
   roomCode: string
   buildingName: string
-  type: 'VIEW' | 'RENT_NOW'
+  type: RequestType
   desiredDate: string
   peopleCount: number
   message: string
@@ -28,26 +31,28 @@ type RentalRequest = {
 const API = 'http://localhost:8080'
 
 const statusLabel: Record<RequestStatus, string> = {
-  NEW: 'Mới',
+  OPEN: 'Mới',
   SCHEDULED: 'Đã hẹn lịch',
-  APPROVED: 'Đã duyệt',
+  ACCEPTED: 'Đã duyệt',
   REJECTED: 'Từ chối',
   CANCELLED: 'Đã huỷ',
+  COMPLETED: 'Đã xong',
 }
 
 const statusColor: Record<
   RequestStatus,
   { bg: string; color: string }
 > = {
-  NEW: { bg: '#eff6ff', color: '#1d4ed8' },
+  OPEN: { bg: '#eff6ff', color: '#1d4ed8' },
   SCHEDULED: { bg: '#fef3c7', color: '#92400e' },
-  APPROVED: { bg: '#dcfce7', color: '#166534' },
+  ACCEPTED: { bg: '#dcfce7', color: '#166534' },
   REJECTED: { bg: '#fef2f2', color: '#b91c1c' },
   CANCELLED: { bg: '#f1f5f9', color: '#475569' },
+  COMPLETED: { bg: '#e0e7ff', color: '#4338ca' },
 }
 
-const typeLabel: Record<'VIEW' | 'RENT_NOW', string> = {
-  VIEW: 'Xem phòng',
+const typeLabel: Record<RequestType, string> = {
+  VIEWING: 'Xem phòng',
   RENT_NOW: 'Thuê ngay',
 }
 
@@ -179,7 +184,7 @@ function MyRequests() {
   }
 
   const canCancel = (status: RequestStatus) =>
-    status === 'NEW' || status === 'SCHEDULED'
+    status === 'OPEN' || status === 'SCHEDULED'
 
   return (
     <div

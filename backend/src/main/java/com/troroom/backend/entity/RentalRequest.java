@@ -11,167 +11,116 @@ import java.time.LocalDateTime;
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_rental_request_code",
-                        columnNames = {"code"}
+                        columnNames = "request_code"
+                )
+        },
+        indexes = {
+                @Index(
+                        name = "idx_rental_requests_listing_tenant_status",
+                        columnList = "listing_id,tenant_id,status"
+                ),
+                @Index(
+                        name = "idx_rental_requests_tenant_created",
+                        columnList = "tenant_id,created_at"
                 )
         }
 )
 public class RentalRequest {
 
+    public enum Type {
+        VIEWING,
+        RENT_NOW
+    }
+
+    // OPEN = Mới, SCHEDULED = Đã hẹn lịch, ACCEPTED = Đã duyệt, REJECTED = Từ chối, CANCELLED = Đã huỷ
+    public enum Status {
+        OPEN,
+        SCHEDULED,
+        ACCEPTED,
+        REJECTED,
+        CANCELLED,
+        COMPLETED
+    }
+
+    public enum RejectReason {
+        ALREADY_RENTED,
+        PEOPLE_MISMATCH,
+        UNREACHABLE,
+        OTHER
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String code;
+    @Column(name = "request_code", nullable = false, unique = true, length = 20)
+    private String requestCode;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "tenant_id", nullable = false)
-    private User tenant;
-
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "listing_id", nullable = false)
     private Listing listing;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private RequestType type;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private User tenant;
 
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Type type;
+
+    @Column(name = "desired_date", nullable = false)
     private LocalDate desiredDate;
 
-    @Column(nullable = false)
-    private int peopleCount;
+    @Column(name = "expected_people", nullable = false)
+    private int expectedPeople;
 
-    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String message;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private RequestStatus status = RequestStatus.NEW;
+    @Column(nullable = false, length = 20)
+    private Status status = Status.OPEN;
 
-    @Column(length = 500)
-    private String rejectReason;
-
-    private LocalDateTime appointmentAt;
-
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+    // S2-08: thông tin xử lý yêu cầu của Chủ nhà
+    @Column(name = "scheduled_at")
+    private LocalDateTime scheduledAt;
 
-    public enum RequestType {
-        VIEW,
-        RENT_NOW
-    }
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reject_reason", length = 30)
+    private RejectReason rejectReason;
 
-    public enum RequestStatus {
-        NEW,
-        SCHEDULED,
-        APPROVED,
-        REJECTED,
-        CANCELLED
-    }
+    @Column(name = "reject_note", columnDefinition = "TEXT")
+    private String rejectNote;
 
     public RentalRequest() {
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public User getTenant() {
-        return tenant;
-    }
-
-    public void setTenant(User tenant) {
-        this.tenant = tenant;
-    }
-
-    public Listing getListing() {
-        return listing;
-    }
-
-    public void setListing(Listing listing) {
-        this.listing = listing;
-    }
-
-    public RequestType getType() {
-        return type;
-    }
-
-    public void setType(RequestType type) {
-        this.type = type;
-    }
-
-    public LocalDate getDesiredDate() {
-        return desiredDate;
-    }
-
-    public void setDesiredDate(LocalDate desiredDate) {
-        this.desiredDate = desiredDate;
-    }
-
-    public int getPeopleCount() {
-        return peopleCount;
-    }
-
-    public void setPeopleCount(int peopleCount) {
-        this.peopleCount = peopleCount;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public RequestStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(RequestStatus status) {
-        this.status = status;
-    }
-
-    public String getRejectReason() {
-        return rejectReason;
-    }
-
-    public void setRejectReason(String rejectReason) {
-        this.rejectReason = rejectReason;
-    }
-
-    public LocalDateTime getAppointmentAt() {
-        return appointmentAt;
-    }
-
-    public void setAppointmentAt(LocalDateTime appointmentAt) {
-        this.appointmentAt = appointmentAt;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    public Long getId() { return id; }
+    public String getRequestCode() { return requestCode; }
+    public void setRequestCode(String requestCode) { this.requestCode = requestCode; }
+    public Listing getListing() { return listing; }
+    public void setListing(Listing listing) { this.listing = listing; }
+    public User getTenant() { return tenant; }
+    public void setTenant(User tenant) { this.tenant = tenant; }
+    public Type getType() { return type; }
+    public void setType(Type type) { this.type = type; }
+    public LocalDate getDesiredDate() { return desiredDate; }
+    public void setDesiredDate(LocalDate desiredDate) { this.desiredDate = desiredDate; }
+    public int getExpectedPeople() { return expectedPeople; }
+    public void setExpectedPeople(int expectedPeople) { this.expectedPeople = expectedPeople; }
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
+    public Status getStatus() { return status; }
+    public void setStatus(Status status) { this.status = status; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getScheduledAt() { return scheduledAt; }
+    public void setScheduledAt(LocalDateTime scheduledAt) { this.scheduledAt = scheduledAt; }
+    public RejectReason getRejectReason() { return rejectReason; }
+    public void setRejectReason(RejectReason rejectReason) { this.rejectReason = rejectReason; }
+    public String getRejectNote() { return rejectNote; }
+    public void setRejectNote(String rejectNote) { this.rejectNote = rejectNote; }
 }

@@ -61,4 +61,7 @@ public class RefreshTokenService {
 
         return refreshToken;
     }
+    public void revokeAllByUser(User user) {
+    refreshTokenRepository.deleteByUser(user);
+}
 }

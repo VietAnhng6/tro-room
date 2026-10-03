@@ -86,6 +86,10 @@ public class PermissionAuthorizationManager
         if (uri.startsWith("/api/services")) {
             return "SERVICE_MANAGE";
         }
+        
+                if (uri.startsWith("/api/listings")) {
+            return "LISTING_MANAGE";
+        }
 
         if (uri.startsWith("/api/profile")) {
             return "PROFILE_VIEW";

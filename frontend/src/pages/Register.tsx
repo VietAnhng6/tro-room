@@ -8,6 +8,8 @@ function Register() {
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [otpStep, setOtpStep] = useState(false)
+  const [otp, setOtp] = useState('')
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,7 +50,54 @@ function Register() {
         throw new Error(data || 'Đăng ký thất bại')
       }
 
-      setMessage('Đăng ký thành công! Bạn có thể đăng nhập.')
+      setMessage('Mã xác minh đã được gửi tới email Gmail của bạn.')
+      setOtpStep(true)
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'Có lỗi xảy ra. Vui lòng thử lại.'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!/^\d{6}$/.test(otp)) {
+      setMessage('Mã OTP phải gồm 6 chữ số.')
+      return
+    }
+
+    setLoading(true)
+    setMessage('')
+
+    try {
+      const response = await fetch(
+        'http://localhost:8080/api/auth/verify-email',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            otp,
+          }),
+        }
+      )
+
+      const data = await response.text()
+
+      if (!response.ok) {
+        throw new Error(data || 'Xác minh email thất bại')
+      }
+
+      setMessage('Xác minh email thành công! Bạn có thể đăng nhập.')
+      setOtp('')
+      setOtpStep(false)
       setName('')
       setPhone('')
       setEmail('')
@@ -70,7 +119,6 @@ function Register() {
       <div className="background-circle circle-two"></div>
 
       <div className="register-container">
-
         <div className="register-brand">
           <div className="logo">
             <span>TR</span>
@@ -86,108 +134,128 @@ function Register() {
         </div>
 
         <div className="register-card">
-
           <div className="register-header">
-            <h2>Tạo tài khoản ✨</h2>
+            <h2>Tạo tài khoản</h2>
             <p>Điền thông tin để bắt đầu sử dụng TroRoom</p>
           </div>
 
-          <form onSubmit={handleRegister}>
+          {otpStep ? (
+            <form onSubmit={handleVerifyOtp}>
+              <h2>Xác minh email</h2>
 
-            <div className="form-group">
-              <label>Họ và tên</label>
-
-              <div className="input-wrapper">
-                <span className="input-icon">👤</span>
-
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Nhập họ và tên"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Số điện thoại</label>
-
-              <div className="input-wrapper">
-                <span className="input-icon">📱</span>
-
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="VD: 0987654321"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Email</label>
-
-              <div className="input-wrapper">
-                <span className="input-icon">✉️</span>
-
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="example@gmail.com"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Mật khẩu</label>
-
-              <div className="input-wrapper">
-                <span className="input-icon">🔒</span>
-
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Ít nhất 8 ký tự, gồm chữ và số"
-                  required
-                />
-
-                <button
-                  type="button"
-                  className="show-password"
-                  onClick={() =>
-                    setShowPassword(!showPassword)
-                  }
-                >
-                  {showPassword ? '🙈' : '👁️'}
-                </button>
-              </div>
-
-              <p className="password-hint">
-                Mật khẩu cần ít nhất 8 ký tự, gồm chữ và số
+              <p>
+                Mã OTP đã được gửi tới:
+                <br />
+                <strong>{email}</strong>
               </p>
-            </div>
 
-            <button
-              type="submit"
-              className="register-button"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <span className="spinner"></span>
-                  Đang tạo tài khoản...
-                </>
-              ) : (
-                'Tạo tài khoản'
-              )}
-            </button>
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="Nhập mã OTP 6 số"
+                maxLength={6}
+                inputMode="numeric"
+                required
+              />
 
-          </form>
+              <button type="submit" disabled={loading} className="register-button">
+                {loading ? 'Đang xác minh...' : 'Xác minh email'}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleRegister}>
+              <div className="form-group">
+                <label>Họ và tên</label>
+                <div className="input-wrapper">
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Nhập họ và tên"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Số điện thoại</label>
+                <div className="input-wrapper">
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="VD: 0987654321"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Email</label>
+                <div className="input-wrapper">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="example@gmail.com"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Mật khẩu</label>
+                <div className="input-wrapper">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Ít nhất 8 ký tự, gồm chữ và số"
+                    className="password-input"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="show-password"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                        <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                        <line x1="2" x2="22" y1="2" y2="22" />
+                      </svg>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                <p className="password-hint">
+                  Mật khẩu cần ít nhất 8 ký tự, gồm chữ và số
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                className="register-button"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner"></span>
+                    Đang tạo tài khoản...
+                  </>
+                ) : (
+                  'Tạo tài khoản'
+                )}
+              </button>
+            </form>
+          )}
 
           {message && (
             <div
@@ -209,13 +277,11 @@ function Register() {
             Đã có tài khoản?
             <a href="/"> Đăng nhập</a>
           </div>
-
         </div>
 
         <p className="copyright">
-          © 2026 TroRoom · Hệ thống quản lý phòng trọ
+          2026 TroRoom · Hệ thống quản lý phòng trọ
         </p>
-
       </div>
 
       <style>{`
@@ -362,18 +428,10 @@ function Register() {
           align-items: center;
         }
 
-        .input-icon {
-          position: absolute;
-          left: 14px;
-          z-index: 1;
-          font-size: 15px;
-          opacity: 0.75;
-        }
-
         .input-wrapper input {
           width: 100%;
           height: 46px;
-          padding: 0 44px;
+          padding: 0 14px; /* Chỉnh lùi sát mép trái (14px) */
           border: 1px solid #dbe2ea;
           border-radius: 11px;
           outline: none;
@@ -381,6 +439,10 @@ function Register() {
           color: #172033;
           font-size: 14px;
           transition: all 0.2s ease;
+        }
+
+        .input-wrapper input.password-input {
+          padding-right: 42px; /* Dành khoảng trống bên phải cho nút ẩn/hiện mật khẩu */
         }
 
         .input-wrapper input::placeholder {
@@ -403,6 +465,9 @@ function Register() {
           font-size: 16px;
           padding: 6px;
           opacity: 0.7;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .show-password:hover {
@@ -468,7 +533,7 @@ function Register() {
         .message {
           margin-top: 15px;
           padding: 10px 12px;
-          border-radius: 9px;
+          border-radius: 99px;
           font-size: 13px;
           text-align: center;
         }

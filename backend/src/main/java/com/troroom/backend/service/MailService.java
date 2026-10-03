@@ -52,4 +52,22 @@ public class MailService {
 
         mailSender.send(message);
     }
+
+    public void sendVerificationOtpMail(String to, String otp) {
+    SimpleMailMessage message = new SimpleMailMessage();
+
+    message.setTo(to);
+    message.setSubject("TroRoom - Xác minh email");
+
+    message.setText(
+            "Xin chào,\n\n"
+            + "Mã OTP xác minh email TroRoom của bạn là:\n\n"
+            + otp
+            + "\n\n"
+            + "Mã có hiệu lực trong 5 phút.\n"
+            + "Nếu bạn không thực hiện đăng ký, hãy bỏ qua email này."
+    );
+
+    mailSender.send(message);
+}
 }

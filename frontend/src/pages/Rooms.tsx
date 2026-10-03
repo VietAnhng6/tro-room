@@ -6,6 +6,7 @@ type Building = {
   id: number
   name: string
   active: boolean
+  roomCount?: number
 }
 
 type Room = {
@@ -40,7 +41,9 @@ function Rooms() {
   const [rooms, setRooms] = useState<Room[]>([])
   const [buildings, setBuildings] = useState<Building[]>([])
 
-  const [buildingId, setBuildingId] = useState('')
+  const [buildingId, setBuildingId] = useState(
+  new URLSearchParams(window.location.search).get('buildingId') || ''
+  )
   const [floor, setFloor] = useState('')
   const [search, setSearch] = useState('')
 
@@ -269,7 +272,17 @@ function Rooms() {
       room.code.toLowerCase().includes(keyword)
     )
   }, [rooms, search])
+  const emptyBuildings = useMemo(() => {
+  return buildings.filter((building) => {
+    if ((building.roomCount || 0) > 0) return false
 
+    if (buildingId && String(building.id) !== buildingId) {
+      return false
+    }
+
+    return true
+  })
+}, [buildings, buildingId])
   const stats = useMemo(() => {
     return {
       total: filteredRooms.length,
@@ -495,20 +508,22 @@ function Rooms() {
             gap: 12,
           }}
         >
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm theo mã phòng..."
-            style={{
-              flex: '1 1 240px',
-              minWidth: 220,
-              border: '1px solid #cbd5e1',
-              borderRadius: 10,
-              padding: '11px 13px',
-              outline: 'none',
-              fontSize: 14,
-            }}
-          />
+       <input
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  placeholder="Tìm theo mã phòng..."
+  style={{
+    flex: '1 1 240px',
+    minWidth: 220,
+    border: '1px solid #cbd5e1',
+    borderRadius: 10,
+    padding: '11px 13px',
+    outline: 'none',
+    fontSize: 14,
+    background: '#ffffff',
+    color: '#0f172a',
+  }}
+/>
 
           <select
             value={buildingId}
@@ -588,43 +603,43 @@ function Rooms() {
             >
               Đang tải danh sách phòng...
             </div>
-          ) : filteredRooms.length === 0 ? (
-            <div
-              style={{
-                padding: 60,
-                textAlign: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 42,
-                  marginBottom: 12,
-                }}
-              >
-                🏠
-              </div>
+          ) : filteredRooms.length === 0 && emptyBuildings.length === 0 ? (
+  <div
+    style={{
+      padding: 60,
+      textAlign: 'center',
+    }}
+  >
+    <div
+      style={{
+        fontSize: 42,
+        marginBottom: 12,
+      }}
+    >
+      
+    </div>
 
-              <div
-                style={{
-                  color: '#0f172a',
-                  fontSize: 18,
-                  fontWeight: 700,
-                  marginBottom: 6,
-                }}
-              >
-                Chưa có phòng
-              </div>
+    <div
+      style={{
+        color: '#0f172a',
+        fontSize: 18,
+        fontWeight: 700,
+        marginBottom: 6,
+      }}
+    >
+      Chưa có phòng
+    </div>
 
-              <div
-                style={{
-                  color: '#64748b',
-                  fontSize: 14,
-                }}
-              >
-                Hãy thêm phòng để bắt đầu quản lý.
-              </div>
-            </div>
-          ) : (
+    <div
+      style={{
+        color: '#64748b',
+        fontSize: 14,
+      }}
+    >
+      Hãy thêm phòng để bắt đầu quản lý.
+    </div>
+  </div>
+) : (
             <div style={{ overflowX: 'auto' }}>
               <table
                 style={{
@@ -715,7 +730,7 @@ function Rooms() {
                         >
                           {room.area} m²
                         </td>
-
+                          
                         <td
                           style={{
                             padding: '16px',
@@ -725,7 +740,7 @@ function Rooms() {
                         >
                           {formatMoney(room.rent)}
                         </td>
-
+                        
                         <td
                           style={{
                             padding: '16px',
@@ -737,24 +752,40 @@ function Rooms() {
 
                         <td style={{ padding: '16px' }}>
                           <select
-                            value={room.status}
-                            onChange={(e) =>
-                              changeStatus(
-                                room,
-                                e.target.value as RoomStatus
-                              )
-                            }
-                            style={{
-                              border: 0,
-                              borderRadius: 999,
-                              padding: '7px 11px',
-                              background: status.bg,
-                              color: status.color,
-                              fontWeight: 700,
-                              fontSize: 12,
-                              cursor: 'pointer',
-                            }}
-                          >
+                          value={room.status}
+                          disabled={
+                            buildings.find(
+                              (building) => building.id === room.buildingId
+                            )?.active === false
+                          }
+                          onChange={(e) =>
+                            changeStatus(
+                              room,
+                              e.target.value as RoomStatus
+                            )
+                          }
+                          style={{
+                            border: 0,
+                            borderRadius: 999,
+                            padding: '7px 11px',
+                            background: status.bg,
+                            color: status.color,
+                            fontWeight: 700,
+                            fontSize: 12,
+                            cursor:
+                              buildings.find(
+                                (building) => building.id === room.buildingId
+                              )?.active === false
+                                ? 'not-allowed'
+                                : 'pointer',
+                            opacity:
+                              buildings.find(
+                                (building) => building.id === room.buildingId
+                              )?.active === false
+                                ? 0.6
+                                : 1,
+                          }}
+                        >
                             {Object.entries(statusLabel).map(
                               ([value, label]) => (
                                 <option
@@ -787,6 +818,65 @@ function Rooms() {
                       </tr>
                     )
                   })}
+                  {emptyBuildings.map((building) => (
+  <tr
+    key={`building-${building.id}`}
+    style={{
+      borderBottom: '1px solid #f1f5f9',
+      background: '#fafafa',
+    }}
+  >
+    <td
+      colSpan={7}
+      style={{
+        padding: '18px 16px',
+        color: '#334155',
+      }}
+    >
+      <div style={{ fontWeight: 800, marginBottom: 5 }}>
+        {building.name}
+      </div>
+
+      <div
+        style={{
+          color: '#94a3b8',
+          fontSize: 13,
+        }}
+      >
+        Chưa có phòng nào
+      </div>
+    </td>
+
+    <td style={{ padding: '16px' }}>
+      <button
+        onClick={() => {
+          setBuildingId(String(building.id))
+          setForm({
+            code: '',
+            floor: '',
+            area: '',
+            rent: '',
+            maxPeople: '',
+            buildingId: String(building.id),
+          })
+          setEditingRoom(null)
+          setShowForm(true)
+        }}
+        style={{
+          border: 0,
+          borderRadius: 9,
+          padding: '8px 13px',
+          background: '#eff6ff',
+          color: '#2563eb',
+          cursor: 'pointer',
+          fontWeight: 700,
+        }}
+      >
+        + Thêm phòng
+      </button>
+    </td>
+  </tr>
+))}
                 </tbody>
               </table>
             </div>

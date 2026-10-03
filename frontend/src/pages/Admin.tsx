@@ -216,7 +216,7 @@ function Admin() {
                 fontSize: 28,
               }}
             >
-              🛡️ Quản trị tài khoản
+              Quản trị tài khoản
             </h1>
 
             <p
@@ -466,7 +466,7 @@ function Admin() {
                       background: '#f8fafc',
                     }}
                   >
-                    <th style={thStyle}>ID</th>
+                    <th style={thStyle}>STT</th>
                     <th style={thStyle}>Họ tên</th>
                     <th style={thStyle}>Số điện thoại</th>
                     <th style={thStyle}>Email</th>
@@ -478,9 +478,9 @@ function Admin() {
                 </thead>
 
                 <tbody>
-                  {users.map((user) => (
-                    <tr key={user.id}>
-                      <td style={tdStyle}>{user.id}</td>
+                  {users.map((user, index) => (
+                  <tr key={user.id}>
+                  <td style={tdStyle}>{page * 20 + index + 1}</td>
 
                       <td
                         style={{

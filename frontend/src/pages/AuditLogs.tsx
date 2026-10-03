@@ -50,7 +50,65 @@ function objectLabel(objectType: string) {
 
   return labels[objectType] || objectType
 }
+function formatAuditData(data: string | null) {
+  if (!data) return '-'
 
+  try {
+    const obj = JSON.parse(data)
+
+    const labels: Record<string, string> = {
+      id: 'Mã',
+      status: 'Trạng thái',
+      buildingId: 'Mã tòa nhà',
+      area: 'Diện tích',
+      code: 'Mã phòng',
+      floor: 'Tầng',
+      rent: 'Giá thuê',
+      maxPeople: 'Số người tối đa',
+    }
+
+    return Object.entries(obj)
+      .map(([key, value]) => {
+        const label = labels[key] || key
+
+        let displayValue = value
+
+        if (key === 'status') {
+          const statusLabels: Record<string, string> = {
+            EMPTY: 'Trống',
+            DEPOSITED: 'Đã đặt cọc',
+            RENTED: 'Đã thuê',
+            STOPPED: 'Ngừng hoạt động',
+          }
+
+          displayValue = statusLabels[String(value)] || value
+        }
+
+        if (key === 'rent' && typeof value === 'number') {
+          displayValue = `${value.toLocaleString('vi-VN')} VNĐ`
+        }
+
+        if (key === 'area' && typeof value === 'number') {
+          displayValue = `${value} m²`
+        }
+
+        return `${label}: ${displayValue}`
+      })
+      .join('\n')
+  } catch {
+    return data
+  }
+}
+function roleLabel(role: string) {
+  const labels: Record<string, string> = {
+    ADMIN: 'Quản trị viên',
+    LANDLORD: 'Chủ nhà',
+    MANAGER: 'Quản lý',
+    TENANT: 'Người thuê',
+  }
+
+  return labels[role] || role
+}
 function AuditLogs() {
   const [logs, setLogs] = useState<AuditLog[]>([])
   const [loading, setLoading] = useState(true)
@@ -281,69 +339,79 @@ function AuditLogs() {
             }}>
               <thead>
                 <tr style={{ background: '#f8fafc' }}>
+                  <th style={thStyle}>STT</th>
                   <th style={thStyle}>Thời gian</th>
                   <th style={thStyle}>Actor</th>
                   <th style={thStyle}>Vai trò</th>
                   <th style={thStyle}>Thao tác</th>
                   <th style={thStyle}>Đối tượng</th>
-                  <th style={thStyle}>ID</th>
                   <th style={thStyle}>Chi tiết</th>
                 </tr>
               </thead>
 
               <tbody>
-                {logs.map(log => (
-                  <tr key={log.id}>
-                    <td style={tdStyle}>
-                      {formatDateTime(log.timestamp)}
-                    </td>
+  {logs.map((log, index) => (
+    <tr key={log.id}>
+      {/* STT */}
+      <td style={tdStyle}>
+        {index + 1}
+      </td>
 
-                    <td style={tdStyle}>
-                      {log.actorId ?? '-'}
-                    </td>
+      {/* Thời gian */}
+      <td style={tdStyle}>
+        {formatDateTime(log.timestamp)}
+      </td>
 
-                    <td style={tdStyle}>
-                      {log.actorRole}
-                    </td>
+      {/* Actor */}
+      <td style={tdStyle}>
+        {log.actorId ?? '-'}
+      </td>
 
-                    <td style={tdStyle}>
-                      {actionLabel(log.action)}
-                    </td>
+      {/* Vai trò */}
+      <td style={tdStyle}>
+      {roleLabel(log.actorRole)}
+      </td>
 
-                    <td style={tdStyle}>
-                      {objectLabel(log.objectType)}
-                    </td>
+      {/* Thao tác */}
+      <td style={tdStyle}>
+        {actionLabel(log.action)}
+      </td>
 
-                    <td style={tdStyle}>
-                      {log.objectId ?? '-'}
-                    </td>
+      {/* Đối tượng */}
+      <td style={tdStyle}>
+        {objectLabel(log.objectType)}
+      </td>
 
-                    <td style={tdStyle}>
-                      <details>
-                        <summary style={{
-                          cursor: 'pointer',
-                          color: '#2563eb',
-                          fontWeight: 600,
-                        }}>
-                          Xem
-                        </summary>
+      {/* Chi tiết */}
+      <td style={tdStyle}>
+        <details>
+          <summary
+            style={{
+              cursor: 'pointer',
+              color: '#2563eb',
+              fontWeight: 600,
+            }}
+          >
+            Xem
+          </summary>
 
-                        <div style={{ marginTop: 10 }}>
-                          <strong>Before:</strong>
-                          <pre style={preStyle}>
-                            {log.beforeData || '-'}
-                          </pre>
+          <div style={{ marginTop: 10 }}>
+  <strong>Dữ liệu trước:</strong>
+  <pre style={preStyle}>
+  {formatAuditData(log.beforeData)}
+  </pre>
 
-                          <strong>After:</strong>
-                          <pre style={preStyle}>
-                            {log.afterData || '-'}
-                          </pre>
-                        </div>
-                      </details>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+  <strong>Dữ liệu sau:</strong>
+
+  <pre style={preStyle}>
+  {formatAuditData(log.afterData)}
+  </pre>
+  </div>
+        </details>
+      </td>
+    </tr>
+  ))}
+</tbody>  
             </table>
           )}
 

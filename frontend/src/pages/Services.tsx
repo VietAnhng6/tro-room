@@ -60,7 +60,7 @@ function Services() {
 
   const [form, setForm] = useState({
     name: '',
-    calculationMethod: 'FIXED',
+    calculationMethod: 'BY_METER',
     unit: '',
     price: '',
     description: '',
@@ -124,7 +124,7 @@ function Services() {
     setEditing(null)
     setForm({
       name: '',
-      calculationMethod: 'FIXED',
+      calculationMethod: 'BY_METER',
       unit: '',
       price: '',
       description: '',
@@ -597,19 +597,19 @@ function Services() {
 
           <Field label="Cách tính">
             <select
-  value={form.calculationMethod}
-  onChange={(e) =>
-    setForm({
-      ...form,
-      calculationMethod: e.target.value,
-    })
-  }
-  style={inputStyle}
->
-  <option value="BY_METER">Theo số</option>
-  <option value="BY_PERSON">Theo người</option>
-  <option value="FIXED_ROOM">Cố định theo phòng</option>
-</select>
+              value={form.calculationMethod}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  calculationMethod: e.target.value,
+                })
+              }
+              style={inputStyle}
+            >
+              <option value="BY_METER">Theo số</option>
+              <option value="BY_PERSON">Theo người</option>
+              <option value="FIXED_ROOM">Cố định theo phòng</option>
+            </select>
           </Field>
 
           <Field label="Đơn vị">
@@ -843,6 +843,7 @@ function Field({
           fontSize: 14,
           fontWeight: 700,
           marginBottom: 7,
+          color: '#0f172a',
         }}
       >
         {label}
@@ -895,7 +896,7 @@ function Modal({
             marginBottom: 22,
           }}
         >
-          <h2 style={{ margin: 0, fontSize: 21 }}>
+          <h2 style={{ margin: 0, fontSize: 21, color: '#0f172a' }}>
             {title}
           </h2>
 
@@ -904,6 +905,7 @@ function Modal({
             style={{
               border: 0,
               background: '#f1f5f9',
+              color: '#334155',
               width: 34,
               height: 34,
               borderRadius: 8,
@@ -940,10 +942,12 @@ function ModalButtons({
       }}
     >
       <button
+        type="button"
         onClick={onCancel}
         style={{
           border: '1px solid #cbd5e1',
           background: '#fff',
+          color: '#334155',
           borderRadius: 9,
           padding: '10px 16px',
           cursor: 'pointer',
@@ -954,6 +958,7 @@ function ModalButtons({
       </button>
 
       <button
+        type="button"
         onClick={onSave}
         style={{
           border: 0,
@@ -984,6 +989,7 @@ const inputStyle: React.CSSProperties = {
   fontSize: 14,
   outline: 'none',
   background: '#fff',
+  color: '#0f172a',
 }
 
 const thStyle: React.CSSProperties = {
@@ -999,6 +1005,7 @@ const tdStyle: React.CSSProperties = {
   borderBottom: '1px solid #e2e8f0',
   verticalAlign: 'middle',
   fontSize: 14,
+  color: '#0f172a',
 }
 
 const emptyStyle: React.CSSProperties = {

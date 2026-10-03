@@ -1,50 +1,56 @@
 package com.troroom.backend.entity;
 
 import jakarta.persistence.*;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "listings")
 public class Listing {
 
+    public enum Status {
+        DRAFT,
+        PUBLISHED,
+        HIDDEN,
+        RENTED
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String title;
-
-    @Column(length = 2000)
-    private String description;
-
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ListingStatus status = ListingStatus.VISIBLE;
+    @Column(nullable = false, length = 200)
+    private String title;
 
-    @Column(nullable = false)
-    private LocalDate expiresAt;
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Status status = Status.DRAFT;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    public enum ListingStatus {
-        DRAFT,
-        VISIBLE,
-        HIDDEN,
-        RENTED
-    }
+    @Column(nullable = false)
+    private LocalDateTime expiresAt;
 
     public Listing() {
     }
 
     public Long getId() {
         return id;
+    }
+
+    public Room getRoom() {
+        return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
     }
 
     public String getTitle() {
@@ -63,28 +69,12 @@ public class Listing {
         this.description = description;
     }
 
-    public Room getRoom() {
-        return room;
-    }
-
-    public void setRoom(Room room) {
-        this.room = room;
-    }
-
-    public ListingStatus getStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(ListingStatus status) {
+    public void setStatus(Status status) {
         this.status = status;
-    }
-
-    public LocalDate getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(LocalDate expiresAt) {
-        this.expiresAt = expiresAt;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -93,5 +83,13 @@ public class Listing {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
     }
 }

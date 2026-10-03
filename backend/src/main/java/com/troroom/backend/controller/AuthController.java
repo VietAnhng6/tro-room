@@ -11,6 +11,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.troroom.backend.dto.VerifyEmailRequest;
+import com.troroom.backend.service.EmailVerificationService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -19,34 +21,35 @@ public class AuthController {
     private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
     private final com.troroom.backend.service.PermissionService permissionService;
-
-public AuthController(
+    private final EmailVerificationService emailVerificationService;
+    public AuthController(
         AuthService authService,
         RefreshTokenService refreshTokenService,
-        com.troroom.backend.service.PermissionService permissionService
-) {
+        com.troroom.backend.service.PermissionService permissionService,
+        EmailVerificationService emailVerificationService
+    ) {
     this.authService = authService;
     this.refreshTokenService = refreshTokenService;
     this.permissionService = permissionService;
-}
+    this.emailVerificationService = emailVerificationService;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(
-            @Valid @RequestBody RegisterRequest request) {
+        @Valid @RequestBody RegisterRequest request) {
 
-        try {
-            User user = authService.register(request);
+    try {
+        authService.register(request);
 
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body("Đăng ký thành công");
+        return ResponseEntity
+                .ok("Mã xác minh đã được gửi tới email");
 
-        } catch (RuntimeException e) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(e.getMessage());
-        }
+    } catch (RuntimeException e) {
+        return ResponseEntity
+                .badRequest()
+                .body(e.getMessage());
     }
+    }   
     @PostMapping("/login")
 public ResponseEntity<?> login(
         @Valid @RequestBody LoginRequest request) {
@@ -125,9 +128,9 @@ public ResponseEntity<?> changePassword(
                 .badRequest()
                 .body(e.getMessage());
     }
-}
-@GetMapping("/me")
-public ResponseEntity<?> me(
+    }
+    @GetMapping("/me")
+    public ResponseEntity<?> me(
         org.springframework.security.core.Authentication authentication) {
 
     if (authentication == null || !authentication.isAuthenticated()) {
@@ -149,5 +152,24 @@ public ResponseEntity<?> me(
         )
     );
     }
+    @PostMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(
+        @Valid @RequestBody VerifyEmailRequest request) {
 
+    try {
+        authService.verifyEmail(
+                request.getEmail(),
+                request.getOtp()
+        );
+
+        return ResponseEntity.ok(
+                "Xác minh email thành công"
+        );
+
+    } catch (RuntimeException e) {
+        return ResponseEntity
+                .badRequest()
+                .body(e.getMessage());
+    }
+    }
 }
