@@ -41,6 +41,10 @@ public class RoomImageController {
         this.roomRepository = roomRepository;
     }
 
+    private boolean isAdmin(User user) {
+        return "ADMIN".equals(user.getRole().name());
+    }
+
     private boolean isLandlord(User user) {
         return "LANDLORD".equals(user.getRole().name());
     }
@@ -50,7 +54,15 @@ public class RoomImageController {
     }
 
     private boolean canManageRoom(User user, Room room) {
+        if (isAdmin(user)) {
+            return true;
+        }
+
         Building building = room.getBuilding();
+
+        if (building == null) {
+            return false;
+        }
 
         if (isLandlord(user)) {
             return building.getLandlord() != null
@@ -110,9 +122,13 @@ public class RoomImageController {
         }
 
         String contentType = image.getContentType();
+        String originalFilename = image.getOriginalFilename();
+        boolean isPng = (contentType != null && (contentType.equalsIgnoreCase("image/png") || contentType.equalsIgnoreCase("image/x-png")))
+                || (originalFilename != null && originalFilename.toLowerCase().endsWith(".png"));
+        boolean isJpg = (contentType != null && (contentType.equalsIgnoreCase("image/jpeg") || contentType.equalsIgnoreCase("image/jpg") || contentType.equalsIgnoreCase("image/pjpeg")))
+                || (originalFilename != null && (originalFilename.toLowerCase().endsWith(".jpg") || originalFilename.toLowerCase().endsWith(".jpeg")));
 
-        if (!"image/jpeg".equals(contentType)
-                && !"image/png".equals(contentType)) {
+        if (!isPng && !isJpg) {
             return ResponseEntity.badRequest()
                     .body(Map.of(
                             "message",
@@ -137,7 +153,7 @@ public class RoomImageController {
             return ResponseEntity.badRequest()
                     .body(Map.of(
                             "message",
-                            "Không thể đọc ảnh"
+                            "Không thể đọc định dạng ảnh"
                     ));
         }
 
@@ -156,11 +172,12 @@ public class RoomImageController {
             );
         }
 
+        int imageType = isPng ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB;
         BufferedImage resizedImage =
                 new BufferedImage(
                         newWidth,
                         newHeight,
-                        BufferedImage.TYPE_INT_RGB
+                        imageType
                 );
 
         Graphics2D graphics =
@@ -179,10 +196,7 @@ public class RoomImageController {
 
         graphics.dispose();
 
-        String extension =
-                "image/png".equals(contentType)
-                        ? ".png"
-                        : ".jpg";
+        String extension = isPng ? ".png" : ".jpg";
 
         String filename =
                 System.currentTimeMillis()
@@ -192,10 +206,7 @@ public class RoomImageController {
 
         Path target = uploadDir.resolve(filename);
 
-        String format =
-                "image/png".equals(contentType)
-                        ? "png"
-                        : "jpg";
+        String format = isPng ? "png" : "jpg";
 
         ImageIO.write(
                 resizedImage,
@@ -216,7 +227,7 @@ public class RoomImageController {
                 Map.of(
                         "id", saved.getId(),
                         "roomId", room.getId(),
-                        "imageUrl", saved.getImageUrl(),
+                        "imageUrl", "/api/room-images/" + saved.getId(),
                         "sortOrder", saved.getSortOrder()
                 )
         );
@@ -249,7 +260,7 @@ public ResponseEntity<?> getRoomImages(
                     .map(roomImage -> Map.of(
                             "id", roomImage.getId(),
                             "roomId", room.getId(),
-                            "imageUrl", roomImage.getImageUrl(),
+                            "imageUrl", "/api/room-images/" + roomImage.getId(),
                             "sortOrder", roomImage.getSortOrder()
                     ))
                     .toList()
