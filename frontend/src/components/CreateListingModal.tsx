@@ -135,11 +135,11 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
         throw new Error(data.message || 'Không thể tạo tin đăng cho phòng này.')
       }
 
-      setSuccessMsg('Đăng tin cho thuê thành công! Khách hàng có thể tìm kiếm và xem tin ngay bây giờ.')
+      setSuccessMsg('Đăng tin cho thuê thành công! Tin đăng hiện đã có thể tìm kiếm.')
       setTimeout(() => {
         if (onSuccess) onSuccess()
         onClose()
-      }, 1500)
+      }, 1200)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi đăng tin.')
     } finally {
@@ -322,7 +322,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
             >
               <div style={{ padding: '10px 14px', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <div style={{ fontSize: '12px', color: '#64748b' }}>Giá thuê</div>
-                <div style={{ fontSize: '15px', fontWeight: 700, color: '#eb6b40' }}>{formatMoney(room.rent)}/th</div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#2563eb' }}>{formatMoney(room.rent)}/th</div>
               </div>
               <div style={{ padding: '10px 14px', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <div style={{ fontSize: '12px', color: '#64748b' }}>Diện tích & Tầng</div>
@@ -474,14 +474,14 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                 disabled={!isRoomEmpty || submitting || isExpired}
                 style={{
                   padding: '11px 26px',
-                  backgroundColor: !isRoomEmpty || isExpired ? '#94a3b8' : '#eb6b40',
+                  backgroundColor: !isRoomEmpty || isExpired ? '#94a3b8' : '#2563eb',
                   color: '#ffffff',
                   fontWeight: 800,
                   fontSize: '14.5px',
                   borderRadius: '10px',
                   border: 'none',
                   cursor: !isRoomEmpty || submitting || isExpired ? 'not-allowed' : 'pointer',
-                  boxShadow: !isRoomEmpty || isExpired ? 'none' : '0 4px 14px rgba(235, 107, 64, 0.35)',
+                  boxShadow: !isRoomEmpty || isExpired ? 'none' : '0 4px 14px rgba(37, 99, 235, 0.28)',
                   transition: 'all 0.2s ease',
                 }}
               >

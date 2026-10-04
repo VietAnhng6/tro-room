@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import Logo from '../components/Logo'
 
 const API = 'http://localhost:8080'
 
@@ -93,7 +94,7 @@ function ListingDetail() {
 
   useEffect(() => {
     if (!Number.isFinite(listingId)) {
-      setLoadError('Tin đăng không hợp lệ')
+      setLoadError('Mã tin đăng trên đường dẫn không hợp lệ.')
       setLoading(false)
       return
     }
@@ -106,7 +107,7 @@ function ListingDetail() {
       .then(async (response) => {
         const data = await response.json().catch(() => ({}))
         if (!response.ok) {
-          throw new Error(data.message || 'Tin đăng không còn hiển thị hoặc phòng đã được thuê.')
+          throw new Error(data.message || 'Tin đăng không còn hiển thị hoặc phòng đã được cho thuê.')
         }
         setListing(data as ListingDetailData)
       })
@@ -214,24 +215,44 @@ function ListingDetail() {
 
   if (loading) {
     return (
-      <div className="detail-loading-screen">
-        <div className="spinner"></div>
-        <p>Đang tải thông tin chi tiết phòng...</p>
+      <div className="detail-page-wrapper">
+        <div className="detail-loading-screen">
+          <div className="spinner"></div>
+          <p style={{ color: '#64748b', fontSize: '15px' }}>Đang tải thông tin chi tiết phòng...</p>
+        </div>
       </div>
     )
   }
 
+  // FIXED ERROR SCREEN WITH TAIRED TAIRED LIGHT BACKGROUND AND BLUE BUTTON (Image 1 fix)
   if (loadError || !listing) {
     return (
       <div className="detail-page-wrapper">
-        <div className="error-container">
-          <div className="error-card">
-            <div className="error-icon">🏚️</div>
-            <h1 className="error-heading">Không thể mở tin đăng</h1>
-            <p className="error-message">{loadError || 'Tin đăng không còn hiển thị.'}</p>
-            <a href="/search-rooms" className="btn-back-search">
-              ← Quay lại trang tìm kiếm phòng
+        <nav className="detail-navbar">
+          <div className="nav-container">
+            <a href="/search-rooms" style={{ textDecoration: 'none' }}>
+              <Logo size="sm" title="TroRoom" subtitle="Nền tảng tìm phòng trọ" />
             </a>
+            <div className="nav-actions">
+              <a href="/search-rooms" className="nav-btn-primary">
+                🔍 Tìm phòng khác
+              </a>
+            </div>
+          </div>
+        </nav>
+
+        <div className="error-container-full">
+          <div className="error-card-box">
+            <div className="error-icon-big">🏡</div>
+            <h1 className="error-heading-text">Không thể mở tin đăng</h1>
+            <p className="error-desc-text">
+              {loadError || 'Tin đăng không còn hiển thị hoặc phòng này đã được người khác thuê.'}
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '20px' }}>
+              <a href="/search-rooms" className="btn-back-search">
+                ← Quay lại trang tìm kiếm phòng
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -252,11 +273,8 @@ function ListingDetail() {
       {/* NAVBAR */}
       <nav className="detail-navbar">
         <div className="nav-container">
-          <a href="/search-rooms" className="brand-logo">
-            <div className="logo-icon">🏠</div>
-            <div className="logo-text">
-              <span className="logo-itro"><span className="highlight">i</span>Tro</span>
-            </div>
+          <a href="/search-rooms" style={{ textDecoration: 'none' }}>
+            <Logo size="sm" title="TroRoom" subtitle="Quản lý & Tìm kiếm phòng trọ" />
           </a>
 
           <div className="nav-actions">
@@ -609,7 +627,7 @@ function ListingDetail() {
 
       {/* FOOTER */}
       <footer className="detail-footer">
-        <p>© 2026 ITRO · Nền tảng quản lý phòng trọ trực tuyến</p>
+        <p>© 2026 TroRoom · Nền tảng quản lý phòng trọ trực tuyến</p>
       </footer>
 
       {/* CSS STYLES */}
@@ -641,35 +659,6 @@ function ListingDetail() {
           justify-content: space-between;
         }
 
-        .brand-logo {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          text-decoration: none;
-        }
-
-        .logo-icon {
-          width: 36px;
-          height: 36px;
-          border-radius: 10px;
-          background: linear-gradient(135deg, #eb6b40, #f97316);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #fff;
-          font-size: 18px;
-        }
-
-        .logo-itro {
-          font-size: 20px;
-          font-weight: 800;
-          color: #0f172a;
-        }
-
-        .logo-itro .highlight {
-          color: #eb6b40;
-        }
-
         .nav-actions {
           display: flex;
           align-items: center;
@@ -692,14 +681,19 @@ function ListingDetail() {
         }
 
         .nav-btn-primary {
-          background: #eb6b40;
+          background: #2563eb;
           color: #fff;
           font-size: 13.5px;
           font-weight: 700;
-          padding: 8px 18px;
+          padding: 9px 18px;
           border-radius: 8px;
           text-decoration: none;
-          box-shadow: 0 4px 10px rgba(235, 107, 64, 0.25);
+          box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+          transition: background 0.2s;
+        }
+
+        .nav-btn-primary:hover {
+          background: #1d4ed8;
         }
 
         .detail-main-content {
@@ -771,8 +765,8 @@ function ListingDetail() {
         }
 
         .price-tag-hero {
-          background: linear-gradient(135deg, #fff7ed, #ffedd5);
-          border: 1px solid #fed7aa;
+          background: linear-gradient(135deg, #eff6ff, #dbeafe);
+          border: 1px solid #bfdbfe;
           padding: 16px 22px;
           border-radius: 14px;
           text-align: right;
@@ -781,20 +775,20 @@ function ListingDetail() {
 
         .price-hero-label {
           font-size: 12px;
-          color: #9a3412;
+          color: #1e40af;
           font-weight: 600;
         }
 
         .price-hero-value {
           font-size: 26px;
           font-weight: 900;
-          color: #c2410c;
+          color: #1d4ed8;
           line-height: 1.2;
         }
 
         .price-hero-unit {
           font-size: 12px;
-          color: #9a3412;
+          color: #1e40af;
         }
 
         /* 2-COLUMN GRID */
@@ -857,7 +851,7 @@ function ListingDetail() {
           position: absolute;
           top: 12px;
           right: 12px;
-          background: rgba(255, 255, 255, 0.9);
+          background: rgba(255, 255, 255, 0.95);
           border: none;
           color: #0f172a;
           padding: 6px 12px;
@@ -889,7 +883,7 @@ function ListingDetail() {
         }
 
         .thumb-btn.active {
-          border-color: #eb6b40;
+          border-color: #2563eb;
         }
 
         .thumb-btn img {
@@ -903,7 +897,7 @@ function ListingDetail() {
           bottom: 2px;
           left: 2px;
           right: 2px;
-          background: #eb6b40;
+          background: #2563eb;
           color: #fff;
           font-size: 9px;
           font-weight: 700;
@@ -1007,8 +1001,8 @@ function ListingDetail() {
         }
 
         .method-pill {
-          background: #f1f5f9;
-          color: #334155;
+          background: #eff6ff;
+          color: #1d4ed8;
           font-size: 12px;
           font-weight: 600;
           padding: 3px 8px;
@@ -1029,8 +1023,8 @@ function ListingDetail() {
 
         /* FIRST MONTH COST CARD */
         .first-month-card {
-          background: #fdfbf7;
-          border: 1.5px solid #fed7aa;
+          background: #f0fdf4;
+          border: 1.5px solid #bbf7d0;
         }
 
         .cost-card-header {
@@ -1039,7 +1033,7 @@ function ListingDetail() {
           gap: 12px;
           margin-bottom: 18px;
           padding-bottom: 14px;
-          border-bottom: 1px solid #ffedd5;
+          border-bottom: 1px solid #dcfce7;
         }
 
         .cost-icon {
@@ -1049,13 +1043,13 @@ function ListingDetail() {
         .cost-card-title {
           font-size: 17px;
           font-weight: 800;
-          color: #9a3412;
+          color: #15803d;
           margin: 0;
         }
 
         .cost-card-subtitle {
           font-size: 12px;
-          color: #c2410c;
+          color: #166534;
           margin: 2px 0 0 0;
         }
 
@@ -1069,7 +1063,7 @@ function ListingDetail() {
           display: flex;
           justify-content: space-between;
           font-size: 13.5px;
-          color: #475569;
+          color: #374151;
         }
 
         .cost-row strong {
@@ -1082,16 +1076,16 @@ function ListingDetail() {
           align-items: center;
           padding-top: 14px;
           margin-top: 6px;
-          border-top: 2px dashed #fed7aa;
+          border-top: 2px dashed #bbf7d0;
           font-size: 14px;
           font-weight: 800;
-          color: #9a3412;
+          color: #15803d;
         }
 
         .total-amount {
           font-size: 22px;
           font-weight: 900;
-          color: #c2410c;
+          color: #166534;
         }
 
         .cost-disclaimer-note {
@@ -1099,9 +1093,9 @@ function ListingDetail() {
           padding: 12px 14px;
           background: #ffffff;
           border-radius: 10px;
-          border: 1px solid #fed7aa;
+          border: 1px solid #bbf7d0;
           font-size: 12px;
-          color: #78350f;
+          color: #166534;
           line-height: 1.5;
         }
 
@@ -1204,9 +1198,9 @@ function ListingDetail() {
         }
 
         .type-btn.active {
-          border-color: #eb6b40;
-          background: #fff7ed;
-          color: #c2410c;
+          border-color: #2563eb;
+          background: #eff6ff;
+          color: #1d4ed8;
         }
 
         .form-input {
@@ -1219,26 +1213,26 @@ function ListingDetail() {
         }
 
         .form-input:focus {
-          border-color: #eb6b40;
+          border-color: #2563eb;
         }
 
         .btn-submit-request {
           width: 100%;
           padding: 13px;
-          background: #eb6b40;
+          background: #2563eb;
           color: #fff;
           border: none;
           border-radius: 10px;
           font-size: 15px;
           font-weight: 800;
           cursor: pointer;
-          box-shadow: 0 4px 14px rgba(235, 107, 64, 0.3);
+          box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
           transition: all 0.2s;
           margin-top: 6px;
         }
 
         .btn-submit-request:hover:not(:disabled) {
-          background: #dc592e;
+          background: #1d4ed8;
           transform: translateY(-1px);
         }
 
@@ -1274,7 +1268,7 @@ function ListingDetail() {
           margin-top: 10px;
         }
 
-        .detail-loading-screen, .error-container {
+        .detail-loading-screen {
           min-height: 80vh;
           display: flex;
           flex-direction: column;
@@ -1288,47 +1282,67 @@ function ListingDetail() {
           width: 38px;
           height: 38px;
           border: 3px solid #e2e8f0;
-          border-top-color: #eb6b40;
+          border-top-color: #2563eb;
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
           margin-bottom: 16px;
         }
 
-        .error-card {
-          background: #fff;
-          padding: 40px 30px;
-          border-radius: 16px;
+        /* ERROR SCREEN */
+        .error-container-full {
+          min-height: calc(80vh - 70px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 20px;
+          background-color: #f8fafc;
+        }
+
+        .error-card-box {
+          background: #ffffff;
+          padding: 44px 36px;
+          border-radius: 20px;
           border: 1px solid #e2e8f0;
-          max-width: 440px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+          max-width: 480px;
+          width: 100%;
+          text-align: center;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
         }
 
-        .error-icon {
-          font-size: 50px;
-          margin-bottom: 12px;
+        .error-icon-big {
+          font-size: 54px;
+          margin-bottom: 16px;
         }
 
-        .error-heading {
-          font-size: 20px;
+        .error-heading-text {
+          font-size: 22px;
           font-weight: 800;
-          margin: 0 0 8px 0;
+          color: #0f172a;
+          margin: 0 0 10px 0;
         }
 
-        .error-message {
-          font-size: 14px;
+        .error-desc-text {
+          font-size: 14.5px;
           color: #64748b;
-          margin: 0 0 20px 0;
+          margin: 0 0 24px 0;
+          line-height: 1.5;
         }
 
         .btn-back-search {
           display: inline-block;
-          padding: 10px 20px;
+          padding: 11px 22px;
           background: #2563eb;
           color: #fff;
-          border-radius: 8px;
+          border-radius: 10px;
           text-decoration: none;
-          font-size: 13.5px;
+          font-size: 14px;
           font-weight: 700;
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+          transition: background 0.2s;
+        }
+
+        .btn-back-search:hover {
+          background: #1d4ed8;
         }
 
         .detail-footer {

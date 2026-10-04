@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Logo from '../components/Logo'
 
 const API = 'http://localhost:8080'
 
@@ -135,12 +136,8 @@ function SearchRooms() {
       {/* NAVIGATION BAR */}
       <nav className="search-navbar">
         <div className="nav-container">
-          <a href="/search-rooms" className="brand-logo">
-            <div className="logo-icon">🏠</div>
-            <div className="logo-text">
-              <span className="logo-itro"><span className="highlight">i</span>Tro</span>
-              <span className="logo-tagline">Tìm trọ dễ dàng & uy tín</span>
-            </div>
+          <a href="/search-rooms" className="brand-logo-link">
+            <Logo size="sm" title="TroRoom" subtitle="Nền tảng tìm kiếm phòng trọ" />
           </a>
 
           <div className="nav-actions">
@@ -177,7 +174,7 @@ function SearchRooms() {
           <section className="filter-card">
             <div className="filter-card-header">
               <div className="filter-card-title">
-                <span>🔍</span> Bộ lọc tìm kiếm kết hợp
+                <span style={{ color: '#2563eb' }}>🔍</span> Bộ lọc tìm kiếm kết hợp
               </div>
               <div className="price-presets">
                 <span className="preset-label">Khoảng giá nhanh:</span>
@@ -384,7 +381,7 @@ function SearchRooms() {
           {/* EMPTY STATE */}
           {!loading && !error && result && result.content.length === 0 && (
             <section className="empty-state-card">
-              <div className="empty-illustration">🏚️</div>
+              <div className="empty-illustration">🏡</div>
               <h2 className="empty-title">Không tìm thấy phòng phù hợp</h2>
               <p className="empty-desc">
                 Rất tiếc, hiện tại không có phòng nào khớp với các tiêu chí tìm kiếm của bạn. Hãy thử nới rộng khoảng giá hoặc điều chỉnh diện tích để xem nhiều phòng hơn.
@@ -495,7 +492,7 @@ function SearchRooms() {
 
       <footer className="search-footer">
         <div className="footer-inner">
-          <p>© 2026 ITRO · Nền tảng quản lý & đăng tin thuê phòng trọ thông minh</p>
+          <p>© 2026 TroRoom · Nền tảng quản lý & đăng tin thuê phòng trọ thông minh</p>
         </div>
       </footer>
 
@@ -528,51 +525,13 @@ function SearchRooms() {
           justify-content: space-between;
         }
 
-        .brand-logo {
-          display: flex;
-          align-items: center;
-          gap: 12px;
+        .brand-logo-link {
           text-decoration: none;
         }
 
-        .logo-icon {
-          width: 38px;
-          height: 38px;
-          border-radius: 10px;
-          background: linear-gradient(135deg, #eb6b40, #f97316);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #fff;
-          font-size: 20px;
-          box-shadow: 0 4px 10px rgba(235, 107, 64, 0.28);
-        }
-
-        .logo-text {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .logo-itro {
-          font-size: 20px;
-          font-weight: 800;
-          color: #0f172a;
-          line-height: 1.1;
-        }
-
-        .logo-itro .highlight {
-          color: #eb6b40;
-        }
-
-        .logo-tagline {
-          font-size: 11px;
-          color: #64748b;
-          font-weight: 500;
-        }
-
         .nav-btn {
-          padding: 8px 18px;
-          border-radius: 8px;
+          padding: 9px 18px;
+          border-radius: 9px;
           font-size: 13.5px;
           font-weight: 700;
           text-decoration: none;
@@ -580,13 +539,13 @@ function SearchRooms() {
         }
 
         .nav-btn.primary {
-          background: #eb6b40;
+          background: #2563eb;
           color: #ffffff;
-          box-shadow: 0 4px 12px rgba(235, 107, 64, 0.25);
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         }
 
         .nav-btn.primary:hover {
-          background: #dc592e;
+          background: #1d4ed8;
           transform: translateY(-1px);
         }
 
@@ -616,14 +575,15 @@ function SearchRooms() {
 
         .hero-badge {
           display: inline-block;
-          padding: 4px 12px;
-          background: #ffedd5;
-          color: #c2410c;
+          padding: 4px 14px;
+          background: #eff6ff;
+          color: #1d4ed8;
           border-radius: 999px;
           font-size: 12px;
           font-weight: 800;
           letter-spacing: 0.5px;
           margin-bottom: 10px;
+          border: 1px solid #dbeafe;
         }
 
         .hero-title {
@@ -690,22 +650,22 @@ function SearchRooms() {
           color: #475569;
           font-size: 12px;
           font-weight: 600;
-          padding: 5px 10px;
+          padding: 5px 12px;
           border-radius: 999px;
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .preset-chip:hover {
-          border-color: #eb6b40;
-          color: #eb6b40;
-          background: #fff7ed;
+          border-color: #2563eb;
+          color: #2563eb;
+          background: #eff6ff;
         }
 
         .preset-chip.active {
-          background: #eb6b40;
-          color: #fff;
-          border-color: #eb6b40;
+          background: #2563eb;
+          color: #ffffff;
+          border-color: #2563eb;
         }
 
         .filter-grid {
@@ -738,8 +698,8 @@ function SearchRooms() {
         }
 
         .filter-input:focus {
-          border-color: #eb6b40;
-          box-shadow: 0 0 0 3px rgba(235, 107, 64, 0.12);
+          border-color: #2563eb;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
 
         .filter-actions-bar {
@@ -753,19 +713,19 @@ function SearchRooms() {
 
         .btn-filter-search {
           padding: 11px 24px;
-          background: #eb6b40;
+          background: #2563eb;
           color: #ffffff;
           border: none;
           border-radius: 10px;
           font-size: 14px;
           font-weight: 700;
           cursor: pointer;
-          box-shadow: 0 4px 12px rgba(235, 107, 64, 0.28);
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
           transition: all 0.2s;
         }
 
         .btn-filter-search:hover {
-          background: #dc592e;
+          background: #1d4ed8;
           transform: translateY(-1px);
         }
 
@@ -799,7 +759,7 @@ function SearchRooms() {
         }
 
         .count-num {
-          color: #eb6b40;
+          color: #2563eb;
           font-weight: 800;
         }
 
@@ -823,8 +783,8 @@ function SearchRooms() {
         }
 
         .view-btn.active {
-          background: #f1f5f9;
-          color: #0f172a;
+          background: #eff6ff;
+          color: #1d4ed8;
           font-weight: 700;
         }
 
@@ -859,7 +819,7 @@ function SearchRooms() {
         .room-card:hover {
           transform: translateY(-4px);
           box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
-          border-color: #cbd5e1;
+          border-color: #93c5fd;
         }
 
         .card-thumb-area {
@@ -886,7 +846,7 @@ function SearchRooms() {
           position: absolute;
           top: 12px;
           left: 12px;
-          background: #eb6b40;
+          background: #2563eb;
           color: #fff;
           font-size: 12px;
           font-weight: 800;
@@ -928,7 +888,7 @@ function SearchRooms() {
         }
 
         .card-title a:hover {
-          color: #eb6b40;
+          color: #2563eb;
         }
 
         .card-location {
@@ -983,7 +943,7 @@ function SearchRooms() {
         .price-value {
           font-size: 18px;
           font-weight: 800;
-          color: #eb6b40;
+          color: #2563eb;
         }
 
         .price-unit {
@@ -993,18 +953,19 @@ function SearchRooms() {
 
         .btn-view-detail {
           padding: 8px 16px;
-          background: #eff6ff;
-          color: #2563eb;
+          background: #2563eb;
+          color: #ffffff;
           border-radius: 8px;
           font-size: 13px;
           font-weight: 700;
           text-decoration: none;
           transition: all 0.2s;
+          box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
         }
 
         .btn-view-detail:hover {
-          background: #2563eb;
-          color: #ffffff;
+          background: #1d4ed8;
+          transform: translateY(-1px);
         }
 
         /* EMPTY STATE */
@@ -1046,13 +1007,18 @@ function SearchRooms() {
 
         .btn-expand-price {
           padding: 11px 22px;
-          background: #eb6b40;
+          background: #2563eb;
           color: #fff;
           border: none;
           border-radius: 10px;
           font-size: 14px;
           font-weight: 700;
           cursor: pointer;
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-expand-price:hover {
+          background: #1d4ed8;
         }
 
         .btn-reset-all {
@@ -1064,6 +1030,10 @@ function SearchRooms() {
           font-size: 14px;
           font-weight: 600;
           cursor: pointer;
+        }
+
+        .btn-reset-all:hover {
+          background: #e2e8f0;
         }
 
         /* PAGINATION */
@@ -1088,8 +1058,8 @@ function SearchRooms() {
         }
 
         .page-nav-btn:hover:not(:disabled) {
-          border-color: #eb6b40;
-          color: #eb6b40;
+          border-color: #2563eb;
+          color: #2563eb;
         }
 
         .page-nav-btn:disabled {
@@ -1111,7 +1081,7 @@ function SearchRooms() {
           width: 36px;
           height: 36px;
           border: 3px solid #e2e8f0;
-          border-top-color: #eb6b40;
+          border-top-color: #2563eb;
           border-radius: 50%;
           margin: 0 auto 16px auto;
           animation: spin 0.8s linear infinite;
@@ -1179,10 +1149,6 @@ function SearchRooms() {
 
           .nav-container {
             padding: 10px 14px;
-          }
-
-          .logo-itro {
-            font-size: 17px;
           }
 
           .hero-title {

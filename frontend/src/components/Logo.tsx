@@ -9,21 +9,21 @@ interface LogoProps {
 
 export const Logo: React.FC<LogoProps> = ({
   size = 'md',
-  title = 'itro',
-  subtitle,
+  title = 'TroRoom',
+  subtitle = 'Quản lý phòng trọ',
   className = '',
 }) => {
-  const iconSize = size === 'sm' ? 28 : size === 'lg' ? 44 : 36
-  const titleSize = size === 'sm' ? '18px' : size === 'lg' ? '26px' : '22px'
+  const iconSize = size === 'sm' ? 32 : size === 'lg' ? 46 : 38
+  const titleSize = size === 'sm' ? '18px' : size === 'lg' ? '24px' : '20px'
   const subSize = size === 'sm' ? '11px' : size === 'lg' ? '13px' : '12px'
 
   return (
     <div
-      className={`itro-logo-brand ${className}`}
+      className={`troroom-logo-brand ${className}`}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: size === 'sm' ? '8px' : '12px',
+        gap: size === 'sm' ? '10px' : '12px',
         textDecoration: 'none',
         userSelect: 'none',
       }}
@@ -32,19 +32,20 @@ export const Logo: React.FC<LogoProps> = ({
         style={{
           width: iconSize,
           height: iconSize,
-          borderRadius: size === 'sm' ? '8px' : '10px',
-          background: 'linear-gradient(135deg, #eb6b40 0%, #f97316 100%)',
+          borderRadius: '10px',
+          background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: '#ffffff',
-          fontWeight: 800,
-          fontSize: size === 'sm' ? '15px' : size === 'lg' ? '22px' : '18px',
-          boxShadow: '0 4px 12px rgba(235, 107, 64, 0.28)',
+          fontWeight: 900,
+          fontSize: size === 'sm' ? '15px' : size === 'lg' ? '20px' : '17px',
+          boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
           flexShrink: 0,
+          letterSpacing: '-0.5px',
         }}
       >
-        🏠
+        TR
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
         <span
@@ -52,17 +53,11 @@ export const Logo: React.FC<LogoProps> = ({
             fontSize: titleSize,
             fontWeight: 800,
             letterSpacing: '-0.5px',
-            color: '#1e293b',
-            lineHeight: 1.1,
+            color: '#0f172a',
+            lineHeight: 1.15,
           }}
         >
-          {title.toLowerCase() === 'itro' ? (
-            <>
-              <span style={{ color: '#eb6b40' }}>i</span>Tro
-            </>
-          ) : (
-            title
-          )}
+          {title}
         </span>
         {subtitle && (
           <span

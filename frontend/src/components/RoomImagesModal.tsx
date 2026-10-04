@@ -87,11 +87,14 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
       return
     }
 
-    // Validate từng file
+    // Validate từng file client-side
     for (const file of fileList) {
-      const validTypes = ['image/jpeg', 'image/png', 'image/jpg']
-      if (!validTypes.includes(file.type.toLowerCase())) {
-        setError(`File "${file.name}" không đúng định dạng JPG/PNG.`)
+      const lowerName = file.name.toLowerCase()
+      const isAllowedExt = lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.png')
+      const isAllowedType = file.type.startsWith('image/')
+
+      if (!isAllowedExt && !isAllowedType) {
+        setError(`File "${file.name}" không đúng định dạng. Chỉ chấp nhận ảnh JPG hoặc PNG.`)
         return
       }
 
@@ -116,8 +119,15 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
         })
 
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}))
-          throw new Error(data.message || `Lỗi tải lên ảnh ${file.name}`)
+          let serverMsg = ''
+          try {
+            const data = await res.json()
+            if (data && data.message) serverMsg = data.message
+          } catch {
+            const txt = await res.text().catch(() => '')
+            if (txt) serverMsg = txt
+          }
+          throw new Error(serverMsg || `Không thể tải lên ảnh "${file.name}" (Mã lỗi ${res.status}).`)
         }
         uploadedCount++
       }
@@ -195,7 +205,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
         throw new Error(data.message || 'Không thể lưu thứ tự ảnh.')
       }
 
-      setSuccessMsg('Đã cập nhật thứ tự ảnh (Ảnh đầu tiên là ảnh đại diện)!')
+      setSuccessMsg('Đã cập nhật thứ tự ảnh (Ảnh số 1 là ảnh đại diện)!')
       if (onUpdated) onUpdated()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Lỗi khi lưu thứ tự ảnh.')
@@ -355,7 +365,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
               onDrop={onFileDrop}
               onClick={() => fileInputRef.current?.click()}
               style={{
-                border: `2px dashed ${isDragOver ? '#3b82f6' : '#cbd5e1'}`,
+                border: `2px dashed ${isDragOver ? '#2563eb' : '#cbd5e1'}`,
                 backgroundColor: isDragOver ? '#eff6ff' : '#f8fafc',
                 borderRadius: '16px',
                 padding: '30px 20px',
@@ -383,7 +393,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
               </div>
               {uploading && (
                 <div style={{ marginTop: '12px', fontSize: '14px', fontWeight: 600, color: '#2563eb' }}>
-                  ⏳ Đang tải ảnh lên...
+                  ⏳ Đang tải ảnh lên máy chủ...
                 </div>
               )}
             </div>
@@ -402,8 +412,8 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
                 Danh sách ảnh phòng ({images.length}/8)
               </h3>
-              <span style={{ fontSize: '12.5px', color: '#64748b' }}>
-                💡 Kéo thả để đổi thứ tự · Ảnh số 1 tự động làm <strong>Ảnh đại diện</strong>
+              <span style={{ fontSize: '12.5px', color: '#2563eb', fontWeight: 600 }}>
+                💡 Kéo thả để đổi thứ tự · Ảnh số 1 là <strong>Ảnh đại diện</strong>
               </span>
             </div>
 
@@ -453,7 +463,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                         border: isHovered
                           ? '2.5px dashed #2563eb'
                           : isCover
-                          ? '2.5px solid #eb6b40'
+                          ? '2.5px solid #2563eb'
                           : '1px solid #e2e8f0',
                         opacity: isDragged ? 0.4 : 1,
                         cursor: 'grab',
@@ -489,7 +499,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                               position: 'absolute',
                               top: '8px',
                               left: '8px',
-                              backgroundColor: '#eb6b40',
+                              backgroundColor: '#2563eb',
                               color: '#ffffff',
                               fontSize: '11px',
                               fontWeight: 800,
@@ -539,7 +549,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                             background: 'transparent',
                             color: '#2563eb',
                             fontSize: '12px',
-                            fontWeight: 600,
+                            fontWeight: 700,
                             cursor: 'pointer',
                             padding: '4px',
                           }}
@@ -586,13 +596,14 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
             onClick={onClose}
             style={{
               padding: '10px 22px',
-              backgroundColor: '#475569',
+              backgroundColor: '#2563eb',
               color: '#ffffff',
               fontWeight: 700,
               fontSize: '14px',
               borderRadius: '8px',
               border: 'none',
               cursor: 'pointer',
+              boxShadow: '0 4px 10px rgba(37, 99, 235, 0.25)',
             }}
           >
             Hoàn tất & Đóng

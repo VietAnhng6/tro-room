@@ -856,9 +856,9 @@ function Rooms() {
                                   : 'Đăng tin cho thuê từ phòng trống này'
                               }
                               style={{
-                                border: room.status === 'EMPTY' ? '1px solid #fdba74' : '1px solid #e2e8f0',
-                                background: room.status === 'EMPTY' ? '#fff7ed' : '#f1f5f9',
-                                color: room.status === 'EMPTY' ? '#ea580c' : '#94a3b8',
+                                border: room.status === 'EMPTY' ? '1px solid #bfdbfe' : '1px solid #e2e8f0',
+                                background: room.status === 'EMPTY' ? '#eff6ff' : '#f1f5f9',
+                                color: room.status === 'EMPTY' ? '#1d4ed8' : '#94a3b8',
                                 borderRadius: 8,
                                 padding: '6px 10px',
                                 cursor: room.status === 'EMPTY' ? 'pointer' : 'not-allowed',
