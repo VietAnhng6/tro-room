@@ -164,6 +164,13 @@ function Dashboard() {
       path: '/dashboard',
     },
     {
+      key: 'searchRooms',
+      icon: '🔍',
+      title: 'Tìm phòng trọ',
+      enabled: true,
+      path: '/search-rooms',
+    },
+    {
       key: 'building',
       icon: '',
       title: 'Quản lý tòa nhà',
@@ -668,6 +675,52 @@ function Dashboard() {
             >
               Sử dụng thanh chức năng bên trái để truy cập các chức năng mà tài khoản của bạn được phép sử dụng.
             </div>
+          </div>
+
+          {/* QUICK SEARCH ROOMS BANNER */}
+          <div
+            style={{
+              marginTop: 20,
+              background: 'linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%)',
+              border: '1.5px solid #bfdbfe',
+              borderRadius: 16,
+              padding: '22px 26px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              boxSizing: 'border-box',
+              flexWrap: 'wrap',
+              gap: 16,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#1e40af', marginBottom: 4 }}>
+                🔍 Khám phá danh sách phòng trọ
+              </div>
+              <div style={{ fontSize: 13.5, color: '#3b82f6' }}>
+                Xem danh sách tất cả các phòng trọ trống đang đăng tin cho thuê trên hệ thống TroRoom.
+              </div>
+            </div>
+            <button
+              onClick={() => go('/search-rooms')}
+              style={{
+                border: 'none',
+                borderRadius: 12,
+                padding: '12px 22px',
+                background: '#2563eb',
+                color: '#ffffff',
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <span>Xem trang tìm phòng</span>
+              <span>→</span>
+            </button>
           </div>
         </main>
       </div>

@@ -227,7 +227,7 @@ public class RoomImageController {
                 Map.of(
                         "id", saved.getId(),
                         "roomId", room.getId(),
-                        "imageUrl", saved.getImageUrl(),
+                        "imageUrl", "/api/room-images/" + saved.getId(),
                         "sortOrder", saved.getSortOrder()
                 )
         );
@@ -260,7 +260,7 @@ public ResponseEntity<?> getRoomImages(
                     .map(roomImage -> Map.of(
                             "id", roomImage.getId(),
                             "roomId", room.getId(),
-                            "imageUrl", roomImage.getImageUrl(),
+                            "imageUrl", "/api/room-images/" + roomImage.getId(),
                             "sortOrder", roomImage.getSortOrder()
                     ))
                     .toList()

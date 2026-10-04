@@ -355,23 +355,75 @@ function Rooms() {
             </p>
           </div>
 
-          <button
-            onClick={openCreate}
-            style={{
-              border: 0,
-              borderRadius: 12,
-              padding: '13px 20px',
-              background:
-                'linear-gradient(135deg, #2563eb, #4f46e5)',
-              color: '#fff',
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 8px 20px rgba(37,99,235,.2)',
-            }}
-          >
-            + Thêm phòng
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => {
+                window.location.href = '/dashboard'
+              }}
+              style={{
+                border: '1px solid #cbd5e1',
+                borderRadius: 12,
+                padding: '12px 16px',
+                background: '#ffffff',
+                color: '#334155',
+                fontSize: 14,
+                fontWeight: 650,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+              }}
+            >
+              <span>🏠</span>
+              <span>Tổng quan</span>
+            </button>
+
+            <button
+              onClick={() => {
+                window.location.href = '/search-rooms'
+              }}
+              style={{
+                border: '1.5px solid #bfdbfe',
+                borderRadius: 12,
+                padding: '12px 16px',
+                background: '#eff6ff',
+                color: '#1d4ed8',
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 6px rgba(37,99,235,0.08)',
+              }}
+            >
+              <span>🔍</span>
+              <span>Trang tìm phòng</span>
+            </button>
+
+            <button
+              onClick={openCreate}
+              style={{
+                border: 0,
+                borderRadius: 12,
+                padding: '12px 20px',
+                background:
+                  'linear-gradient(135deg, #2563eb, #4f46e5)',
+                color: '#fff',
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 8px 20px rgba(37,99,235,.2)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <span>+</span>
+              <span>Thêm phòng</span>
+            </button>
+          </div>
         </div>
 
         {/* STATS */}

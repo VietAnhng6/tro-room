@@ -17,6 +17,86 @@ interface RoomImagesModalProps {
 
 const API = 'http://localhost:8080'
 
+// Helper function để lấy link ảnh chính xác
+const getImageSrc = (img: RoomImageItem) => {
+  if (!img) return ''
+  if (img.imageUrl?.startsWith('http://') || img.imageUrl?.startsWith('https://')) {
+    return img.imageUrl
+  }
+  if (img.imageUrl?.startsWith('/api/room-images/')) {
+    return `${API}${img.imageUrl}`
+  }
+  // Fallback an toàn tới endpoint ID
+  return `${API}/api/room-images/${img.id}`
+}
+
+// Hàm tối ưu và nén ảnh client-side để không bao giờ bị lỗi 413 Payload Too Large
+const compressImageFile = async (file: File): Promise<File> => {
+  return new Promise((resolve) => {
+    // Nếu file đã rất nhẹ (< 300KB) thì giữ nguyên
+    if (file.size < 300 * 1024) {
+      resolve(file)
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        const maxDim = 1400
+        let width = img.width
+        let height = img.height
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width)
+            width = maxDim
+          } else {
+            width = Math.round((width * maxDim) / height)
+            height = maxDim
+          }
+        }
+
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(file)
+          return
+        }
+
+        // Đổ nền trắng cho ảnh nếu là ảnh có nền trong suốt
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, width, height)
+        ctx.drawImage(img, 0, 0, width, height)
+
+        // Nén sang định dạng JPEG chất lượng cao 82% (giảm dung lượng còn 150-300KB)
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file)
+              return
+            }
+            const cleanName = file.name.replace(/\.[^/.]+$/, '') + '.jpg'
+            const optimizedFile = new File([blob], cleanName, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            })
+            resolve(optimizedFile)
+          },
+          'image/jpeg',
+          0.82
+        )
+      }
+      img.onerror = () => resolve(file)
+      img.src = event.target?.result as string
+    }
+    reader.onerror = () => resolve(file)
+    reader.readAsDataURL(file)
+  })
+}
+
 export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
   roomId,
   roomCode,
@@ -98,8 +178,8 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
         return
       }
 
-      if (file.size > 5 * 1024 * 1024) {
-        setError(`File "${file.name}" vượt quá kích thước 5MB tối đa.`)
+      if (file.size > 8 * 1024 * 1024) {
+        setError(`File "${file.name}" vượt quá kích thước 8MB tối đa.`)
         return
       }
     }
@@ -108,9 +188,12 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
     let uploadedCount = 0
 
     try {
-      for (const file of fileList) {
+      for (const rawFile of fileList) {
+        // Tối ưu nén ảnh trước khi gửi để đảm bảo tốc độ và không bao giờ vượt giới hạn payload
+        const optimizedFile = await compressImageFile(rawFile)
+
         const formData = new FormData()
-        formData.append('image', file)
+        formData.append('image', optimizedFile)
 
         const res = await fetch(`${API}/api/room-images/room/${roomId}`, {
           method: 'POST',
@@ -127,7 +210,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
             const txt = await res.text().catch(() => '')
             if (txt) serverMsg = txt
           }
-          throw new Error(serverMsg || `Không thể tải lên ảnh "${file.name}" (Mã lỗi ${res.status}).`)
+          throw new Error(serverMsg || `Không thể tải lên ảnh "${rawFile.name}" (Mã lỗi ${res.status}).`)
         }
         uploadedCount++
       }
@@ -481,7 +564,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                         }}
                       >
                         <img
-                          src={`${API}${img.imageUrl}`}
+                          src={getImageSrc(img)}
                           alt={`Phòng ${roomCode} - ảnh ${index + 1}`}
                           style={{
                             width: '100%',
@@ -489,7 +572,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                             objectFit: 'cover',
                             display: 'block',
                           }}
-                          onClick={() => setPreviewUrl(`${API}${img.imageUrl}`)}
+                          onClick={() => setPreviewUrl(getImageSrc(img))}
                         />
 
                         {/* Cover Badge */}
@@ -543,7 +626,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                       >
                         <button
                           type="button"
-                          onClick={() => setPreviewUrl(`${API}${img.imageUrl}`)}
+                          onClick={() => setPreviewUrl(getImageSrc(img))}
                           style={{
                             border: 'none',
                             background: 'transparent',
@@ -655,7 +738,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
               }}
             >
               <img
-                src={`${API}${deletingImage.imageUrl}`}
+                src={getImageSrc(deletingImage)}
                 alt="Ảnh cần xóa"
                 style={{ width: '100%', height: '140px', objectFit: 'contain' }}
               />

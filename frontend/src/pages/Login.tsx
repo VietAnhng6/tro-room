@@ -212,6 +212,40 @@ function Login() {
             <span>hoặc</span>
           </div>
 
+          <div style={{ marginBottom: '16px' }}>
+            <a
+              href="/search-rooms"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                width: '100%',
+                height: '46px',
+                borderRadius: '11px',
+                background: '#eff6ff',
+                border: '1.5px solid #bfdbfe',
+                color: '#1d4ed8',
+                fontSize: '14px',
+                fontWeight: 700,
+                textDecoration: 'none',
+                transition: 'all 0.2s ease',
+                boxSizing: 'border-box',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#dbeafe'
+                e.currentTarget.style.borderColor = '#93c5fd'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#eff6ff'
+                e.currentTarget.style.borderColor = '#bfdbfe'
+              }}
+            >
+              <span>🔍</span>
+              <span>Tìm kiếm phòng trọ trống</span>
+            </a>
+          </div>
+
           <div className="register-link">
             Chưa có tài khoản?
             <a href="/register"> Đăng ký ngay</a>
