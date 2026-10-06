@@ -61,8 +61,8 @@ const statusColor: Record<string, { bg: string; color: string; border: string }>
 }
 
 const typeLabel: Record<string, string> = {
-  VIEWING: '👁️ Xem phòng',
-  RENT_NOW: '⚡ Thuê ngay',
+  VIEWING: 'Xem phòng',
+  RENT_NOW: 'Thuê ngay',
 }
 
 function formatDate(value: string | null): string {
@@ -250,7 +250,7 @@ function MyRequests() {
                 gap: 6,
               }}
             >
-              <span>🔍</span> Tìm phòng khác
+              Tìm phòng khác
             </button>
 
             <button
@@ -271,7 +271,7 @@ function MyRequests() {
                 gap: 6,
               }}
             >
-              <span>🏠</span> Về Tổng quan
+              Về Tổng quan
             </button>
           </div>
         </div>
@@ -293,7 +293,7 @@ function MyRequests() {
               alignItems: 'center',
             }}
           >
-            <div>✓ {successMsg}</div>
+            <div>{successMsg}</div>
             <button
               onClick={() => setSuccessMsg('')}
               style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#047857', fontWeight: 700 }}
@@ -316,7 +316,7 @@ function MyRequests() {
               fontWeight: 600,
             }}
           >
-            ⚠️ {error}
+            {error}
           </div>
         )}
 
@@ -336,7 +336,6 @@ function MyRequests() {
             </div>
           ) : requests.length === 0 ? (
             <div style={{ padding: '70px 20px', textAlign: 'center' }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
               <div style={{ color: '#0f172a', fontSize: 20, fontWeight: 800, marginBottom: 6 }}>
                 Bạn chưa gửi yêu cầu thuê phòng nào
               </div>
@@ -359,14 +358,14 @@ function MyRequests() {
                   boxShadow: '0 4px 14px rgba(37,99,235,0.25)',
                 }}
               >
-                🔍 Khám phá phòng trọ ngay
+                Khám phá phòng trọ ngay
               </button>
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1050 }}>
                 <thead>
-                  <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0' }}>
+                  <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0', textAlign: 'center' }}>
                     {[
                       'Mã yêu cầu',
                       'Phòng & Tòa nhà',
@@ -380,7 +379,7 @@ function MyRequests() {
                       <th
                         key={header}
                         style={{
-                          textAlign: 'left',
+                          textAlign: 'center',
                           padding: '16px 18px',
                           color: '#475569',
                           fontSize: 13,
@@ -401,7 +400,7 @@ function MyRequests() {
                     return (
                       <tr key={request.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                         {/* Mã yêu cầu */}
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
                           <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 14 }}>{request.code}</div>
                           <div style={{ color: '#64748b', fontSize: 12, marginTop: 2 }}>
                             {formatDateTime(request.createdAt)}
@@ -409,17 +408,17 @@ function MyRequests() {
                         </td>
 
                         {/* Phòng & Tòa */}
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
                           <div style={{ color: '#0f172a', fontWeight: 800, fontSize: 14 }}>
                             Phòng {request.roomCode}
                           </div>
                           <div style={{ color: '#64748b', fontSize: 12.5, marginTop: 2 }}>
-                            🏢 {request.buildingName}
+                            {request.buildingName}
                           </div>
                         </td>
 
                         {/* Loại */}
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
                           <span
                             style={{
                               fontWeight: 700,
@@ -436,65 +435,69 @@ function MyRequests() {
                         </td>
 
                         {/* Ngày mong muốn */}
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', fontSize: 13.5, fontWeight: 600, color: '#334155' }}>
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center', fontSize: 13.5, fontWeight: 600, color: '#334155' }}>
                           {formatDate(request.desiredDate)}
                           <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>{request.peopleCount} người ở</div>
                         </td>
 
                         {/* Trạng thái */}
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
                           <span
                             style={{
                               display: 'inline-block',
                               borderRadius: 999,
                               padding: '5px 12px',
+                              fontSize: 12,
+                              fontWeight: 800,
                               background: status.bg,
                               color: status.color,
                               border: `1px solid ${status.border}`,
-                              fontWeight: 800,
-                              fontSize: 12,
-                              whiteSpace: 'nowrap',
                             }}
                           >
                             {statusLabel[request.status] || request.status}
                           </span>
                         </td>
 
-                        {/* Lịch hẹn */}
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
+                        {/* Lịch hẹn xem phòng */}
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
                           {request.appointmentAt ? (
-                            <div
+                            <span
                               style={{
-                                background: '#fef3c7',
                                 color: '#92400e',
+                                background: '#fef3c7',
                                 padding: '5px 10px',
                                 borderRadius: 8,
-                                fontWeight: 700,
+                                fontWeight: 750,
                                 fontSize: 12.5,
+                                border: '1px solid #fde68a',
                                 display: 'inline-block',
                               }}
                             >
-                              📅 {formatDateTime(request.appointmentAt)}
-                            </div>
+                              {formatDateTime(request.appointmentAt)}
+                            </span>
                           ) : (
-                            <span style={{ color: '#94a3b8' }}>Chưa có lịch hẹn</span>
+                            <span style={{ color: '#94a3b8', fontSize: 13 }}>—</span>
                           )}
                         </td>
 
-                        {/* Lý do từ chối / Phản hồi */}
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', maxWidth: 220 }}>
-                          {request.status === 'REJECTED' ? (
-                            <div style={{ color: '#b91c1c', fontSize: 13, background: '#fef2f2', padding: '6px 10px', borderRadius: 8, border: '1px solid #fecaca' }}>
-                              <strong>Lý do:</strong> {request.rejectReason || 'Không phù hợp'}
+                        {/* Lý do / Phản hồi */}
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center', maxWidth: 200 }}>
+                          {request.rejectReason ? (
+                            <div style={{ color: '#dc2626', fontSize: 12.5, fontWeight: 600 }}>
+                              {request.rejectReason}
+                            </div>
+                          ) : request.message ? (
+                            <div style={{ color: '#475569', fontSize: 12.5, fontStyle: 'italic' }}>
+                              "{request.message}"
                             </div>
                           ) : (
-                            <span style={{ color: '#94a3b8' }}>—</span>
+                            <span style={{ color: '#94a3b8', fontSize: 13 }}>—</span>
                           )}
                         </td>
 
-                        {/* Thao tác (S2-09) */}
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
-                          <div style={{ display: 'flex', gap: 7, flexWrap: 'nowrap' }}>
+                        {/* Thao tác */}
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 7, flexWrap: 'nowrap', justifyContent: 'center' }}>
                             <button
                               onClick={() => {
                                 window.location.href = `/listing/${request.listingId}`
@@ -528,7 +531,7 @@ function MyRequests() {
                                 whiteSpace: 'nowrap',
                               }}
                             >
-                              📜 Lịch sử
+                              Lịch sử
                             </button>
 
                             {canCancel(request.status) && (
@@ -587,7 +590,6 @@ function MyRequests() {
               boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
             }}
           >
-            <div style={{ fontSize: 44, marginBottom: 12 }}>⚠️</div>
             <h3 style={{ margin: '0 0 10px', fontSize: 19, fontWeight: 800, color: '#0f172a' }}>
               Xác nhận huỷ yêu cầu?
             </h3>
@@ -672,7 +674,7 @@ function MyRequests() {
             >
               <div>
                 <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
-                  📜 Tiến trình xử lý yêu cầu {historyReq.code}
+                  Tiến trình xử lý yêu cầu {historyReq.code}
                 </h3>
                 <div style={{ color: '#64748b', fontSize: 13, marginTop: 3 }}>
                   Phòng {historyReq.roomCode} · {historyReq.buildingName}

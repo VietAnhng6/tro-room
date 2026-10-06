@@ -246,7 +246,7 @@ function BuildingServices() {
                 fontSize: 13.5,
               }}
             >
-              🏠 Tổng quan
+              Tổng quan
             </button>
           </div>
         </div>
@@ -254,7 +254,7 @@ function BuildingServices() {
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: 30 }}>
         <div style={noticeStyle}>
-          💡 Thay đổi cách tính hoặc đơn giá chỉ áp dụng từ{' '}
+          Thay đổi cách tính hoặc đơn giá chỉ áp dụng từ{' '}
           <strong>kỳ hoá đơn kế tiếp</strong>. Kỳ hiện tại vẫn giữ nguyên cấu
           hình cũ.
         </div>

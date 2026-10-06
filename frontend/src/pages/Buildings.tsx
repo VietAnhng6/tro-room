@@ -466,7 +466,7 @@ function Buildings() {
         {/* MESSAGE */}
         {message && (
           <div style={styles.success}>
-            ✓ {message}
+            {message}
           </div>
         )}
 
@@ -830,7 +830,7 @@ function Buildings() {
                       }}
                       style={styles.serviceButton}
                     >
-                      ⚡ Điện nước
+                      Điện nước
                     </button>
 
                     <button

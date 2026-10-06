@@ -27,6 +27,17 @@ type SearchResponse = {
   last: boolean
 }
 
+type FilterParams = {
+  district?: string
+  minRent?: string
+  maxRent?: string
+  minArea?: string
+  maxArea?: string
+  maxPeople?: string
+  sort?: string
+  page?: number
+}
+
 function SearchRooms() {
   const [district, setDistrict] = useState('')
   const [minRent, setMinRent] = useState('')
@@ -44,39 +55,49 @@ function SearchRooms() {
 
   const token = localStorage.getItem('accessToken')
 
-  const searchRooms = async (targetPage = 0, targetSort = sort) => {
+  // Đọc dữ liệu trực tiếp từ overrides hoặc từ state hiện tại
+  const searchRooms = async (overrides: FilterParams = {}) => {
     setLoading(true)
     setError('')
+
+    const queryDistrict = overrides.district !== undefined ? overrides.district : district
+    const queryMinRent = overrides.minRent !== undefined ? overrides.minRent : minRent
+    const queryMaxRent = overrides.maxRent !== undefined ? overrides.maxRent : maxRent
+    const queryMinArea = overrides.minArea !== undefined ? overrides.minArea : minArea
+    const queryMaxArea = overrides.maxArea !== undefined ? overrides.maxArea : maxArea
+    const queryMaxPeople = overrides.maxPeople !== undefined ? overrides.maxPeople : maxPeople
+    const querySort = overrides.sort !== undefined ? overrides.sort : sort
+    const queryPage = overrides.page !== undefined ? overrides.page : 0
 
     try {
       const params = new URLSearchParams()
 
-      if (district.trim()) {
-        params.set('district', district.trim())
+      if (queryDistrict.trim()) {
+        params.set('district', queryDistrict.trim())
       }
 
-      if (minRent) {
-        params.set('minRent', String(Number(minRent) * 1000000))
+      if (queryMinRent) {
+        params.set('minRent', String(Number(queryMinRent) * 1000000))
       }
 
-      if (maxRent) {
-        params.set('maxRent', String(Number(maxRent) * 1000000))
+      if (queryMaxRent) {
+        params.set('maxRent', String(Number(queryMaxRent) * 1000000))
       }
 
-      if (minArea) {
-        params.set('minArea', minArea)
+      if (queryMinArea) {
+        params.set('minArea', queryMinArea)
       }
 
-      if (maxArea) {
-        params.set('maxArea', maxArea)
+      if (queryMaxArea) {
+        params.set('maxArea', queryMaxArea)
       }
 
-      if (maxPeople) {
-        params.set('maxPeople', maxPeople)
+      if (queryMaxPeople) {
+        params.set('maxPeople', queryMaxPeople)
       }
 
-      params.set('sort', targetSort)
-      params.set('page', String(targetPage))
+      params.set('sort', querySort)
+      params.set('page', String(queryPage))
 
       const response = await fetch(
         `${API}/api/public/listings/search?${params.toString()}`
@@ -88,7 +109,7 @@ function SearchRooms() {
 
       const data: SearchResponse = await response.json()
       setResult(data)
-      setPage(targetPage)
+      setPage(queryPage)
     } catch (err) {
       setError(
         err instanceof Error
@@ -102,7 +123,7 @@ function SearchRooms() {
   }
 
   useEffect(() => {
-    searchRooms(0)
+    searchRooms({ page: 0 })
   }, [])
 
   const formatMoney = (value: number) => {
@@ -118,17 +139,23 @@ function SearchRooms() {
     setMaxPeople('')
     setSort('newest')
 
-    setTimeout(() => {
-      searchRooms(0, 'newest')
-    }, 0)
+    // Truyền trực tiếp các giá trị rỗng để search ngay lập tức
+    searchRooms({
+      district: '',
+      minRent: '',
+      maxRent: '',
+      minArea: '',
+      maxArea: '',
+      maxPeople: '',
+      sort: 'newest',
+      page: 0,
+    })
   }
 
   const applyPricePreset = (min: string, max: string) => {
     setMinRent(min)
     setMaxRent(max)
-    setTimeout(() => {
-      searchRooms(0)
-    }, 0)
+    searchRooms({ minRent: min, maxRent: max, page: 0 })
   }
 
   return (
@@ -143,7 +170,7 @@ function SearchRooms() {
           <div className="nav-actions">
             {token ? (
               <a href="/dashboard" className="nav-btn primary">
-                Vào Dashboard ➔
+                Vào Dashboard
               </a>
             ) : (
               <div style={{ display: 'flex', gap: '10px' }}>
@@ -174,7 +201,7 @@ function SearchRooms() {
           <section className="filter-card">
             <div className="filter-card-header">
               <div className="filter-card-title">
-                <span style={{ color: '#2563eb' }}>🔍</span> Bộ lọc tìm kiếm kết hợp
+                Bộ lọc tìm kiếm kết hợp
               </div>
               <div className="price-presets">
                 <span className="preset-label">Khoảng giá nhanh:</span>
@@ -300,12 +327,12 @@ function SearchRooms() {
                   onChange={(e) => {
                     const newSort = e.target.value
                     setSort(newSort)
-                    searchRooms(0, newSort)
+                    searchRooms({ sort: newSort, page: 0 })
                   }}
                 >
-                  <option value="newest">🕒 Tin mới nhất trước</option>
-                  <option value="price_asc">💵 Giá: Thấp đến Cao</option>
-                  <option value="price_desc">💎 Giá: Cao đến Thấp</option>
+                  <option value="newest">Tin mới nhất trước</option>
+                  <option value="price_asc">Giá: Thấp đến Cao</option>
+                  <option value="price_desc">Giá: Cao đến Thấp</option>
                 </select>
               </div>
             </div>
@@ -315,9 +342,9 @@ function SearchRooms() {
               <button
                 type="button"
                 className="btn-filter-search"
-                onClick={() => searchRooms(0)}
+                onClick={() => searchRooms({ page: 0 })}
               >
-                🔎 Tìm kiếm ngay
+                Tìm kiếm ngay
               </button>
 
               <button
@@ -325,7 +352,7 @@ function SearchRooms() {
                 className="btn-filter-clear"
                 onClick={clearFilters}
               >
-                🔄 Xóa bộ lọc
+                Xóa bộ lọc
               </button>
             </div>
           </section>
@@ -350,7 +377,7 @@ function SearchRooms() {
                 onClick={() => setViewMode('grid')}
                 title="Xem dạng lưới"
               >
-                🔲 Lưới
+                Lưới
               </button>
               <button
                 type="button"
@@ -358,7 +385,7 @@ function SearchRooms() {
                 onClick={() => setViewMode('list')}
                 title="Xem dạng danh sách"
               >
-                📋 Danh sách
+                Danh sách
               </button>
             </div>
           </div>
@@ -366,7 +393,7 @@ function SearchRooms() {
           {/* ERROR ALERT */}
           {error && (
             <div className="error-box">
-              ⚠️ {error}
+              {error}
             </div>
           )}
 
@@ -381,7 +408,6 @@ function SearchRooms() {
           {/* EMPTY STATE */}
           {!loading && !error && result && result.content.length === 0 && (
             <section className="empty-state-card">
-              <div className="empty-illustration">🏡</div>
               <h2 className="empty-title">Không tìm thấy phòng phù hợp</h2>
               <p className="empty-desc">
                 Rất tiếc, hiện tại không có phòng nào khớp với các tiêu chí tìm kiếm của bạn. Hãy thử nới rộng khoảng giá hoặc điều chỉnh diện tích để xem nhiều phòng hơn.
@@ -395,17 +421,17 @@ function SearchRooms() {
                     setMaxRent('')
                     setMinArea('')
                     setMaxArea('')
-                    searchRooms(0)
+                    searchRooms({ minRent: '', maxRent: '', minArea: '', maxArea: '', page: 0 })
                   }}
                 >
-                  🎯 Nới rộng khoảng giá & diện tích
+                  Nới rộng khoảng giá & diện tích
                 </button>
                 <button
                   type="button"
                   className="btn-reset-all"
                   onClick={clearFilters}
                 >
-                  🔄 Đặt lại tất cả bộ lọc
+                  Đặt lại tất cả bộ lọc
                 </button>
               </div>
             </section>
@@ -418,9 +444,6 @@ function SearchRooms() {
                 {result.content.map((item) => (
                   <article key={item.id} className="room-card">
                     <div className="card-thumb-area">
-                      <div className="thumb-placeholder">
-                        <span>🏠</span>
-                      </div>
                       <div className="card-room-badge">Phòng {item.roomCode}</div>
                       <div className="card-floor-badge">Tầng {item.floor}</div>
                     </div>
@@ -431,12 +454,12 @@ function SearchRooms() {
                       </h3>
 
                       <div className="card-location">
-                        📍 <strong>{item.buildingName}</strong> · {item.district || item.address}
+                        <strong>{item.buildingName}</strong> · {item.district || item.address}
                       </div>
 
                       <div className="card-specs">
-                        <span className="spec-tag">📐 {item.area} m²</span>
-                        <span className="spec-tag">👥 Tối đa {item.maxPeople} người</span>
+                        <span className="spec-tag">{item.area} m²</span>
+                        <span className="spec-tag">Tối đa {item.maxPeople} người</span>
                       </div>
 
                       <p className="card-desc">
@@ -451,7 +474,7 @@ function SearchRooms() {
                         </div>
 
                         <a href={`/listing/${item.id}`} className="btn-view-detail">
-                          Xem chi tiết ➔
+                          Xem chi tiết
                         </a>
                       </div>
                     </div>
@@ -465,7 +488,7 @@ function SearchRooms() {
                   <button
                     type="button"
                     disabled={result.first}
-                    onClick={() => searchRooms(page - 1)}
+                    onClick={() => searchRooms({ page: page - 1 })}
                     className="page-nav-btn"
                   >
                     ← Trang trước
@@ -478,7 +501,7 @@ function SearchRooms() {
                   <button
                     type="button"
                     disabled={result.last}
-                    onClick={() => searchRooms(page + 1)}
+                    onClick={() => searchRooms({ page: page + 1 })}
                     className="page-nav-btn"
                   >
                     Trang sau →
@@ -788,7 +811,6 @@ function SearchRooms() {
           font-weight: 700;
         }
 
-        /* GRID VIEW & LIST VIEW */
         .listings-container.grid-view {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -835,11 +857,6 @@ function SearchRooms() {
         .listings-container.list-view .card-thumb-area {
           width: 240px;
           height: auto;
-        }
-
-        .thumb-placeholder {
-          font-size: 48px;
-          opacity: 0.8;
         }
 
         .card-room-badge {
@@ -968,7 +985,6 @@ function SearchRooms() {
           transform: translateY(-1px);
         }
 
-        /* EMPTY STATE */
         .empty-state-card {
           background: #ffffff;
           border-radius: 18px;
@@ -976,11 +992,6 @@ function SearchRooms() {
           padding: 60px 24px;
           text-align: center;
           margin-top: 20px;
-        }
-
-        .empty-illustration {
-          font-size: 56px;
-          margin-bottom: 16px;
         }
 
         .empty-title {
@@ -1036,7 +1047,6 @@ function SearchRooms() {
           background: #e2e8f0;
         }
 
-        /* PAGINATION */
         .pagination-bar {
           display: flex;
           align-items: center;
@@ -1101,7 +1111,6 @@ function SearchRooms() {
           color: #94a3b8;
         }
 
-        /* RESPONSIVE STYLES (DOWN TO 360PX) */
         @media (max-width: 768px) {
           .listings-container.list-view .room-card {
             flex-direction: column;

@@ -365,13 +365,12 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '20px' }}>🖼️</span>
               <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
                 Quản lý ảnh thực tế - Phòng {roomCode}
               </h2>
             </div>
             {buildingName && (
-              <p style={{ margin: '4px 0 0 28px', fontSize: '13px', color: '#64748b' }}>
+              <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>
                 Tòa nhà: <strong>{buildingName}</strong> · Tối đa 8 ảnh (≤ 5MB/ảnh, định dạng JPG/PNG)
               </p>
             )}
@@ -418,7 +417,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                 fontSize: '13.5px',
               }}
             >
-              ⚠️ {error}
+              {error}
             </div>
           )}
 
@@ -433,7 +432,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                 fontSize: '13.5px',
               }}
             >
-              ✓ {successMsg}
+              {successMsg}
             </div>
           )}
 
@@ -451,7 +450,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                 border: `2px dashed ${isDragOver ? '#2563eb' : '#cbd5e1'}`,
                 backgroundColor: isDragOver ? '#eff6ff' : '#f8fafc',
                 borderRadius: '16px',
-                padding: '30px 20px',
+                padding: '24px 20px',
                 textAlign: 'center',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
@@ -467,7 +466,6 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                   if (e.target.files) handleUploadFiles(e.target.files)
                 }}
               />
-              <div style={{ fontSize: '36px', marginBottom: '10px' }}>📤</div>
               <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e293b', marginBottom: '4px' }}>
                 Kéo & thả ảnh vào đây hoặc bấm để chọn tệp
               </div>
@@ -476,7 +474,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
               </div>
               {uploading && (
                 <div style={{ marginTop: '12px', fontSize: '14px', fontWeight: 600, color: '#2563eb' }}>
-                  ⏳ Đang tải ảnh lên máy chủ...
+                  Đang tải ảnh lên máy chủ...
                 </div>
               )}
             </div>
@@ -496,7 +494,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                 Danh sách ảnh phòng ({images.length}/8)
               </h3>
               <span style={{ fontSize: '12.5px', color: '#2563eb', fontWeight: 600 }}>
-                💡 Kéo thả để đổi thứ tự · Ảnh số 1 là <strong>Ảnh đại diện</strong>
+                Kéo thả để đổi thứ tự · Ảnh số 1 là <strong>Ảnh đại diện</strong>
               </span>
             </div>
 
@@ -592,7 +590,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                               letterSpacing: '0.2px',
                             }}
                           >
-                            ⭐ Ảnh đại diện
+                            Ảnh đại diện
                           </div>
                         )}
 
@@ -637,7 +635,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                             padding: '4px',
                           }}
                         >
-                          🔍 Xem lớn
+                          Xem lớn
                         </button>
 
                         <button
@@ -654,7 +652,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                             padding: '4px 8px',
                           }}
                         >
-                          🗑️ Xóa
+                          Xóa
                         </button>
                       </div>
                     </div>
@@ -719,7 +717,6 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
               boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
             }}
           >
-            <div style={{ fontSize: '42px', marginBottom: '10px' }}>⚠️</div>
             <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>
               Xác nhận xóa ảnh phòng?
             </h3>
@@ -794,28 +791,66 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            backgroundColor: 'rgba(0, 0, 0, 0.88)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1200,
+            zIndex: 3200,
             padding: '24px',
+            boxSizing: 'border-box',
             cursor: 'zoom-out',
           }}
         >
-          <div style={{ position: 'relative', maxWidth: '800px', width: '100%', textAlign: 'center' }}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setPreviewUrl(null)}
+              style={{
+                position: 'absolute',
+                top: -14,
+                right: -14,
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                background: '#ffffff',
+                color: '#0f172a',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                zIndex: 3210,
+              }}
+            >
+              ✕
+            </button>
             <img
               src={previewUrl}
               alt="Xem chi tiết ảnh phòng"
               style={{
-                maxWidth: '100%',
-                maxHeight: '80vh',
+                maxWidth: '88vw',
+                maxHeight: '82vh',
+                objectFit: 'contain',
                 borderRadius: '12px',
                 boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+                backgroundColor: '#0f172a',
               }}
             />
-            <div style={{ marginTop: '12px', color: '#ffffff', fontSize: '13px' }}>
-              Bấm bất kỳ đâu để đóng
+            <div style={{ marginTop: '10px', color: '#ffffff', fontSize: '13px', opacity: 0.85 }}>
+              Bấm ra ngoài hoặc nút đóng để quay lại
             </div>
           </div>
         </div>

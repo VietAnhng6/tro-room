@@ -56,8 +56,8 @@ const STATUS_COLOR: Record<string, { bg: string; fg: string; border: string }> =
 }
 
 const TYPE_LABEL: Record<string, string> = {
-  VIEWING: '👁️ Xem phòng',
-  RENT_NOW: '⚡ Thuê ngay',
+  VIEWING: 'Xem phòng',
+  RENT_NOW: 'Thuê ngay',
 }
 
 const REJECT_REASONS = [
@@ -361,7 +361,7 @@ function LandlordRequests() {
                 gap: 6,
               }}
             >
-              <span>🚪</span> Quản lý phòng
+              Quản lý phòng
             </button>
 
             <button
@@ -384,7 +384,7 @@ function LandlordRequests() {
                 gap: 6,
               }}
             >
-              <span>🏠</span> Về Tổng quan
+              Về Tổng quan
             </button>
           </div>
         </div>
@@ -406,7 +406,7 @@ function LandlordRequests() {
               justifyContent: 'space-between',
             }}
           >
-            <div>✓ {successMsg}</div>
+            <div>{successMsg}</div>
             <button
               onClick={() => setSuccessMsg('')}
               style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#047857', fontWeight: 700 }}
@@ -429,7 +429,7 @@ function LandlordRequests() {
               fontWeight: 600,
             }}
           >
-            ⚠️ {error}
+            {error}
           </div>
         )}
 
@@ -537,7 +537,7 @@ function LandlordRequests() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1100 }}>
               <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0', textAlign: 'left' }}>
+                <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0', textAlign: 'center' }}>
                   {[
                     'Mã yêu cầu',
                     'Khách thuê',
@@ -555,6 +555,7 @@ function LandlordRequests() {
                         fontSize: 13,
                         fontWeight: 750,
                         color: '#475569',
+                        textAlign: 'center',
                         whiteSpace: 'nowrap',
                       }}
                     >
@@ -568,7 +569,6 @@ function LandlordRequests() {
                 {!loading && items.length === 0 && !error && (
                   <tr>
                     <td colSpan={8} style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
-                      <div style={{ fontSize: 36, marginBottom: 8 }}>📭</div>
                       <div style={{ fontSize: 16, fontWeight: 700, color: '#334155' }}>Không có yêu cầu nào phù hợp</div>
                       <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 4 }}>Hãy thử thay đổi bộ lọc tìm kiếm.</div>
                     </td>
@@ -590,7 +590,7 @@ function LandlordRequests() {
                       }}
                     >
                       {/* Mã yêu cầu */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
+                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
                         <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 14 }}>{r.requestCode}</div>
                         {r.overdue && (
                           <div
@@ -607,26 +607,26 @@ function LandlordRequests() {
                               marginTop: 6,
                             }}
                           >
-                            ⏰ Quá 24h chưa xử lý
+                            Quá 24h chưa xử lý
                           </div>
                         )}
                       </td>
 
                       {/* Khách thuê */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
+                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
                         <div style={{ fontWeight: 700, color: '#1e293b', fontSize: 14 }}>{r.tenantName}</div>
-                        <div style={{ color: '#2563eb', fontSize: 13, marginTop: 2, fontWeight: 600 }}>📞 {r.tenantPhone}</div>
+                        <div style={{ color: '#2563eb', fontSize: 13, marginTop: 2, fontWeight: 600 }}>{r.tenantPhone}</div>
                         <div style={{ color: '#64748b', fontSize: 12, marginTop: 2 }}>{r.expectedPeople} người ở</div>
                       </td>
 
                       {/* Phòng & Tòa nhà */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
+                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
                         <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 14 }}>Phòng {r.roomCode}</div>
-                        <div style={{ color: '#64748b', fontSize: 13, marginTop: 2 }}>🏢 {r.buildingName}</div>
+                        <div style={{ color: '#64748b', fontSize: 13, marginTop: 2 }}>{r.buildingName}</div>
                       </td>
 
                       {/* Loại yêu cầu */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
+                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
                         <span
                           style={{
                             fontWeight: 700,
@@ -648,7 +648,7 @@ function LandlordRequests() {
                               marginTop: 6,
                               maxWidth: 180,
                               lineHeight: 1.4,
-                              fontStyle: 'italic',
+                              margin: '6px auto 0',
                             }}
                           >
                             "{r.message}"
@@ -657,54 +657,54 @@ function LandlordRequests() {
                       </td>
 
                       {/* Ngày mong muốn */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', fontSize: 13.5, color: '#334155', fontWeight: 600 }}>
-                        {formatDate(r.desiredDate)}
-                      </td>
-
-                      {/* Trạng thái */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
-                        <span
-                          style={{
-                            background: color.bg,
-                            color: color.fg,
-                            border: `1px solid ${color.border}`,
-                            padding: '5px 12px',
-                            borderRadius: 999,
-                            fontSize: 12.5,
-                            fontWeight: 800,
-                            whiteSpace: 'nowrap',
-                            display: 'inline-block',
-                          }}
-                        >
-                          {STATUS_LABEL[r.status] || r.status}
-                        </span>
-
+                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
+                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 13.5 }}>
+                          {formatDate(r.desiredDate)}
+                        </div>
                         {r.scheduledAt && (
                           <div
                             style={{
-                              color: '#92400e',
+                              marginTop: 6,
                               fontSize: 12,
                               fontWeight: 700,
-                              marginTop: 6,
+                              color: '#92400e',
                               background: '#fef3c7',
                               padding: '3px 8px',
                               borderRadius: 6,
                               display: 'inline-block',
                             }}
                           >
-                            📅 Hẹn: {formatDateTime(r.scheduledAt)}
+                            Hẹn: {formatDateTime(r.scheduledAt)}
                           </div>
                         )}
                       </td>
 
+                      {/* Trạng thái */}
+                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '4px 10px',
+                            borderRadius: 999,
+                            fontSize: 12,
+                            fontWeight: 800,
+                            background: color.bg,
+                            color: color.fg,
+                            border: `1px solid ${color.border}`,
+                          }}
+                        >
+                          {STATUS_LABEL[r.status] || r.status}
+                        </span>
+                      </td>
+
                       {/* Gửi lúc */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', fontSize: 13, color: '#64748b' }}>
+                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center', color: '#64748b', fontSize: 12.5 }}>
                         {formatDateTime(r.createdAt)}
                       </td>
 
-                      {/* Thao tác (S2-08) */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {/* Thao tác */}
+                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
                           {(isNew || isScheduled) && (
                             <button
                               onClick={() => handleOpenSchedule(r)}
@@ -719,7 +719,7 @@ function LandlordRequests() {
                                 cursor: 'pointer',
                               }}
                             >
-                              📅 {isScheduled ? 'Đổi lịch' : 'Hẹn lịch'}
+                              {isScheduled ? 'Đổi lịch' : 'Hẹn lịch'}
                             </button>
                           )}
 
@@ -737,7 +737,7 @@ function LandlordRequests() {
                                 cursor: 'pointer',
                               }}
                             >
-                              ✓ Duyệt thuê
+                              Duyệt thuê
                             </button>
                           )}
 
@@ -755,7 +755,7 @@ function LandlordRequests() {
                                 cursor: 'pointer',
                               }}
                             >
-                              ✕ Từ chối
+                              Từ chối
                             </button>
                           )}
 
@@ -772,7 +772,7 @@ function LandlordRequests() {
                               cursor: 'pointer',
                             }}
                           >
-                            📜 Lịch sử
+                            Lịch sử
                           </button>
                         </div>
                       </td>
@@ -812,7 +812,7 @@ function LandlordRequests() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
               <h3 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: '#0f172a' }}>
-                📅 {schedulingReq.status === 'SCHEDULED' ? 'Đổi lịch hẹn xem phòng' : 'Xác nhận lịch hẹn xem phòng'}
+                {schedulingReq.status === 'SCHEDULED' ? 'Đổi lịch hẹn xem phòng' : 'Xác nhận lịch hẹn xem phòng'}
               </h3>
               <button
                 onClick={() => setSchedulingReq(null)}
@@ -864,7 +864,7 @@ function LandlordRequests() {
                   lineHeight: 1.5,
                 }}
               >
-                <div>⚠️ {scheduleConflictMsg}</div>
+                <div>{scheduleConflictMsg}</div>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, cursor: 'pointer', fontWeight: 700 }}>
                   <input
                     type="checkbox"
@@ -938,7 +938,7 @@ function LandlordRequests() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
               <h3 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: '#dc2626' }}>
-                ✕ Từ chối yêu cầu thuê
+                Từ chối yêu cầu thuê
               </h3>
               <button
                 onClick={() => setRejectingReq(null)}
@@ -1059,7 +1059,6 @@ function LandlordRequests() {
               boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
             }}
           >
-            <div style={{ fontSize: 44, marginBottom: 12 }}>🎉</div>
             <h3 style={{ margin: '0 0 10px', fontSize: 20, fontWeight: 800, color: '#0f172a' }}>
               Xác nhận duyệt yêu cầu thuê?
             </h3>
@@ -1144,7 +1143,7 @@ function LandlordRequests() {
             >
               <div>
                 <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
-                  📜 Lịch sử xử lý yêu cầu {historyReq.requestCode}
+                  Lịch sử xử lý yêu cầu {historyReq.requestCode}
                 </h3>
                 <div style={{ color: '#64748b', fontSize: 13, marginTop: 3 }}>
                   Khách thuê: {historyReq.tenantName} · Phòng: {historyReq.roomCode}
