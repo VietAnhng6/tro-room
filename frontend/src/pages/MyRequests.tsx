@@ -61,20 +61,8 @@ const statusColor: Record<string, { bg: string; color: string; border: string }>
 }
 
 const typeLabel: Record<string, string> = {
-<<<<<<< HEAD
   VIEWING: 'Xem phòng',
   RENT_NOW: 'Thuê ngay',
-=======
-  VIEWING: '👁️ Xem phòng',
-  RENT_NOW: '⚡ Thuê ngay',
-}
-
-function formatDate(value: string | null): string {
-  if (!value) return '—'
-  if (value.includes('T')) value = value.split('T')[0]
-  const [year, month, day] = value.split('-')
-  return `${day}/${month}/${year}`
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
 }
 
 function formatDate(value: string | null): string {
@@ -262,11 +250,7 @@ function MyRequests() {
                 gap: 6,
               }}
             >
-<<<<<<< HEAD
               Tìm phòng khác
-=======
-              <span>🔍</span> Tìm phòng khác
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             </button>
 
             <button
@@ -287,11 +271,7 @@ function MyRequests() {
                 gap: 6,
               }}
             >
-<<<<<<< HEAD
               Về Tổng quan
-=======
-              <span>🏠</span> Về Tổng quan
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             </button>
           </div>
         </div>
@@ -313,11 +293,7 @@ function MyRequests() {
               alignItems: 'center',
             }}
           >
-<<<<<<< HEAD
             <div>{successMsg}</div>
-=======
-            <div>✓ {successMsg}</div>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             <button
               onClick={() => setSuccessMsg('')}
               style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#047857', fontWeight: 700 }}
@@ -340,7 +316,7 @@ function MyRequests() {
               fontWeight: 600,
             }}
           >
-            ⚠️ {error}
+            {error}
           </div>
         )}
 
@@ -360,10 +336,6 @@ function MyRequests() {
             </div>
           ) : requests.length === 0 ? (
             <div style={{ padding: '70px 20px', textAlign: 'center' }}>
-<<<<<<< HEAD
-=======
-              <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               <div style={{ color: '#0f172a', fontSize: 20, fontWeight: 800, marginBottom: 6 }}>
                 Bạn chưa gửi yêu cầu thuê phòng nào
               </div>
@@ -386,22 +358,14 @@ function MyRequests() {
                   boxShadow: '0 4px 14px rgba(37,99,235,0.25)',
                 }}
               >
-<<<<<<< HEAD
                 Khám phá phòng trọ ngay
-=======
-                🔍 Khám phá phòng trọ ngay
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               </button>
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1050 }}>
                 <thead>
-<<<<<<< HEAD
                   <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0', textAlign: 'center' }}>
-=======
-                  <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0' }}>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                     {[
                       'Mã yêu cầu',
                       'Phòng & Tòa nhà',
@@ -415,11 +379,7 @@ function MyRequests() {
                       <th
                         key={header}
                         style={{
-<<<<<<< HEAD
                           textAlign: 'center',
-=======
-                          textAlign: 'left',
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                           padding: '16px 18px',
                           color: '#475569',
                           fontSize: 13,
@@ -440,11 +400,7 @@ function MyRequests() {
                     return (
                       <tr key={request.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                         {/* Mã yêu cầu */}
-<<<<<<< HEAD
                         <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
-=======
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                           <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 14 }}>{request.code}</div>
                           <div style={{ color: '#64748b', fontSize: 12, marginTop: 2 }}>
                             {formatDateTime(request.createdAt)}
@@ -452,29 +408,17 @@ function MyRequests() {
                         </td>
 
                         {/* Phòng & Tòa */}
-<<<<<<< HEAD
                         <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
-=======
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                           <div style={{ color: '#0f172a', fontWeight: 800, fontSize: 14 }}>
                             Phòng {request.roomCode}
                           </div>
                           <div style={{ color: '#64748b', fontSize: 12.5, marginTop: 2 }}>
-<<<<<<< HEAD
                             {request.buildingName}
-=======
-                            🏢 {request.buildingName}
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                           </div>
                         </td>
 
                         {/* Loại */}
-<<<<<<< HEAD
                         <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
-=======
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                           <span
                             style={{
                               fontWeight: 700,
@@ -491,47 +435,29 @@ function MyRequests() {
                         </td>
 
                         {/* Ngày mong muốn */}
-<<<<<<< HEAD
                         <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center', fontSize: 13.5, fontWeight: 600, color: '#334155' }}>
-=======
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', fontSize: 13.5, fontWeight: 600, color: '#334155' }}>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                           {formatDate(request.desiredDate)}
                           <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>{request.peopleCount} người ở</div>
                         </td>
 
                         {/* Trạng thái */}
-<<<<<<< HEAD
                         <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
-=======
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                           <span
                             style={{
                               display: 'inline-block',
                               borderRadius: 999,
                               padding: '5px 12px',
-<<<<<<< HEAD
                               fontSize: 12,
                               fontWeight: 800,
                               background: status.bg,
                               color: status.color,
                               border: `1px solid ${status.border}`,
-=======
-                              background: status.bg,
-                              color: status.color,
-                              border: `1px solid ${status.border}`,
-                              fontWeight: 800,
-                              fontSize: 12,
-                              whiteSpace: 'nowrap',
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                             }}
                           >
                             {statusLabel[request.status] || request.status}
                           </span>
                         </td>
 
-<<<<<<< HEAD
                         {/* Lịch hẹn xem phòng */}
                         <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
                           {request.appointmentAt ? (
@@ -572,43 +498,6 @@ function MyRequests() {
                         {/* Thao tác */}
                         <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: 7, flexWrap: 'nowrap', justifyContent: 'center' }}>
-=======
-                        {/* Lịch hẹn */}
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
-                          {request.appointmentAt ? (
-                            <div
-                              style={{
-                                background: '#fef3c7',
-                                color: '#92400e',
-                                padding: '5px 10px',
-                                borderRadius: 8,
-                                fontWeight: 700,
-                                fontSize: 12.5,
-                                display: 'inline-block',
-                              }}
-                            >
-                              📅 {formatDateTime(request.appointmentAt)}
-                            </div>
-                          ) : (
-                            <span style={{ color: '#94a3b8' }}>Chưa có lịch hẹn</span>
-                          )}
-                        </td>
-
-                        {/* Lý do từ chối / Phản hồi */}
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', maxWidth: 220 }}>
-                          {request.status === 'REJECTED' ? (
-                            <div style={{ color: '#b91c1c', fontSize: 13, background: '#fef2f2', padding: '6px 10px', borderRadius: 8, border: '1px solid #fecaca' }}>
-                              <strong>Lý do:</strong> {request.rejectReason || 'Không phù hợp'}
-                            </div>
-                          ) : (
-                            <span style={{ color: '#94a3b8' }}>—</span>
-                          )}
-                        </td>
-
-                        {/* Thao tác (S2-09) */}
-                        <td style={{ padding: '16px 18px', verticalAlign: 'middle' }}>
-                          <div style={{ display: 'flex', gap: 7, flexWrap: 'nowrap' }}>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                             <button
                               onClick={() => {
                                 window.location.href = `/listing/${request.listingId}`
@@ -642,11 +531,7 @@ function MyRequests() {
                                 whiteSpace: 'nowrap',
                               }}
                             >
-<<<<<<< HEAD
                               Lịch sử
-=======
-                              📜 Lịch sử
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                             </button>
 
                             {canCancel(request.status) && (
@@ -705,10 +590,6 @@ function MyRequests() {
               boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
             }}
           >
-<<<<<<< HEAD
-=======
-            <div style={{ fontSize: 44, marginBottom: 12 }}>⚠️</div>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             <h3 style={{ margin: '0 0 10px', fontSize: 19, fontWeight: 800, color: '#0f172a' }}>
               Xác nhận huỷ yêu cầu?
             </h3>
@@ -793,11 +674,7 @@ function MyRequests() {
             >
               <div>
                 <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
-<<<<<<< HEAD
                   Tiến trình xử lý yêu cầu {historyReq.code}
-=======
-                  📜 Tiến trình xử lý yêu cầu {historyReq.code}
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                 </h3>
                 <div style={{ color: '#64748b', fontSize: 13, marginTop: 3 }}>
                   Phòng {historyReq.roomCode} · {historyReq.buildingName}

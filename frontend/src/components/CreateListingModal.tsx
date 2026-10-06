@@ -187,19 +187,11 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-<<<<<<< HEAD
-=======
-              <span style={{ fontSize: '20px' }}>📢</span>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
                 Đăng tin cho thuê - Phòng {room.code}
               </h2>
             </div>
-<<<<<<< HEAD
             <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>
-=======
-            <p style={{ margin: '4px 0 0 28px', fontSize: '13px', color: '#64748b' }}>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               Tòa nhà: <strong>{room.buildingName}</strong> · Tự động đồng bộ thông số phòng, ảnh & dịch vụ
             </p>
           </div>
@@ -249,10 +241,6 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                 gap: '12px',
               }}
             >
-<<<<<<< HEAD
-=======
-              <span style={{ fontSize: '22px' }}>🚫</span>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               <div>
                 <strong>Không thể đăng tin:</strong> Phòng hiện đang ở trạng thái <strong>{room.status}</strong>. Nút đăng tin đã bị vô hiệu hóa vì chỉ phòng đang trống mới được phép đăng tin cho thuê.
               </div>
@@ -274,10 +262,6 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                 gap: '8px',
               }}
             >
-<<<<<<< HEAD
-=======
-              <span>⚠️</span>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               <div>
                 <strong>Cảnh báo:</strong> Ngày hết hạn được chọn ở trong quá khứ. Tin đăng sẽ không hiển thị trên kết quả tìm kiếm.
               </div>
@@ -295,11 +279,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                 fontSize: '13.5px',
               }}
             >
-<<<<<<< HEAD
               {error}
-=======
-              ⚠️ {error}
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             </div>
           )}
 
@@ -314,11 +294,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                 fontSize: '13.5px',
               }}
             >
-<<<<<<< HEAD
               {successMsg}
-=======
-              ✓ {successMsg}
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             </div>
           )}
 
@@ -332,11 +308,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
             }}
           >
             <div style={{ fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '10px' }}>
-<<<<<<< HEAD
               Thông tin tự động điền từ hệ thống phòng:
-=======
-              ⚡ Thông tin tự động điền từ hệ thống phòng:
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             </div>
             <div
               style={{
@@ -439,17 +411,10 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                     backgroundColor: '#ffffff',
                   }}
                 >
-<<<<<<< HEAD
                   <option value="PUBLISHED">Đang hiển thị (Công khai cho khách)</option>
                   <option value="DRAFT">Bản nháp (Chưa công khai)</option>
                   <option value="HIDDEN">Tạm ẩn (Ẩn khỏi tìm kiếm)</option>
                   <option value="RENTED">Đã cho thuê</option>
-=======
-                  <option value="PUBLISHED">🟢 Đang hiển thị (Công khai cho khách)</option>
-                  <option value="DRAFT">📝 Bản nháp (Chưa công khai)</option>
-                  <option value="HIDDEN">⏸️ Tạm ẩn (Ẩn khỏi tìm kiếm)</option>
-                  <option value="RENTED">🔒 Đã cho thuê</option>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                 </select>
               </div>
 
@@ -517,11 +482,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                   transition: 'all 0.2s ease',
                 }}
               >
-<<<<<<< HEAD
                 {submitting ? 'Đang tạo tin...' : 'Xác nhận & Đăng tin'}
-=======
-                {submitting ? 'Đang tạo tin...' : '🚀 Xác nhận & Đăng tin'}
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               </button>
             </div>
           </form>

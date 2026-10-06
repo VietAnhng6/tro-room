@@ -148,7 +148,7 @@ function Forbidden() {
           margin: 0 auto 28px;
           max-width: 560px;
           color: #64748b;
-          font-size: 16px;
+          fontSize: 16px;
           line-height: 1.6;
         }
 
@@ -319,24 +319,18 @@ export function AppRoutes() {
         }
       />
 
+      {/* Public Pages with their own independent search view */}
+      <Route path="/search-rooms" element={<SearchRooms />} />
       <Route path="/listing/:id" element={<ListingDetail />} />
       <Route path="/403" element={<Forbidden />} />
 
-      {/* Protected Nested Routes Wrapped by MainLayout (Sidebar + Topbar) */}
+      {/* Protected Nested Routes Wrapped by MainLayout (Sidebar + Topbar + Carousel + Outlet) */}
       <Route element={<MainLayout />}>
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute path="/dashboard">
               <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/search-rooms"
-          element={
-            <ProtectedRoute path="/search-rooms">
-              <SearchRooms />
             </ProtectedRoute>
           }
         />

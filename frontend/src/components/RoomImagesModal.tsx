@@ -365,20 +365,12 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-<<<<<<< HEAD
-=======
-              <span style={{ fontSize: '20px' }}>🖼️</span>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
                 Quản lý ảnh thực tế - Phòng {roomCode}
               </h2>
             </div>
             {buildingName && (
-<<<<<<< HEAD
               <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>
-=======
-              <p style={{ margin: '4px 0 0 28px', fontSize: '13px', color: '#64748b' }}>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                 Tòa nhà: <strong>{buildingName}</strong> · Tối đa 8 ảnh (≤ 5MB/ảnh, định dạng JPG/PNG)
               </p>
             )}
@@ -425,11 +417,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                 fontSize: '13.5px',
               }}
             >
-<<<<<<< HEAD
               {error}
-=======
-              ⚠️ {error}
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             </div>
           )}
 
@@ -444,11 +432,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                 fontSize: '13.5px',
               }}
             >
-<<<<<<< HEAD
               {successMsg}
-=======
-              ✓ {successMsg}
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             </div>
           )}
 
@@ -466,11 +450,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                 border: `2px dashed ${isDragOver ? '#2563eb' : '#cbd5e1'}`,
                 backgroundColor: isDragOver ? '#eff6ff' : '#f8fafc',
                 borderRadius: '16px',
-<<<<<<< HEAD
                 padding: '24px 20px',
-=======
-                padding: '30px 20px',
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                 textAlign: 'center',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
@@ -486,10 +466,6 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                   if (e.target.files) handleUploadFiles(e.target.files)
                 }}
               />
-<<<<<<< HEAD
-=======
-              <div style={{ fontSize: '36px', marginBottom: '10px' }}>📤</div>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e293b', marginBottom: '4px' }}>
                 Kéo & thả ảnh vào đây hoặc bấm để chọn tệp
               </div>
@@ -498,11 +474,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
               </div>
               {uploading && (
                 <div style={{ marginTop: '12px', fontSize: '14px', fontWeight: 600, color: '#2563eb' }}>
-<<<<<<< HEAD
                   Đang tải ảnh lên máy chủ...
-=======
-                  ⏳ Đang tải ảnh lên máy chủ...
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                 </div>
               )}
             </div>
@@ -522,11 +494,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                 Danh sách ảnh phòng ({images.length}/8)
               </h3>
               <span style={{ fontSize: '12.5px', color: '#2563eb', fontWeight: 600 }}>
-<<<<<<< HEAD
                 Kéo thả để đổi thứ tự · Ảnh số 1 là <strong>Ảnh đại diện</strong>
-=======
-                💡 Kéo thả để đổi thứ tự · Ảnh số 1 là <strong>Ảnh đại diện</strong>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               </span>
             </div>
 
@@ -622,11 +590,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                               letterSpacing: '0.2px',
                             }}
                           >
-<<<<<<< HEAD
                             Ảnh đại diện
-=======
-                            ⭐ Ảnh đại diện
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                           </div>
                         )}
 
@@ -671,11 +635,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                             padding: '4px',
                           }}
                         >
-<<<<<<< HEAD
                           Xem lớn
-=======
-                          🔍 Xem lớn
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                         </button>
 
                         <button
@@ -692,11 +652,7 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
                             padding: '4px 8px',
                           }}
                         >
-<<<<<<< HEAD
                           Xóa
-=======
-                          🗑️ Xóa
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                         </button>
                       </div>
                     </div>
@@ -761,10 +717,6 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
               boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
             }}
           >
-<<<<<<< HEAD
-=======
-            <div style={{ fontSize: '42px', marginBottom: '10px' }}>⚠️</div>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>
               Xác nhận xóa ảnh phòng?
             </h3>
@@ -839,7 +791,6 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
           style={{
             position: 'fixed',
             inset: 0,
-<<<<<<< HEAD
             backgroundColor: 'rgba(0, 0, 0, 0.88)',
             display: 'flex',
             alignItems: 'center',
@@ -886,23 +837,10 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
             >
               ✕
             </button>
-=======
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1200,
-            padding: '24px',
-            cursor: 'zoom-out',
-          }}
-        >
-          <div style={{ position: 'relative', maxWidth: '800px', width: '100%', textAlign: 'center' }}>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             <img
               src={previewUrl}
               alt="Xem chi tiết ảnh phòng"
               style={{
-<<<<<<< HEAD
                 maxWidth: '88vw',
                 maxHeight: '82vh',
                 objectFit: 'contain',
@@ -913,16 +851,6 @@ export const RoomImagesModal: React.FC<RoomImagesModalProps> = ({
             />
             <div style={{ marginTop: '10px', color: '#ffffff', fontSize: '13px', opacity: 0.85 }}>
               Bấm ra ngoài hoặc nút đóng để quay lại
-=======
-                maxWidth: '100%',
-                maxHeight: '80vh',
-                borderRadius: '12px',
-                boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
-              }}
-            />
-            <div style={{ marginTop: '12px', color: '#ffffff', fontSize: '13px' }}>
-              Bấm bất kỳ đâu để đóng
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             </div>
           </div>
         </div>

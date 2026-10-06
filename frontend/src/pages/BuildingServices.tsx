@@ -246,11 +246,7 @@ function BuildingServices() {
                 fontSize: 13.5,
               }}
             >
-<<<<<<< HEAD
               Tổng quan
-=======
-              🏠 Tổng quan
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             </button>
           </div>
         </div>

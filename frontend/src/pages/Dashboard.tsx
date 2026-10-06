@@ -73,30 +73,9 @@ export function Dashboard() {
 
   const statCards = [
     {
-<<<<<<< HEAD
       title: 'Tòa nhà',
       value: String(buildingCount),
       color: '#2563eb',
-=======
-      key: 'dashboard',
-      icon: '',
-      title: 'Tổng quan',
-      enabled: true,
-      path: '/dashboard',
-    },
-    {
-      key: 'searchRooms',
-      icon: '🔍',
-      title: 'Tìm phòng trọ',
-      enabled: true,
-      path: '/search-rooms',
-    },
-    {
-      key: 'building',
-      icon: '',
-      title: 'Quản lý tòa nhà',
-      enabled: permissions.building,
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
       path: '/buildings',
     },
     {
@@ -443,79 +422,9 @@ export function Dashboard() {
               textAlign: 'center',
             }}
           >
-<<<<<<< HEAD
             Chỉnh sửa hồ sơ cá nhân
           </button>
         </div>
-=======
-            <div
-              style={{
-                fontSize: 18,
-                fontWeight: 750,
-                marginBottom: 8,
-              }}
-            >
-              Chào mừng đến với TroRoom 👋
-            </div>
-
-            <div
-              style={{
-                color: '#64748b',
-                fontSize: 14,
-                lineHeight: 1.6,
-              }}
-            >
-              Sử dụng thanh chức năng bên trái để truy cập các chức năng mà tài khoản của bạn được phép sử dụng.
-            </div>
-          </div>
-
-          {/* QUICK SEARCH ROOMS BANNER */}
-          <div
-            style={{
-              marginTop: 20,
-              background: 'linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%)',
-              border: '1.5px solid #bfdbfe',
-              borderRadius: 16,
-              padding: '22px 26px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              boxSizing: 'border-box',
-              flexWrap: 'wrap',
-              gap: 16,
-            }}
-          >
-            <div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: '#1e40af', marginBottom: 4 }}>
-                🔍 Khám phá danh sách phòng trọ
-              </div>
-              <div style={{ fontSize: 13.5, color: '#3b82f6' }}>
-                Xem danh sách tất cả các phòng trọ trống đang đăng tin cho thuê trên hệ thống TroRoom.
-              </div>
-            </div>
-            <button
-              onClick={() => go('/search-rooms')}
-              style={{
-                border: 'none',
-                borderRadius: 12,
-                padding: '12px 22px',
-                background: '#2563eb',
-                color: '#ffffff',
-                fontSize: 14,
-                fontWeight: 700,
-                cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-              }}
-            >
-              <span>Xem trang tìm phòng</span>
-              <span>→</span>
-            </button>
-          </div>
-        </main>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
       </div>
     </div>
   )

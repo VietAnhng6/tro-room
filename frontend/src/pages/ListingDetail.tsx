@@ -244,11 +244,7 @@ function ListingDetail() {
             </a>
             <div className="nav-actions">
               <a href="/search-rooms" className="nav-btn-primary">
-<<<<<<< HEAD
                 Tìm phòng khác
-=======
-                🔍 Tìm phòng khác
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               </a>
             </div>
           </div>
@@ -256,21 +252,13 @@ function ListingDetail() {
 
         <div className="error-container-full">
           <div className="error-card-box">
-<<<<<<< HEAD
-=======
-            <div className="error-icon-big">🏡</div>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             <h1 className="error-heading-text">Không thể mở tin đăng</h1>
             <p className="error-desc-text">
               {loadError || 'Tin đăng không còn hiển thị hoặc phòng này đã được người khác thuê.'}
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '20px' }}>
               <a href="/search-rooms" className="btn-back-search">
-<<<<<<< HEAD
                 Quay lại trang tìm kiếm phòng
-=======
-                ← Quay lại trang tìm kiếm phòng
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               </a>
             </div>
           </div>
@@ -303,11 +291,7 @@ function ListingDetail() {
             </a>
             {token ? (
               <a href="/dashboard" className="nav-btn-primary">
-<<<<<<< HEAD
                 Dashboard
-=======
-                Dashboard ➔
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               </a>
             ) : (
               <a href="/" className="nav-btn-primary">
@@ -331,17 +315,10 @@ function ListingDetail() {
 
           <div className="listing-header">
             <div>
-<<<<<<< HEAD
               <div className="status-badge">ĐANG CHO THUÊ</div>
               <h1 className="listing-title">{listing.title}</h1>
               <p className="listing-address">
                 <strong>{listing.buildingName}</strong> · {listing.address} ({listing.district || 'Hà Nội'})
-=======
-              <div className="status-badge">🟢 ĐANG CHO THUÊ</div>
-              <h1 className="listing-title">{listing.title}</h1>
-              <p className="listing-address">
-                📍 <strong>{listing.buildingName}</strong> · {listing.address} ({listing.district || 'Hà Nội'})
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               </p>
             </div>
 
@@ -362,7 +339,6 @@ function ListingDetail() {
                   <>
                     <div className="main-image-container">
                       <img
-<<<<<<< HEAD
                         src={getImageSrc(currentImage)}
                         alt={`${listing.title} - ảnh ${selectedImageIndex + 1}`}
                         className="main-gallery-img"
@@ -370,30 +346,14 @@ function ListingDetail() {
                       />
                       <div className="gallery-counter-badge">
                         {selectedImageIndex + 1} / {images.length}
-=======
-                        src={`${API}${currentImage.imageUrl}`}
-                        alt={`${listing.title} - ảnh ${selectedImageIndex + 1}`}
-                        className="main-gallery-img"
-                        onClick={() => setPreviewZoomUrl(`${API}${currentImage.imageUrl}`)}
-                      />
-                      <div className="gallery-counter-badge">
-                        📸 {selectedImageIndex + 1} / {images.length}
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                       </div>
                       <button
                         type="button"
                         className="btn-zoom-image"
-<<<<<<< HEAD
                         onClick={() => setPreviewZoomUrl(getImageSrc(currentImage))}
                         title="Phóng to ảnh"
                       >
                         Phóng to
-=======
-                        onClick={() => setPreviewZoomUrl(`${API}${currentImage.imageUrl}`)}
-                        title="Phóng to ảnh"
-                      >
-                        🔍 Phóng to
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                       </button>
                     </div>
 
@@ -406,11 +366,7 @@ function ListingDetail() {
                           className={`thumb-btn ${selectedImageIndex === idx ? 'active' : ''}`}
                           onClick={() => setSelectedImageIndex(idx)}
                         >
-<<<<<<< HEAD
                           <img src={getImageSrc(img)} alt={`Thumbnail ${idx + 1}`} />
-=======
-                          <img src={`${API}${img.imageUrl}`} alt={`Thumbnail ${idx + 1}`} />
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                           {idx === 0 && <span className="thumb-cover-tag">Ảnh bìa</span>}
                         </button>
                       ))}
@@ -418,10 +374,6 @@ function ListingDetail() {
                   </>
                 ) : (
                   <div className="no-images-placeholder">
-<<<<<<< HEAD
-=======
-                    <span>🏠</span>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                     <p>Chưa có hình ảnh phòng thực tế cho tin đăng này</p>
                   </div>
                 )}
@@ -429,22 +381,14 @@ function ListingDetail() {
 
               {/* ROOM SPECIFICATIONS */}
               <section className="info-card">
-<<<<<<< HEAD
                 <h2 className="card-section-title">Thông số chi tiết phòng</h2>
                 <div className="specs-grid">
                   <div className="spec-card-item">
-=======
-                <h2 className="card-section-title">📐 Thông số chi tiết phòng</h2>
-                <div className="specs-grid">
-                  <div className="spec-card-item">
-                    <div className="spec-item-icon">🚪</div>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                     <div className="spec-item-info">
                       <span className="spec-item-label">Mã phòng</span>
                       <strong className="spec-item-val">{listing.roomCode}</strong>
                     </div>
                   </div>
-<<<<<<< HEAD
 
                   <div className="spec-card-item">
                     <div className="spec-item-info">
@@ -735,246 +679,6 @@ function ListingDetail() {
             <div style={{ marginTop: '10px', color: '#ffffff', fontSize: '13px', opacity: 0.85 }}>
               Bấm ra ngoài hoặc nút đóng để quay lại
             </div>
-=======
-
-                  <div className="spec-card-item">
-                    <div className="spec-item-icon">📏</div>
-                    <div className="spec-item-info">
-                      <span className="spec-item-label">Diện tích</span>
-                      <strong className="spec-item-val">{listing.area} m²</strong>
-                    </div>
-                  </div>
-
-                  <div className="spec-card-item">
-                    <div className="spec-item-icon">🏢</div>
-                    <div className="spec-item-info">
-                      <span className="spec-item-label">Vị trí tầng</span>
-                      <strong className="spec-item-val">Tầng {listing.floor}</strong>
-                    </div>
-                  </div>
-
-                  <div className="spec-card-item">
-                    <div className="spec-item-icon">👥</div>
-                    <div className="spec-item-info">
-                      <span className="spec-item-label">Sức chứa tối đa</span>
-                      <strong className="spec-item-val">{listing.maxPeople} người</strong>
-                    </div>
-                  </div>
-
-                  <div className="spec-card-item">
-                    <div className="spec-item-icon">💰</div>
-                    <div className="spec-item-info">
-                      <span className="spec-item-label">Tiền cọc giữ phòng</span>
-                      <strong className="spec-item-val">{money(depositAmount)} (1 tháng)</strong>
-                    </div>
-                  </div>
-
-                  <div className="spec-card-item">
-                    <div className="spec-item-icon">📅</div>
-                    <div className="spec-item-info">
-                      <span className="spec-item-label">Thời hạn tin đăng</span>
-                      <strong className="spec-item-val">Đến {listing.expiresAt ? listing.expiresAt.slice(0, 10) : '30 ngày'}</strong>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* DESCRIPTION */}
-              <section className="info-card">
-                <h2 className="card-section-title">📝 Mô tả chi tiết từ chủ nhà</h2>
-                <div className="description-content">
-                  {listing.description ? (
-                    <p style={{ whiteSpace: 'pre-line' }}>{listing.description}</p>
-                  ) : (
-                    <p className="muted-text">Phòng trọ khép kín, tiện nghi đầy đủ, an ninh đảm bảo, giờ giấc tự do.</p>
-                  )}
-                </div>
-              </section>
-
-              {/* SERVICES AND FEES TABLE (S2-05) */}
-              <section className="info-card">
-                <h2 className="card-section-title">⚡ Bảng đơn giá dịch vụ & tiện ích</h2>
-                <div className="table-responsive">
-                  <table className="services-detail-table">
-                    <thead>
-                      <tr>
-                        <th>Tên dịch vụ</th>
-                        <th>Cách tính</th>
-                        <th>Đơn vị</th>
-                        <th style={{ textAlign: 'right' }}>Đơn giá</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {services.length > 0 ? (
-                        services.map((srv) => (
-                          <tr key={srv.id}>
-                            <td className="font-bold">{srv.name}</td>
-                            <td>
-                              <span className="method-pill">{methodLabel(srv.calculationMethod, srv.unit)}</span>
-                            </td>
-                            <td>{srv.unit || '-'}</td>
-                            <td className="price-cell">{money(srv.price)}</td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={4} className="empty-cell">
-                            Chưa có danh sách dịch vụ riêng được thiết lập.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            </div>
-
-            {/* RIGHT COLUMN: ESTIMATED FIRST MONTH COST & RENTAL REQUEST FORM */}
-            <div className="detail-right-col">
-              {/* FIRST MONTH ESTIMATED COST BOX (S2-05) */}
-              <section className="first-month-card">
-                <div className="cost-card-header">
-                  <span className="cost-icon">🧮</span>
-                  <div>
-                    <h3 className="cost-card-title">Ước tính tổng chi phí tháng đầu</h3>
-                    <p className="cost-card-subtitle">Chi phí dự kiến khi ký hợp đồng và nhận phòng</p>
-                  </div>
-                </div>
-
-                <div className="cost-breakdown-list">
-                  <div className="cost-row">
-                    <span>💵 Tiền thuê phòng (tháng 1):</span>
-                    <strong>{money(listing.rent)}</strong>
-                  </div>
-                  <div className="cost-row">
-                    <span>🔒 Tiền đặt cọc giữ phòng (1 tháng):</span>
-                    <strong>{money(depositAmount)}</strong>
-                  </div>
-                  <div className="cost-row">
-                    <span>📦 Chi phí dịch vụ cố định hàng tháng:</span>
-                    <strong>{money(fixedCost)}</strong>
-                  </div>
-
-                  <div className="cost-total-row">
-                    <span>TỔNG CỘNG THÁNG ĐẦU:</span>
-                    <span className="total-amount">{money(calculatedFirstMonthTotal)}</span>
-                  </div>
-                </div>
-
-                <div className="cost-disclaimer-note">
-                  <strong>💡 Ghi chú quan trọng về Điện & Nước:</strong>
-                  <p>
-                    Khoản tính trên chưa bao gồm tiền Điện & Nước. Tiền Điện & Nước sẽ được tính riêng theo chỉ số công tơ/đồng hồ thực tế tiêu thụ trong tháng (theo bảng đơn giá dịch vụ niêm yết).
-                  </p>
-                </div>
-              </section>
-
-              {/* RENTAL REQUEST FORM (S2-06) */}
-              <section className="request-card">
-                <h3 className="request-card-title">📨 Gửi yêu cầu đặt lịch hoặc thuê</h3>
-                <p className="request-card-desc">
-                  Chủ nhà sẽ nhận được thông tin và liên hệ lại với bạn sớm nhất.
-                </p>
-
-                {notice && (
-                  <div className={`notice-box ${notice.type}`}>
-                    <div>{notice.text}</div>
-                    {notice.requestCode && (
-                      <div className="request-code-highlight">
-                        Mã yêu cầu của bạn: <strong>{notice.requestCode}</strong>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {!token && (
-                  <div className="unauthenticated-notice">
-                    <span>ℹ️</span>
-                    <div>
-                      Bạn đang xem tin với tư cách khách vãng lai. Vui lòng <a href="/">Đăng nhập</a> hoặc <a href="/register">Đăng ký tài khoản Khách thuê</a> để gửi yêu cầu đặt lịch xem phòng.
-                    </div>
-                  </div>
-                )}
-
-                <div className="form-group-item">
-                  <label className="form-label">Loại yêu cầu *</label>
-                  <div className="request-type-selector">
-                    <button
-                      type="button"
-                      className={`type-btn ${requestType === 'VIEWING' ? 'active' : ''}`}
-                      onClick={() => setRequestType('VIEWING')}
-                    >
-                      👁️ Đặt lịch xem phòng
-                    </button>
-                    <button
-                      type="button"
-                      className={`type-btn ${requestType === 'RENT_NOW' ? 'active' : ''}`}
-                      onClick={() => setRequestType('RENT_NOW')}
-                    >
-                      🚀 Thuê ngay
-                    </button>
-                  </div>
-                </div>
-
-                <div className="form-group-item">
-                  <label className="form-label">Ngày mong muốn (trong 60 ngày tới) *</label>
-                  <input
-                    type="date"
-                    className="form-input"
-                    min={today}
-                    max={maxDate}
-                    value={desiredDate}
-                    onChange={(e) => setDesiredDate(e.target.value)}
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label className="form-label">Số người dự kiến ở * (Tối đa {listing.maxPeople} người)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max={listing.maxPeople}
-                    className="form-input"
-                    value={expectedPeople}
-                    onChange={(e) => setExpectedPeople(e.target.value)}
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label className="form-label">Lời nhắn gửi chủ nhà (Tùy chọn)</label>
-                  <textarea
-                    rows={3}
-                    className="form-input"
-                    placeholder="VD: Tôi có thể xem phòng vào lúc 18h tối được không?..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  disabled={submitting}
-                  className="btn-submit-request"
-                  onClick={submitRequest}
-                >
-                  {submitting ? 'Đang gửi yêu cầu...' : '🚀 Gửi yêu cầu ngay'}
-                </button>
-              </section>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* MODAL ZOOM ẢNH FULL SIZE */}
-      {previewZoomUrl && (
-        <div
-          className="zoom-overlay"
-          onClick={() => setPreviewZoomUrl(null)}
-        >
-          <div className="zoom-modal-content">
-            <img src={previewZoomUrl} alt="Phóng to ảnh phòng" />
-            <p>Bấm bất kỳ đâu để đóng</p>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
           </div>
         </div>
       )}

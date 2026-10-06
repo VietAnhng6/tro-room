@@ -260,20 +260,12 @@ export const RoomServicesModal: React.FC<RoomServicesModalProps> = ({
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-<<<<<<< HEAD
-=======
-              <span style={{ fontSize: '20px' }}>🛠️</span>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
                 Quản lý dịch vụ riêng - Phòng {roomCode}
               </h2>
             </div>
             {buildingName && (
-<<<<<<< HEAD
               <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>
-=======
-              <p style={{ margin: '4px 0 0 28px', fontSize: '13px', color: '#64748b' }}>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                 Thuộc tòa nhà: <strong>{buildingName}</strong>
               </p>
             )}
@@ -324,10 +316,6 @@ export const RoomServicesModal: React.FC<RoomServicesModalProps> = ({
               gap: '10px',
             }}
           >
-<<<<<<< HEAD
-=======
-            <span style={{ fontSize: '18px' }}>ℹ️</span>
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             <div>
               <strong>Ghi chú quan trọng:</strong> Cấu hình dịch vụ & đơn giá riêng chỉ áp dụng từ kỳ hóa đơn sau. Đơn giá riêng ưu tiên hơn đơn giá chung của tòa nhà.
             </div>
@@ -344,11 +332,7 @@ export const RoomServicesModal: React.FC<RoomServicesModalProps> = ({
                 fontSize: '13.5px',
               }}
             >
-<<<<<<< HEAD
               {error}
-=======
-              ⚠️ {error}
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             </div>
           )}
 
@@ -363,11 +347,7 @@ export const RoomServicesModal: React.FC<RoomServicesModalProps> = ({
                 fontSize: '13.5px',
               }}
             >
-<<<<<<< HEAD
               {successMsg}
-=======
-              ✓ {successMsg}
->>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             </div>
           )}
 

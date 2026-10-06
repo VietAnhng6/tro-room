@@ -453,31 +453,14 @@ function Buildings() {
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <button
-              onClick={() => {
-                window.location.href = '/search-rooms'
-              }}
-              style={{
-                ...styles.backButton,
-                background: '#eff6ff',
-                color: '#1d4ed8',
-                borderColor: '#bfdbfe',
-                fontWeight: 700,
-              }}
-            >
-              🔍 Tìm phòng trọ
-            </button>
-
-            <button
-              onClick={() => {
-                window.location.href = '/dashboard'
-              }}
-              style={styles.backButton}
-            >
-              ← Dashboard
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              window.location.href = '/dashboard'
+            }}
+            style={styles.backButton}
+          >
+            ← Dashboard
+          </button>
         </div>
 
         {/* MESSAGE */}
