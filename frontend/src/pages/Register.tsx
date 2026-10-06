@@ -50,7 +50,7 @@ function Register() {
         throw new Error(data || 'Đăng ký thất bại')
       }
 
-      setMessage('Mã xác minh đã được gửi tới email Gmail của bạn.')
+      setMessage('Mã xác minh đã được gửi tới Gmail của bạn.')
       setOtpStep(true)
     } catch (error) {
       setMessage(

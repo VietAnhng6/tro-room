@@ -37,6 +37,10 @@ public class RoomServiceController {
         this.buildingRepository = buildingRepository;
     }
 
+    private boolean isAdmin(User user) {
+        return "ADMIN".equals(user.getRole().name());
+    }
+
     private boolean isLandlord(User user) {
         return "LANDLORD".equals(user.getRole().name());
     }
@@ -46,7 +50,15 @@ public class RoomServiceController {
     }
 
     private boolean canManageRoom(User user, Room room) {
+        if (isAdmin(user)) {
+            return true;
+        }
+
         Building building = room.getBuilding();
+
+        if (building == null) {
+            return false;
+        }
 
         if (isLandlord(user)) {
             return building.getLandlord() != null
