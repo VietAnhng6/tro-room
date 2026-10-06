@@ -55,8 +55,12 @@ function SearchRooms() {
 
   const token = localStorage.getItem('accessToken')
 
+<<<<<<< HEAD
   // Đọc dữ liệu trực tiếp từ overrides hoặc từ state hiện tại
   const searchRooms = async (overrides: FilterParams = {}) => {
+=======
+  const searchRooms = async (targetPage = 0, targetSort = sort) => {
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
     setLoading(true)
     setError('')
 
@@ -158,6 +162,14 @@ function SearchRooms() {
     searchRooms({ minRent: min, maxRent: max, page: 0 })
   }
 
+  const applyPricePreset = (min: string, max: string) => {
+    setMinRent(min)
+    setMaxRent(max)
+    setTimeout(() => {
+      searchRooms(0)
+    }, 0)
+  }
+
   return (
     <div className="search-page-wrapper">
       {/* NAVIGATION BAR */}
@@ -170,7 +182,11 @@ function SearchRooms() {
           <div className="nav-actions">
             {token ? (
               <a href="/dashboard" className="nav-btn primary">
+<<<<<<< HEAD
                 Vào Dashboard
+=======
+                Vào Dashboard ➔
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               </a>
             ) : (
               <div style={{ display: 'flex', gap: '10px' }}>
@@ -201,7 +217,11 @@ function SearchRooms() {
           <section className="filter-card">
             <div className="filter-card-header">
               <div className="filter-card-title">
+<<<<<<< HEAD
                 Bộ lọc tìm kiếm kết hợp
+=======
+                <span style={{ color: '#2563eb' }}>🔍</span> Bộ lọc tìm kiếm kết hợp
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               </div>
               <div className="price-presets">
                 <span className="preset-label">Khoảng giá nhanh:</span>
@@ -327,12 +347,21 @@ function SearchRooms() {
                   onChange={(e) => {
                     const newSort = e.target.value
                     setSort(newSort)
+<<<<<<< HEAD
                     searchRooms({ sort: newSort, page: 0 })
                   }}
                 >
                   <option value="newest">Tin mới nhất trước</option>
                   <option value="price_asc">Giá: Thấp đến Cao</option>
                   <option value="price_desc">Giá: Cao đến Thấp</option>
+=======
+                    searchRooms(0, newSort)
+                  }}
+                >
+                  <option value="newest">🕒 Tin mới nhất trước</option>
+                  <option value="price_asc">💵 Giá: Thấp đến Cao</option>
+                  <option value="price_desc">💎 Giá: Cao đến Thấp</option>
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                 </select>
               </div>
             </div>
@@ -342,9 +371,15 @@ function SearchRooms() {
               <button
                 type="button"
                 className="btn-filter-search"
+<<<<<<< HEAD
                 onClick={() => searchRooms({ page: 0 })}
               >
                 Tìm kiếm ngay
+=======
+                onClick={() => searchRooms(0)}
+              >
+                🔎 Tìm kiếm ngay
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               </button>
 
               <button
@@ -352,7 +387,11 @@ function SearchRooms() {
                 className="btn-filter-clear"
                 onClick={clearFilters}
               >
+<<<<<<< HEAD
                 Xóa bộ lọc
+=======
+                🔄 Xóa bộ lọc
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               </button>
             </div>
           </section>
@@ -377,7 +416,11 @@ function SearchRooms() {
                 onClick={() => setViewMode('grid')}
                 title="Xem dạng lưới"
               >
+<<<<<<< HEAD
                 Lưới
+=======
+                🔲 Lưới
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               </button>
               <button
                 type="button"
@@ -385,7 +428,11 @@ function SearchRooms() {
                 onClick={() => setViewMode('list')}
                 title="Xem dạng danh sách"
               >
+<<<<<<< HEAD
                 Danh sách
+=======
+                📋 Danh sách
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               </button>
             </div>
           </div>
@@ -393,7 +440,11 @@ function SearchRooms() {
           {/* ERROR ALERT */}
           {error && (
             <div className="error-box">
+<<<<<<< HEAD
               {error}
+=======
+              ⚠️ {error}
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
             </div>
           )}
 
@@ -408,6 +459,10 @@ function SearchRooms() {
           {/* EMPTY STATE */}
           {!loading && !error && result && result.content.length === 0 && (
             <section className="empty-state-card">
+<<<<<<< HEAD
+=======
+              <div className="empty-illustration">🏡</div>
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
               <h2 className="empty-title">Không tìm thấy phòng phù hợp</h2>
               <p className="empty-desc">
                 Rất tiếc, hiện tại không có phòng nào khớp với các tiêu chí tìm kiếm của bạn. Hãy thử nới rộng khoảng giá hoặc điều chỉnh diện tích để xem nhiều phòng hơn.
@@ -424,14 +479,22 @@ function SearchRooms() {
                     searchRooms({ minRent: '', maxRent: '', minArea: '', maxArea: '', page: 0 })
                   }}
                 >
+<<<<<<< HEAD
                   Nới rộng khoảng giá & diện tích
+=======
+                  🎯 Nới rộng khoảng giá & diện tích
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                 </button>
                 <button
                   type="button"
                   className="btn-reset-all"
                   onClick={clearFilters}
                 >
+<<<<<<< HEAD
                   Đặt lại tất cả bộ lọc
+=======
+                  🔄 Đặt lại tất cả bộ lọc
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                 </button>
               </div>
             </section>
@@ -444,6 +507,12 @@ function SearchRooms() {
                 {result.content.map((item) => (
                   <article key={item.id} className="room-card">
                     <div className="card-thumb-area">
+<<<<<<< HEAD
+=======
+                      <div className="thumb-placeholder">
+                        <span>🏠</span>
+                      </div>
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                       <div className="card-room-badge">Phòng {item.roomCode}</div>
                       <div className="card-floor-badge">Tầng {item.floor}</div>
                     </div>
@@ -454,12 +523,21 @@ function SearchRooms() {
                       </h3>
 
                       <div className="card-location">
+<<<<<<< HEAD
                         <strong>{item.buildingName}</strong> · {item.district || item.address}
                       </div>
 
                       <div className="card-specs">
                         <span className="spec-tag">{item.area} m²</span>
                         <span className="spec-tag">Tối đa {item.maxPeople} người</span>
+=======
+                        📍 <strong>{item.buildingName}</strong> · {item.district || item.address}
+                      </div>
+
+                      <div className="card-specs">
+                        <span className="spec-tag">📐 {item.area} m²</span>
+                        <span className="spec-tag">👥 Tối đa {item.maxPeople} người</span>
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                       </div>
 
                       <p className="card-desc">
@@ -474,7 +552,11 @@ function SearchRooms() {
                         </div>
 
                         <a href={`/listing/${item.id}`} className="btn-view-detail">
+<<<<<<< HEAD
                           Xem chi tiết
+=======
+                          Xem chi tiết ➔
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                         </a>
                       </div>
                     </div>
@@ -488,7 +570,11 @@ function SearchRooms() {
                   <button
                     type="button"
                     disabled={result.first}
+<<<<<<< HEAD
                     onClick={() => searchRooms({ page: page - 1 })}
+=======
+                    onClick={() => searchRooms(page - 1)}
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                     className="page-nav-btn"
                   >
                     ← Trang trước
@@ -501,7 +587,11 @@ function SearchRooms() {
                   <button
                     type="button"
                     disabled={result.last}
+<<<<<<< HEAD
                     onClick={() => searchRooms({ page: page + 1 })}
+=======
+                    onClick={() => searchRooms(page + 1)}
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
                     className="page-nav-btn"
                   >
                     Trang sau →
@@ -811,6 +901,10 @@ function SearchRooms() {
           font-weight: 700;
         }
 
+<<<<<<< HEAD
+=======
+        /* GRID VIEW & LIST VIEW */
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
         .listings-container.grid-view {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -859,6 +953,14 @@ function SearchRooms() {
           height: auto;
         }
 
+<<<<<<< HEAD
+=======
+        .thumb-placeholder {
+          font-size: 48px;
+          opacity: 0.8;
+        }
+
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
         .card-room-badge {
           position: absolute;
           top: 12px;
@@ -985,6 +1087,10 @@ function SearchRooms() {
           transform: translateY(-1px);
         }
 
+<<<<<<< HEAD
+=======
+        /* EMPTY STATE */
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
         .empty-state-card {
           background: #ffffff;
           border-radius: 18px;
@@ -994,6 +1100,14 @@ function SearchRooms() {
           margin-top: 20px;
         }
 
+<<<<<<< HEAD
+=======
+        .empty-illustration {
+          font-size: 56px;
+          margin-bottom: 16px;
+        }
+
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
         .empty-title {
           font-size: 22px;
           font-weight: 800;
@@ -1047,6 +1161,10 @@ function SearchRooms() {
           background: #e2e8f0;
         }
 
+<<<<<<< HEAD
+=======
+        /* PAGINATION */
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
         .pagination-bar {
           display: flex;
           align-items: center;
@@ -1111,6 +1229,10 @@ function SearchRooms() {
           color: #94a3b8;
         }
 
+<<<<<<< HEAD
+=======
+        /* RESPONSIVE STYLES (DOWN TO 360PX) */
+>>>>>>> 2dcbd0ecc63704ec53c21db1c3227b0430e03459
         @media (max-width: 768px) {
           .listings-container.list-view .room-card {
             flex-direction: column;
