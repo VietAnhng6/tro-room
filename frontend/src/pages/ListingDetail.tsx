@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import Logo from '../components/Logo'
 
 const API = 'http://localhost:8080'
 
@@ -42,6 +41,15 @@ type Notice = {
 
 const money = (value: number) =>
   `${new Intl.NumberFormat('vi-VN').format(value)} đ`
+
+const getImageSrc = (urlOrObj?: string | { imageUrl?: string; id?: number }) => {
+  if (!urlOrObj) return ''
+  const url = typeof urlOrObj === 'string' ? urlOrObj : urlOrObj.imageUrl || `/api/room-images/${urlOrObj.id}`
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/')) return `${API}${url}`
+  return `${API}/${url}`
+}
 
 function vietnamDate(daysFromToday = 0) {
   const today = new Date()
@@ -88,6 +96,7 @@ function ListingDetail() {
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [notice, setNotice] = useState<Notice | null>(null)
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const token = localStorage.getItem('accessToken')
   const role = localStorage.getItem('role')
@@ -128,6 +137,7 @@ function ListingDetail() {
         type: 'info',
         text: 'Vui lòng đăng nhập tài khoản Khách thuê để gửi yêu cầu thuê hoặc đặt lịch xem phòng.',
       })
+      setShowLoginModal(true)
       return
     }
 
@@ -228,29 +238,15 @@ function ListingDetail() {
   if (loadError || !listing) {
     return (
       <div className="detail-page-wrapper">
-        <nav className="detail-navbar">
-          <div className="nav-container">
-            <a href="/search-rooms" style={{ textDecoration: 'none' }}>
-              <Logo size="sm" title="TroRoom" subtitle="Nền tảng tìm phòng trọ" />
-            </a>
-            <div className="nav-actions">
-              <a href="/search-rooms" className="nav-btn-primary">
-                🔍 Tìm phòng khác
-              </a>
-            </div>
-          </div>
-        </nav>
-
         <div className="error-container-full">
           <div className="error-card-box">
-            <div className="error-icon-big">🏡</div>
             <h1 className="error-heading-text">Không thể mở tin đăng</h1>
             <p className="error-desc-text">
               {loadError || 'Tin đăng không còn hiển thị hoặc phòng này đã được người khác thuê.'}
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '20px' }}>
               <a href="/search-rooms" className="btn-back-search">
-                ← Quay lại trang tìm kiếm phòng
+                Quay lại trang tìm kiếm phòng
               </a>
             </div>
           </div>
@@ -270,30 +266,6 @@ function ListingDetail() {
 
   return (
     <div className="detail-page-wrapper">
-      {/* NAVBAR */}
-      <nav className="detail-navbar">
-        <div className="nav-container">
-          <a href="/search-rooms" style={{ textDecoration: 'none' }}>
-            <Logo size="sm" title="TroRoom" subtitle="Quản lý & Tìm kiếm phòng trọ" />
-          </a>
-
-          <div className="nav-actions">
-            <a href="/search-rooms" className="nav-link-btn">
-              ← Danh sách phòng
-            </a>
-            {token ? (
-              <a href="/dashboard" className="nav-btn-primary">
-                Dashboard ➔
-              </a>
-            ) : (
-              <a href="/" className="nav-btn-primary">
-                Đăng nhập
-              </a>
-            )}
-          </div>
-        </div>
-      </nav>
-
       <main className="detail-main-content">
         <div className="detail-container">
           {/* TOP BREADCRUMB & TITLE */}
@@ -307,10 +279,10 @@ function ListingDetail() {
 
           <div className="listing-header">
             <div>
-              <div className="status-badge">🟢 ĐANG CHO THUÊ</div>
+              <div className="status-badge">ĐANG CHO THUÊ</div>
               <h1 className="listing-title">{listing.title}</h1>
               <p className="listing-address">
-                📍 <strong>{listing.buildingName}</strong> · {listing.address} ({listing.district || 'Hà Nội'})
+                <strong>{listing.buildingName}</strong> · {listing.address} ({listing.district || 'Hà Nội'})
               </p>
             </div>
 
@@ -331,21 +303,21 @@ function ListingDetail() {
                   <>
                     <div className="main-image-container">
                       <img
-                        src={`${API}${currentImage.imageUrl}`}
+                        src={getImageSrc(currentImage)}
                         alt={`${listing.title} - ảnh ${selectedImageIndex + 1}`}
                         className="main-gallery-img"
-                        onClick={() => setPreviewZoomUrl(`${API}${currentImage.imageUrl}`)}
+                        onClick={() => setPreviewZoomUrl(getImageSrc(currentImage))}
                       />
                       <div className="gallery-counter-badge">
-                        📸 {selectedImageIndex + 1} / {images.length}
+                        {selectedImageIndex + 1} / {images.length}
                       </div>
                       <button
                         type="button"
                         className="btn-zoom-image"
-                        onClick={() => setPreviewZoomUrl(`${API}${currentImage.imageUrl}`)}
+                        onClick={() => setPreviewZoomUrl(getImageSrc(currentImage))}
                         title="Phóng to ảnh"
                       >
-                        🔍 Phóng to
+                        Phóng to
                       </button>
                     </div>
 
@@ -358,7 +330,7 @@ function ListingDetail() {
                           className={`thumb-btn ${selectedImageIndex === idx ? 'active' : ''}`}
                           onClick={() => setSelectedImageIndex(idx)}
                         >
-                          <img src={`${API}${img.imageUrl}`} alt={`Thumbnail ${idx + 1}`} />
+                          <img src={getImageSrc(img)} alt={`Thumbnail ${idx + 1}`} />
                           {idx === 0 && <span className="thumb-cover-tag">Ảnh bìa</span>}
                         </button>
                       ))}
@@ -366,7 +338,6 @@ function ListingDetail() {
                   </>
                 ) : (
                   <div className="no-images-placeholder">
-                    <span>🏠</span>
                     <p>Chưa có hình ảnh phòng thực tế cho tin đăng này</p>
                   </div>
                 )}
@@ -374,10 +345,9 @@ function ListingDetail() {
 
               {/* ROOM SPECIFICATIONS */}
               <section className="info-card">
-                <h2 className="card-section-title">📐 Thông số chi tiết phòng</h2>
+                <h2 className="card-section-title">Thông số chi tiết phòng</h2>
                 <div className="specs-grid">
                   <div className="spec-card-item">
-                    <div className="spec-item-icon">🚪</div>
                     <div className="spec-item-info">
                       <span className="spec-item-label">Mã phòng</span>
                       <strong className="spec-item-val">{listing.roomCode}</strong>
@@ -385,7 +355,6 @@ function ListingDetail() {
                   </div>
 
                   <div className="spec-card-item">
-                    <div className="spec-item-icon">📏</div>
                     <div className="spec-item-info">
                       <span className="spec-item-label">Diện tích</span>
                       <strong className="spec-item-val">{listing.area} m²</strong>
@@ -393,7 +362,6 @@ function ListingDetail() {
                   </div>
 
                   <div className="spec-card-item">
-                    <div className="spec-item-icon">🏢</div>
                     <div className="spec-item-info">
                       <span className="spec-item-label">Vị trí tầng</span>
                       <strong className="spec-item-val">Tầng {listing.floor}</strong>
@@ -401,7 +369,6 @@ function ListingDetail() {
                   </div>
 
                   <div className="spec-card-item">
-                    <div className="spec-item-icon">👥</div>
                     <div className="spec-item-info">
                       <span className="spec-item-label">Sức chứa tối đa</span>
                       <strong className="spec-item-val">{listing.maxPeople} người</strong>
@@ -409,7 +376,6 @@ function ListingDetail() {
                   </div>
 
                   <div className="spec-card-item">
-                    <div className="spec-item-icon">💰</div>
                     <div className="spec-item-info">
                       <span className="spec-item-label">Tiền cọc giữ phòng</span>
                       <strong className="spec-item-val">{money(depositAmount)} (1 tháng)</strong>
@@ -417,7 +383,6 @@ function ListingDetail() {
                   </div>
 
                   <div className="spec-card-item">
-                    <div className="spec-item-icon">📅</div>
                     <div className="spec-item-info">
                       <span className="spec-item-label">Thời hạn tin đăng</span>
                       <strong className="spec-item-val">Đến {listing.expiresAt ? listing.expiresAt.slice(0, 10) : '30 ngày'}</strong>
@@ -428,7 +393,7 @@ function ListingDetail() {
 
               {/* DESCRIPTION */}
               <section className="info-card">
-                <h2 className="card-section-title">📝 Mô tả chi tiết từ chủ nhà</h2>
+                <h2 className="card-section-title">Mô tả chi tiết từ chủ nhà</h2>
                 <div className="description-content">
                   {listing.description ? (
                     <p style={{ whiteSpace: 'pre-line' }}>{listing.description}</p>
@@ -440,7 +405,7 @@ function ListingDetail() {
 
               {/* SERVICES AND FEES TABLE (S2-05) */}
               <section className="info-card">
-                <h2 className="card-section-title">⚡ Bảng đơn giá dịch vụ & tiện ích</h2>
+                <h2 className="card-section-title">Bảng đơn giá dịch vụ & tiện ích</h2>
                 <div className="table-responsive">
                   <table className="services-detail-table">
                     <thead>
@@ -481,7 +446,6 @@ function ListingDetail() {
               {/* FIRST MONTH ESTIMATED COST BOX (S2-05) */}
               <section className="first-month-card">
                 <div className="cost-card-header">
-                  <span className="cost-icon">🧮</span>
                   <div>
                     <h3 className="cost-card-title">Ước tính tổng chi phí tháng đầu</h3>
                     <p className="cost-card-subtitle">Chi phí dự kiến khi ký hợp đồng và nhận phòng</p>
@@ -490,15 +454,15 @@ function ListingDetail() {
 
                 <div className="cost-breakdown-list">
                   <div className="cost-row">
-                    <span>💵 Tiền thuê phòng (tháng 1):</span>
+                    <span>Tiền thuê phòng (tháng 1):</span>
                     <strong>{money(listing.rent)}</strong>
                   </div>
                   <div className="cost-row">
-                    <span>🔒 Tiền đặt cọc giữ phòng (1 tháng):</span>
+                    <span>Tiền đặt cọc giữ phòng (1 tháng):</span>
                     <strong>{money(depositAmount)}</strong>
                   </div>
                   <div className="cost-row">
-                    <span>📦 Chi phí dịch vụ cố định hàng tháng:</span>
+                    <span>Chi phí dịch vụ cố định hàng tháng:</span>
                     <strong>{money(fixedCost)}</strong>
                   </div>
 
@@ -509,7 +473,7 @@ function ListingDetail() {
                 </div>
 
                 <div className="cost-disclaimer-note">
-                  <strong>💡 Ghi chú quan trọng về Điện & Nước:</strong>
+                  <strong>Ghi chú quan trọng về Điện & Nước:</strong>
                   <p>
                     Khoản tính trên chưa bao gồm tiền Điện & Nước. Tiền Điện & Nước sẽ được tính riêng theo chỉ số công tơ/đồng hồ thực tế tiêu thụ trong tháng (theo bảng đơn giá dịch vụ niêm yết).
                   </p>
@@ -518,7 +482,7 @@ function ListingDetail() {
 
               {/* RENTAL REQUEST FORM (S2-06) */}
               <section className="request-card">
-                <h3 className="request-card-title">📨 Gửi yêu cầu đặt lịch hoặc thuê</h3>
+                <h3 className="request-card-title">Gửi yêu cầu đặt lịch hoặc thuê</h3>
                 <p className="request-card-desc">
                   Chủ nhà sẽ nhận được thông tin và liên hệ lại với bạn sớm nhất.
                 </p>
@@ -536,7 +500,6 @@ function ListingDetail() {
 
                 {!token && (
                   <div className="unauthenticated-notice">
-                    <span>ℹ️</span>
                     <div>
                       Bạn đang xem tin với tư cách khách vãng lai. Vui lòng <a href="/">Đăng nhập</a> hoặc <a href="/register">Đăng ký tài khoản Khách thuê</a> để gửi yêu cầu đặt lịch xem phòng.
                     </div>
@@ -551,14 +514,14 @@ function ListingDetail() {
                       className={`type-btn ${requestType === 'VIEWING' ? 'active' : ''}`}
                       onClick={() => setRequestType('VIEWING')}
                     >
-                      👁️ Đặt lịch xem phòng
+                      Đặt lịch xem phòng
                     </button>
                     <button
                       type="button"
                       className={`type-btn ${requestType === 'RENT_NOW' ? 'active' : ''}`}
                       onClick={() => setRequestType('RENT_NOW')}
                     >
-                      🚀 Thuê ngay
+                      Thuê ngay
                     </button>
                   </div>
                 </div>
@@ -604,7 +567,7 @@ function ListingDetail() {
                   className="btn-submit-request"
                   onClick={submitRequest}
                 >
-                  {submitting ? 'Đang gửi yêu cầu...' : '🚀 Gửi yêu cầu ngay'}
+                  {submitting ? 'Đang gửi yêu cầu...' : 'Gửi yêu cầu ngay'}
                 </button>
               </section>
             </div>
@@ -615,12 +578,205 @@ function ListingDetail() {
       {/* MODAL ZOOM ẢNH FULL SIZE */}
       {previewZoomUrl && (
         <div
-          className="zoom-overlay"
           onClick={() => setPreviewZoomUrl(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.88)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 3000,
+            padding: '24px',
+            boxSizing: 'border-box',
+            cursor: 'zoom-out',
+          }}
         >
-          <div className="zoom-modal-content">
-            <img src={previewZoomUrl} alt="Phóng to ảnh phòng" />
-            <p>Bấm bất kỳ đâu để đóng</p>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              maxWidth: '92vw',
+              maxHeight: '92vh',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setPreviewZoomUrl(null)}
+              style={{
+                position: 'absolute',
+                top: -14,
+                right: -14,
+                width: 34,
+                height: 34,
+                borderRadius: '50%',
+                background: '#ffffff',
+                color: '#0f172a',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 16,
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                zIndex: 3010,
+              }}
+            >
+              ✕
+            </button>
+            <img
+              src={previewZoomUrl}
+              alt="Phóng to ảnh phòng"
+              style={{
+                maxWidth: '90vw',
+                maxHeight: '84vh',
+                objectFit: 'contain',
+                borderRadius: '10px',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                backgroundColor: '#0f172a',
+              }}
+            />
+            <div style={{ marginTop: '10px', color: '#ffffff', fontSize: '13px', opacity: 0.85 }}>
+              Bấm ra ngoài hoặc nút đóng để quay lại
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL YÊU CẦU ĐĂNG NHẬP (GUEST LOGIN PROMPT MODAL) */}
+      {showLoginModal && (
+        <div
+          onClick={() => setShowLoginModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 3500,
+            padding: '20px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: 480,
+              background: '#ffffff',
+              borderRadius: 16,
+              padding: '28px 30px',
+              boxShadow: '0 25px 60px rgba(15,23,42,0.2)',
+              textAlign: 'center',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setShowLoginModal(false)}
+              style={{
+                position: 'absolute',
+                top: 14,
+                right: 14,
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: '#f1f5f9',
+                color: '#64748b',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 16,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              ✕
+            </button>
+
+            <div
+              style={{
+                width: 54,
+                height: 54,
+                borderRadius: 14,
+                background: '#eff6ff',
+                color: '#2563eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px',
+                fontSize: 24,
+                fontWeight: 800,
+              }}
+            >
+              TR
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 800, color: '#0f172a' }}>
+              Yêu cầu đăng nhập
+            </h3>
+
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: '#64748b', lineHeight: 1.5 }}>
+              Bạn cần đăng nhập tài khoản Khách thuê để gửi yêu cầu đặt lịch xem phòng hoặc thuê ngay. Sau khi đăng nhập, bạn có thể theo dõi trạng thái phản hồi từ chủ nhà.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <a
+                href="/login"
+                style={{
+                  display: 'block',
+                  padding: '12px 20px',
+                  background: 'linear-gradient(135deg, #2563eb, #4f46e5)',
+                  color: '#ffffff',
+                  borderRadius: 10,
+                  fontSize: 14.5,
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 14px rgba(37,99,235,0.25)',
+                }}
+              >
+                Đăng nhập ngay
+              </a>
+
+              <a
+                href="/register"
+                style={{
+                  display: 'block',
+                  padding: '11px 20px',
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  color: '#334155',
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+              >
+                Chưa có tài khoản? Đăng ký
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setShowLoginModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94a3b8',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: '6px 0',
+                }}
+              >
+                Để sau, tiếp tục xem phòng
+              </button>
+            </div>
           </div>
         </div>
       )}
