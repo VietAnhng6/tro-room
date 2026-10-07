@@ -1,16 +1,24 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
 
 type Role = 'ADMIN' | 'LANDLORD' | 'MANAGER' | 'TENANT' | string
 
-export function Dashboard() {
-  const navigate = useNavigate()
+function roleLabel(role: Role) {
+  const labels: Record<string, string> = {
+    ADMIN: 'ADMIN',
+    LANDLORD: 'Chủ nhà',
+    MANAGER: 'Quản lý',
+    TENANT: 'Người thuê',
+  }
+
+  return labels[role] || role
+}
+
+function Dashboard() {
   const [role, setRole] = useState<Role>('TENANT')
   const [username, setUsername] = useState('')
   const [buildingCount, setBuildingCount] = useState(0)
   const [roomCount, setRoomCount] = useState(0)
   const [pendingRequests, setPendingRequests] = useState(0)
-
   useEffect(() => {
     setRole(localStorage.getItem('role') || 'TENANT')
     setUsername(localStorage.getItem('username') || '')
@@ -54,377 +62,667 @@ export function Dashboard() {
 
     loadDashboardStats()
   }, [role])
+   // S2-07: số yêu cầu thuê chưa xử lý hiện trên menu của Chủ nhà
+   useEffect(() => {
+     const token = localStorage.getItem('accessToken')
+     if (!token || role !== 'LANDLORD') return
 
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken')
-    if (!token || role !== 'LANDLORD') return
+     fetch('http://localhost:8080/api/landlord/requests/pending-count', {
+       headers: { Authorization: `Bearer ${token}` },
+     })
+       .then((res) => (res.ok ? res.json() : null))
+       .then((data) => {
+         if (data) setPendingRequests(data.count)
+       })
+       .catch(() => {})
+   }, [role])
+  const permissions = useMemo(() => {
+    if (role === 'ADMIN') {
+      return {
+        building: false,
+        room: false,
+        tenant: true,
+        contract: true,
+        service: false,
+        profile: true,
+        audit: true,
+        admin: true,
+      }
+    }
 
-    fetch('http://localhost:8080/api/landlord/requests/pending-count', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && typeof data.count === 'number') {
-          setPendingRequests(data.count)
-        }
-      })
-      .catch(() => {})
+    if (role === 'LANDLORD') {
+      return {
+        building: true,
+        room: true,
+        tenant: false,
+        contract: false,
+        service: true,
+        profile: true,
+        audit: false,
+        admin: false,
+      }
+    }
+
+    if (role === 'MANAGER') {
+      return {
+        building: true,
+        room: true,
+        tenant: false,
+        contract: false,
+        service: true,
+        profile: true,
+        audit: false,
+        admin: false,
+      }
+    }
+
+    return {
+      building: false,
+      room: false,
+      tenant: false,
+      contract: false,
+      service: false,
+      profile: true,
+      audit: false,
+      admin: false,
+    }
   }, [role])
 
-  const statCards = [
+  const handleLogout = () => {
+    const token = localStorage.getItem('accessToken')
+    const refreshToken = localStorage.getItem('refreshToken')
+
+    if (token && refreshToken) {
+      fetch('http://localhost:8080/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+      }).catch(() => {})
+    }
+
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    localStorage.removeItem('role')
+    localStorage.removeItem('username')
+
+    window.location.href = '/'
+  }
+
+  const go = (path: string) => {
+    window.location.href = path
+  }
+
+  const actions = [
     {
-      title: 'Tòa nhà',
-      value: String(buildingCount),
-      color: '#2563eb',
+      key: 'dashboard',
+      icon: '',
+      title: 'Tổng quan',
+      enabled: true,
+      path: '/dashboard',
+    },
+    {
+      key: 'searchRooms',
+      icon: '🔍',
+      title: 'Tìm phòng trọ',
+      enabled: true,
+      path: '/search-rooms',
+    },
+    {
+      key: 'building',
+      icon: '',
+      title: 'Quản lý tòa nhà',
+      enabled: permissions.building,
       path: '/buildings',
     },
     {
-      title: 'Phòng trọ',
-      value: String(roomCount),
-      color: '#0d9488',
+      key: 'room',
+      icon: '',
+      title: 'Quản lý phòng',
+      enabled: permissions.room,
       path: '/rooms',
     },
+        {
+      key: 'request',
+      icon: '',
+      title: 'Yêu cầu thuê',
+      enabled: role === 'LANDLORD',
+      path: '/landlord/requests',
+    },
     {
+      key: 'myRequests',
+      icon: '',
+      title: 'Yêu cầu của tôi',
+      enabled: role === 'TENANT',
+      path: '/my-requests',
+    },
+    {
+      key: 'tenant',
+      icon: '',
       title: 'Người thuê',
-      value: '0',
-      color: '#d97706',
+      enabled: permissions.tenant,
       path: '/tenants',
     },
     {
-      title: 'Doanh thu tháng',
-      value: '0 ₫',
-      color: '#7c3aed',
-      path: '#',
+      key: 'contract',
+      icon: '',
+      title: 'Hợp đồng',
+      enabled: permissions.contract,
+      path: '/contracts',
+    },
+    {
+      key: 'service',
+      icon: '',
+      title: 'Dịch vụ',
+      enabled: permissions.service,
+      path: '/services',
+    },
+    {
+      key: 'profile',
+      icon: '',
+      title: 'Hồ sơ',
+      enabled: permissions.profile,
+      path: '/profile',
+    },
+    {
+      key: 'audit',
+      icon: '',
+      title: 'Nhật ký hệ thống',
+      enabled: permissions.audit,
+      path: '/audit-logs',
+    },
+    {
+      key: 'admin',
+      icon: '',
+      title: 'Quản trị tài khoản',
+      enabled: permissions.admin,
+      path: '/admin',
     },
   ]
 
   return (
-    <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 28px 40px', boxSizing: 'border-box' }}>
-      {/* TITLE & GREETING */}
-      <div style={{ marginBottom: 24 }}>
-        <h1
-          style={{
-            margin: 0,
-            fontSize: 24,
-            fontWeight: 800,
-            color: '#0f172a',
-            letterSpacing: '-0.4px',
-          }}
-        >
-          Chào mừng trở lại, {username || 'bạn'}
-        </h1>
-        <p
-          style={{
-            margin: '6px 0 0',
-            color: '#64748b',
-            fontSize: 14,
-          }}
-        >
-          Theo dõi tổng quan hệ thống, thống kê tòa nhà và hoạt động thuê phòng hôm nay.
-        </p>
-      </div>
-
-      {/* PENDING REQUESTS ALERT FOR LANDLORD */}
-      {role === 'LANDLORD' && pendingRequests > 0 && (
-        <div
-          onClick={() => navigate('/landlord/requests')}
-          style={{
-            background: '#fff7ed',
-            border: '1px solid #fed7aa',
-            borderRadius: 12,
-            padding: '16px 20px',
-            marginBottom: 22,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            cursor: 'pointer',
-          }}
-        >
-          <div>
-            <div style={{ fontWeight: 800, color: '#9a3412', fontSize: 14.5 }}>
-              Bạn có {pendingRequests} yêu cầu thuê / xem phòng mới đang chờ duyệt
-            </div>
-            <div style={{ color: '#c2410c', fontSize: 13, marginTop: 2 }}>
-              Nhấn vào đây để xem chi tiết và phản hồi khách thuê ngay.
-            </div>
-          </div>
-          <button
-            style={{
-              border: 'none',
-              background: '#ea580c',
-              color: '#ffffff',
-              padding: '8px 16px',
-              borderRadius: 8,
-              fontWeight: 700,
-              fontSize: 13,
-              cursor: 'pointer',
-            }}
-          >
-            Xử lý ngay
-          </button>
-        </div>
-      )}
-
-      {/* STATISTICS - 4 EQUAL SIZED CLEAN BLOCKS */}
-      <div
+    <div
+      style={{
+        height: '100vh',
+        overflow: 'hidden',
+        background: '#f8fafc',
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif',
+        color: '#0f172a',
+        display: 'flex',
+      }}
+    >
+      {/* ================= SIDEBAR ================= */}
+      <aside
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-          gap: 16,
-          width: '100%',
-          marginBottom: 24,
+          width: 250,
+          height: '100vh',
+          background: '#ffffff',
+          borderRight: '1px solid #e2e8f0',
+          display: 'flex',
+          flexDirection: 'column',
+          flexShrink: 0,
+          boxSizing: 'border-box',
+          zIndex: 10,
         }}
       >
-        {statCards.map((card) => (
+        {/* LOGO */}
+        <div
+          style={{
+            height: 82,
+            padding: '0 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            borderBottom: '1px solid #e2e8f0',
+            boxSizing: 'border-box',
+          }}
+        >
           <div
-            key={card.title}
-            onClick={() => card.path !== '#' && navigate(card.path)}
             style={{
-              background: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: 14,
-              padding: '20px 22px',
-              boxSizing: 'border-box',
+              width: 42,
+              height: 42,
+              borderRadius: 12,
               display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              minHeight: 125,
-              boxShadow: '0 2px 6px rgba(15, 23, 42, 0.03)',
-              cursor: card.path !== '#' ? 'pointer' : 'default',
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              if (card.path !== '#') {
-                e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = '0 6px 14px rgba(15, 23, 42, 0.06)'
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (card.path !== '#') {
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = '0 2px 6px rgba(15, 23, 42, 0.03)'
-              }
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'linear-gradient(135deg,#2563eb,#4f46e5)',
+              color: '#fff',
+              fontWeight: 800,
+              fontSize: 16,
+              flexShrink: 0,
             }}
           >
-            <div style={{ color: '#64748b', fontSize: 13.5, fontWeight: 650 }}>{card.title}</div>
+            TR
+          </div>
+
+          <div>
             <div
               style={{
-                fontSize: 28,
                 fontWeight: 800,
-                color: card.color,
-                marginTop: 10,
-                letterSpacing: '-0.5px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
+                fontSize: 18,
               }}
             >
-              {card.value}
+              TroRoom
+            </div>
+
+            <div
+              style={{
+                color: '#94a3b8',
+                fontSize: 11,
+                marginTop: 2,
+              }}
+            >
+              Quản lý phòng trọ
             </div>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* QUICK SEARCH ROOMS BANNER (CHO KHÁCH THUÊ) */}
-      {role === 'TENANT' && (
-        <div
+        {/* MENU */}
+        <nav
           style={{
-            marginBottom: 24,
-            background: '#eff6ff',
-            border: '1px solid #bfdbfe',
-            borderRadius: 14,
-            padding: '20px 24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            boxSizing: 'border-box',
-            flexWrap: 'wrap',
-            gap: 16,
+            flex: 1,
+            padding: '22px 12px',
+            overflowY: 'auto',
           }}
         >
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#1e40af', marginBottom: 3 }}>
-              Khám phá danh sách phòng trọ đang cho thuê
-            </div>
-            <div style={{ fontSize: 13.5, color: '#2563eb' }}>
-              Tìm kiếm phòng theo tòa nhà, tầng, mức giá phù hợp và đặt lịch xem phòng trực tuyến.
-            </div>
-          </div>
-          <button
-            onClick={() => navigate('/search-rooms')}
+          <div
             style={{
-              border: 'none',
-              borderRadius: 10,
-              padding: '11px 20px',
-              background: '#2563eb',
-              color: '#ffffff',
-              fontSize: 14,
+              fontSize: 11,
               fontWeight: 700,
-              cursor: 'pointer',
+              color: '#94a3b8',
+              letterSpacing: '0.5px',
+              margin: '0 12px 12px',
             }}
           >
-            Tìm phòng ngay
-          </button>
-        </div>
-      )}
-
-      {/* QUICK ACTIONS & WELCOME INFO */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '2fr 1fr',
-          gap: 20,
-        }}
-      >
-        {/* LEFT CARD */}
-        <div
-          style={{
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: 14,
-            padding: 24,
-            boxSizing: 'border-box',
-            boxShadow: '0 2px 6px rgba(15, 23, 42, 0.03)',
-          }}
-        >
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#0f172a', marginBottom: 6 }}>
-            Hướng dẫn sử dụng hệ thống
+            CHỨC NĂNG
           </div>
-          <p style={{ color: '#64748b', fontSize: 13.5, lineHeight: 1.6, margin: '0 0 16px' }}>
-            Hệ thống cung cấp đầy đủ công cụ phục vụ cả Chủ nhà và Khách thuê trong việc quản lý, đăng tin và thuê trọ tiện lợi:
-          </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-            <div
-              style={{
-                padding: '14px 16px',
-                borderRadius: 10,
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-              }}
-            >
-              <div style={{ fontWeight: 750, fontSize: 14, color: '#1e293b', marginBottom: 4 }}>
-                Quản lý tòa và phòng
-              </div>
-              <div style={{ fontSize: 12.5, color: '#64748b' }}>
-                Thêm tòa nhà, cấu hình tầng, số phòng và cập nhật bảng giá điện nước chi tiết.
-              </div>
-            </div>
+          {actions
+            .filter((item) => item.enabled)
+            .map((item) => {
+              const active = item.path === '/dashboard'
 
-            <div
-              style={{
-                padding: '14px 16px',
-                borderRadius: 10,
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-              }}
-            >
-              <div style={{ fontWeight: 750, fontSize: 14, color: '#1e293b', marginBottom: 4 }}>
-                Tải ảnh và Đăng tin
-              </div>
-              <div style={{ fontSize: 12.5, color: '#64748b' }}>
-                Gộp quản lý ảnh vào form sửa phòng, đăng tin cho thuê các phòng trống nhanh chóng.
-              </div>
-            </div>
-
-            <div
-              style={{
-                padding: '14px 16px',
-                borderRadius: 10,
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-              }}
-            >
-              <div style={{ fontWeight: 750, fontSize: 14, color: '#1e293b', marginBottom: 4 }}>
-                Xử lý yêu cầu thuê
-              </div>
-              <div style={{ fontSize: 12.5, color: '#64748b' }}>
-                Tiếp nhận yêu cầu hẹn xem phòng từ khách thuê và phản hồi nhanh chóng.
-              </div>
-            </div>
-
-            <div
-              style={{
-                padding: '14px 16px',
-                borderRadius: 10,
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-              }}
-            >
-              <div style={{ fontWeight: 750, fontSize: 14, color: '#1e293b', marginBottom: 4 }}>
-                Hồ sơ cá nhân & CCCD
-              </div>
-              <div style={{ fontSize: 12.5, color: '#64748b' }}>
-                Cập nhật thông tin định danh và tải lên hình ảnh CCCD 2 mặt với bản xem trước trực tiếp.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT CARD */}
-        <div
-          style={{
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: 14,
-            padding: 24,
-            boxSizing: 'border-box',
-            boxShadow: '0 2px 6px rgba(15, 23, 42, 0.03)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>
-              Thông tin tài khoản
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5 }}>
-                <span style={{ color: '#64748b' }}>Tài khoản:</span>
-                <span style={{ fontWeight: 700, color: '#1e293b' }}>{username || 'N/A'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5 }}>
-                <span style={{ color: '#64748b' }}>Vai trò:</span>
-                <span
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => go(item.path)}
                   style={{
-                    fontWeight: 750,
-                    color: '#2563eb',
-                    background: '#eff6ff',
-                    padding: '2px 8px',
-                    borderRadius: 4,
-                    fontSize: 12,
+                    width: '100%',
+                    height: 48,
+                    border: 'none',
+                    borderRadius: 10,
+                    padding: '0 12px',
+                    marginBottom: 5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    background: active ? '#eff6ff' : 'transparent',
+                    color: active ? '#2563eb' : '#475569',
+                    fontWeight: active ? 700 : 500,
+                    fontSize: 13,
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box',
                   }}
                 >
-                  {role}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5 }}>
-                <span style={{ color: '#64748b' }}>Trạng thái:</span>
-                <span style={{ fontWeight: 700, color: '#16a34a' }}>Đang hoạt động</span>
-              </div>
+                  <span
+                    style={{
+                      width: 28,
+                      textAlign: 'center',
+                      fontSize: 17,
+                    }}
+                  >
+                    {item.icon}
+                  </span>
+
+                  <span>{item.title}</span>
+                  
+                  {item.key === 'request' && pendingRequests > 0 && (
+                    <span
+                      style={{
+                        marginLeft: 'auto',
+                        minWidth: 20,
+                        height: 20,
+                        padding: '0 6px',
+                        borderRadius: 10,
+                        background: '#ef4444',
+                        color: '#ffffff',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {pendingRequests}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+        </nav>
+
+        {/* USER */}
+        <div
+          style={{
+            borderTop: '1px solid #e2e8f0',
+            padding: 14,
+          }}
+        >
+          <div
+            style={{
+              background: '#f8fafc',
+              borderRadius: 10,
+              padding: 12,
+              marginBottom: 10,
+            }}
+          >
+            <div
+              style={{
+                color: '#334155',
+                fontSize: 13,
+                fontWeight: 600,
+                marginBottom: 7,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {username || 'Tài khoản'}
             </div>
+
+            <span
+              style={{
+                display: 'inline-block',
+                padding: '5px 10px',
+                borderRadius: 999,
+                background: '#eff6ff',
+                color: '#2563eb',
+                fontSize: 11,
+                fontWeight: 700,
+              }}
+            >
+              {roleLabel(role)}
+            </span>
           </div>
 
           <button
-            onClick={() => navigate('/profile')}
+            onClick={handleLogout}
             style={{
-              marginTop: 20,
               width: '100%',
-              padding: '10px',
+              height: 42,
+              border: 'none',
+              background: '#1081b9',
+              color: '#fff',
               borderRadius: 8,
-              border: '1px solid #cbd5e1',
-              background: '#f8fafc',
-              color: '#334155',
-              fontSize: 13.5,
-              fontWeight: 700,
               cursor: 'pointer',
-              textAlign: 'center',
+              fontSize: 13,
+              fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)',
             }}
           >
-            Chỉnh sửa hồ sơ cá nhân
+            Đăng xuất
           </button>
         </div>
+      </aside>
+
+      {/* ================= MAIN ================= */}
+      <div
+        style={{
+          flex: 1,
+          height: '100vh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          boxSizing: 'border-box',
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.45), rgba(255,255,255,0.45)), url('/tro-room-bg.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }}
+      >
+        {/* HEADER */}
+        <header
+          style={{
+            height: 82,
+            background: '#ffffff',
+            borderBottom: '1px solid #e2e8f0',
+            padding: '0 36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: 12,
+                color: '#94a3b8',
+                marginBottom: 4,
+              }}
+            >
+              Trang hiện tại
+            </div>
+
+            <div
+              style={{
+                fontSize: 17,
+                fontWeight: 750,
+              }}
+            >
+              Tổng quan
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <span
+              style={{
+                color: '#334155',
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              {username || 'Tài khoản'}
+            </span>
+
+            <span
+              style={{
+                padding: '7px 12px',
+                borderRadius: 999,
+                background: '#eff6ff',
+                color: '#2563eb',
+                fontSize: 12,
+                fontWeight: 700,
+              }}
+            >
+              {roleLabel(role)}
+            </span>
+          </div>
+        </header>
+
+        {/* CONTENT */}
+        <main
+          style={{
+            width: '100%',
+            minHeight: 'calc(100vh - 82px)',
+            padding: '20px',
+            boxSizing: 'border-box',
+          }}
+        >
+          {/* TITLE */}
+          <div style={{ marginBottom: 28 }}>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 28,
+                fontWeight: 800,
+              }}
+            >
+              Tổng quan
+            </h1>
+
+            <p
+              style={{
+                margin: '8px 0 0',
+                color: '#64748b',
+                fontSize: 14,
+              }}
+            >
+              Chào mừng bạn đến với hệ thống TroRoom.
+            </p>
+          </div>
+
+          {/* STATISTICS */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+              gap: 18,
+              width: '100%',
+            }}
+          >
+            {[
+              ['', 'Tòa nhà', String(buildingCount)],
+              ['', 'Phòng trọ', String(roomCount)],
+              ['', 'Người thuê', '0'],
+              ['', 'Doanh thu tháng', '0 ₫'],
+            ].map(([icon, title, value]) => (
+              <div
+                key={title}
+                style={{
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 16,
+                  padding: '28px 24px',
+                  minHeight: 160,
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(15,23,42,.035)',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 27,
+                    marginBottom: 12,
+                  }}
+                >
+                  {icon}
+                </div>
+
+                <div
+                  style={{
+                    color: '#64748b',
+                    fontSize: 13,
+                    marginBottom: 8,
+                  }}
+                >
+                  {title}
+                </div>
+
+                <div
+                  style={{
+                    fontSize: 25,
+                    fontWeight: 800,
+                  }}
+                >
+                  {value}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* WELCOME PANEL */}
+          <div
+            style={{
+              marginTop: 24,
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: 16,
+              padding: 26,
+              boxSizing: 'border-box',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 750,
+                marginBottom: 8,
+              }}
+            >
+              Chào mừng đến với TroRoom 👋
+            </div>
+
+            <div
+              style={{
+                color: '#64748b',
+                fontSize: 14,
+                lineHeight: 1.6,
+              }}
+            >
+              Sử dụng thanh chức năng bên trái để truy cập các chức năng mà tài khoản của bạn được phép sử dụng.
+            </div>
+          </div>
+
+          {/* QUICK SEARCH ROOMS BANNER */}
+          <div
+            style={{
+              marginTop: 20,
+              background: 'linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%)',
+              border: '1.5px solid #bfdbfe',
+              borderRadius: 16,
+              padding: '22px 26px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              boxSizing: 'border-box',
+              flexWrap: 'wrap',
+              gap: 16,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#1e40af', marginBottom: 4 }}>
+                🔍 Khám phá danh sách phòng trọ
+              </div>
+              <div style={{ fontSize: 13.5, color: '#3b82f6' }}>
+                Xem danh sách tất cả các phòng trọ trống đang đăng tin cho thuê trên hệ thống TroRoom.
+              </div>
+            </div>
+            <button
+              onClick={() => go('/search-rooms')}
+              style={{
+                border: 'none',
+                borderRadius: 12,
+                padding: '12px 22px',
+                background: '#2563eb',
+                color: '#ffffff',
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <span>Xem trang tìm phòng</span>
+              <span>→</span>
+            </button>
+          </div>
+        </main>
       </div>
     </div>
   )

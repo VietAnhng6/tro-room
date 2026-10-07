@@ -173,7 +173,7 @@ public class ListingSearchController {
 
                 room.getBuilding().getId(),
                 room.getBuilding().getName(),
-                room.getBuilding().getDistrict(),
+                room.getBuilding().getAddress(),
                 room.getBuilding().getAddress()
         );
     }
