@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import Logo from '../components/Logo'
 
 const API = 'http://localhost:8080'
 
@@ -239,19 +238,6 @@ function ListingDetail() {
   if (loadError || !listing) {
     return (
       <div className="detail-page-wrapper">
-        <nav className="detail-navbar">
-          <div className="nav-container">
-            <a href="/search-rooms" style={{ textDecoration: 'none' }}>
-              <Logo size="sm" title="TroRoom" subtitle="Nền tảng tìm phòng trọ" />
-            </a>
-            <div className="nav-actions">
-              <a href="/search-rooms" className="nav-btn-primary">
-                Tìm phòng khác
-              </a>
-            </div>
-          </div>
-        </nav>
-
         <div className="error-container-full">
           <div className="error-card-box">
             <h1 className="error-heading-text">Không thể mở tin đăng</h1>
@@ -280,40 +266,6 @@ function ListingDetail() {
 
   return (
     <div className="detail-page-wrapper">
-      {/* NAVBAR */}
-      <nav className="detail-navbar">
-        <div className="nav-container">
-          <a href="/" style={{ textDecoration: 'none' }}>
-            <Logo size="sm" title="TroRoom" subtitle="Quản lý & Tìm kiếm phòng trọ" />
-          </a>
-
-          <div className="nav-actions">
-            <a href="/" className="nav-link-btn">
-              ← Danh sách phòng
-            </a>
-            {token ? (
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <a href="/profile" className="nav-link-btn">
-                  Hồ sơ
-                </a>
-                <a href="/dashboard" className="nav-btn-primary">
-                  Dashboard
-                </a>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <a href="/login" className="nav-link-btn" style={{ border: '1px solid #cbd5e1', padding: '8px 16px', borderRadius: '8px' }}>
-                  Đăng nhập
-                </a>
-                <a href="/register" className="nav-btn-primary">
-                  Đăng ký
-                </a>
-              </div>
-            )}
-          </div>
-        </div>
-      </nav>
-
       <main className="detail-main-content">
         <div className="detail-container">
           {/* TOP BREADCRUMB & TITLE */}

@@ -280,12 +280,7 @@ function PublicAuthRoute({ children }: { children: React.ReactNode }) {
 export function AppRoutes() {
   return (
     <Routes>
-      {/* PUBLIC PORTAL: Xem phòng, tìm kiếm và chi tiết phòng mà KHÔNG CẦN ĐĂNG NHẬP */}
-      <Route path="/" element={<SearchRooms />} />
-      <Route path="/search-rooms" element={<SearchRooms />} />
-      <Route path="/listing/:id" element={<ListingDetail />} />
-
-      {/* AUTHENTICATION ROUTES */}
+      {/* AUTHENTICATION ROUTES (Standalone pages without sidebar) */}
       <Route
         path="/login"
         element={
@@ -321,8 +316,14 @@ export function AppRoutes() {
 
       <Route path="/403" element={<Forbidden />} />
 
-      {/* PROTECTED ROUTES: Yêu cầu đăng nhập để thêm hồ sơ, quản lý, xem yêu cầu */}
+      {/* ALL MAIN ROUTES WRAPPED BY MAINLAYOUT (Retains Sidebar on left) */}
       <Route element={<MainLayout />}>
+        {/* Public Room Browsing Routes */}
+        <Route path="/" element={<SearchRooms />} />
+        <Route path="/search-rooms" element={<SearchRooms />} />
+        <Route path="/listing/:id" element={<ListingDetail />} />
+
+        {/* Protected System Pages */}
         <Route
           path="/dashboard"
           element={

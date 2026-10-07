@@ -4,7 +4,8 @@ import BannerCarousel from '../components/BannerCarousel'
 
 type Role = 'ADMIN' | 'LANDLORD' | 'MANAGER' | 'TENANT' | string
 
-function roleLabel(role: Role) {
+function roleLabel(role: Role, hasToken: boolean) {
+  if (!hasToken) return 'Khách vãng lai'
   const labels: Record<string, string> = {
     ADMIN: 'Quản trị viên',
     LANDLORD: 'Chủ nhà',
@@ -15,13 +16,14 @@ function roleLabel(role: Role) {
 }
 
 const PAGE_TITLES: Record<string, { title: string; category: string }> = {
+  '/': { title: 'Tìm kiếm phòng trọ', category: 'Khám phá' },
+  '/search-rooms': { title: 'Tìm kiếm phòng trọ', category: 'Khám phá' },
   '/dashboard': { title: 'Tổng quan', category: 'Hệ thống' },
   '/buildings': { title: 'Quản lý tòa nhà', category: 'Quản lý' },
   '/rooms': { title: 'Quản lý phòng', category: 'Quản lý' },
   '/services': { title: 'Dịch vụ tòa nhà', category: 'Cấu hình' },
   '/landlord/requests': { title: 'Yêu cầu thuê & Xem phòng', category: 'Xử lý' },
   '/my-requests': { title: 'Yêu cầu thuê của tôi', category: 'Khách thuê' },
-  '/search-rooms': { title: 'Tìm kiếm phòng trọ', category: 'Khám phá' },
   '/tenants': { title: 'Danh sách người thuê', category: 'Quản lý' },
   '/contracts': { title: 'Quản lý hợp đồng', category: 'Quản lý' },
   '/profile': { title: 'Hồ sơ cá nhân & CCCD', category: 'Tài khoản' },
@@ -33,18 +35,20 @@ export const MainLayout: React.FC = () => {
   const location = useLocation()
   const navigate = useNavigate()
 
+  const [hasToken, setHasToken] = useState(false)
   const [role, setRole] = useState<Role>('TENANT')
   const [username, setUsername] = useState('')
   const [pendingRequests, setPendingRequests] = useState(0)
 
   useEffect(() => {
+    const token = localStorage.getItem('accessToken')
     const r = localStorage.getItem('role') || 'TENANT'
     const u = localStorage.getItem('username') || ''
+    setHasToken(Boolean(token))
     setRole(r)
     setUsername(u)
 
     // Load pending requests count for landlord
-    const token = localStorage.getItem('accessToken')
     if (token && r === 'LANDLORD') {
       fetch('http://localhost:8080/api/landlord/requests/pending-count', {
         headers: { Authorization: `Bearer ${token}` },
@@ -60,8 +64,26 @@ export const MainLayout: React.FC = () => {
   }, [location.pathname])
 
   const permissions = useMemo(() => {
+    if (!hasToken) {
+      return {
+        dashboard: false,
+        building: false,
+        room: false,
+        tenant: false,
+        contract: false,
+        service: false,
+        profile: false,
+        audit: false,
+        admin: false,
+        landlordRequests: false,
+        myRequests: false,
+        searchRooms: true,
+      }
+    }
+
     if (role === 'ADMIN') {
       return {
+        dashboard: true,
         building: false,
         room: false,
         tenant: true,
@@ -72,12 +94,13 @@ export const MainLayout: React.FC = () => {
         admin: true,
         landlordRequests: false,
         myRequests: false,
-        searchRooms: false,
+        searchRooms: true,
       }
     }
 
     if (role === 'LANDLORD') {
       return {
+        dashboard: true,
         building: true,
         room: true,
         tenant: false,
@@ -88,12 +111,13 @@ export const MainLayout: React.FC = () => {
         admin: false,
         landlordRequests: true,
         myRequests: false,
-        searchRooms: false,
+        searchRooms: true,
       }
     }
 
     if (role === 'MANAGER') {
       return {
+        dashboard: true,
         building: true,
         room: true,
         tenant: false,
@@ -104,12 +128,13 @@ export const MainLayout: React.FC = () => {
         admin: false,
         landlordRequests: true,
         myRequests: false,
-        searchRooms: false,
+        searchRooms: true,
       }
     }
 
     // TENANT
     return {
+      dashboard: true,
       building: false,
       room: false,
       tenant: false,
@@ -122,13 +147,13 @@ export const MainLayout: React.FC = () => {
       myRequests: true,
       searchRooms: true,
     }
-  }, [role])
+  }, [role, hasToken])
 
   const menuItems = [
     {
       key: 'dashboard',
       title: 'Tổng quan',
-      enabled: true,
+      enabled: permissions.dashboard,
       path: '/dashboard',
     },
     {
@@ -220,13 +245,18 @@ export const MainLayout: React.FC = () => {
     localStorage.removeItem('role')
     localStorage.removeItem('username')
 
-    navigate('/')
+    setHasToken(false)
+    navigate('/login')
   }
 
   const currentPath = location.pathname
-  const pageMeta = PAGE_TITLES[currentPath] || {
-    title: 'TroRoom',
-    category: 'Quản lý',
+  let pageMeta = PAGE_TITLES[currentPath]
+  if (!pageMeta) {
+    if (currentPath.startsWith('/listing/')) {
+      pageMeta = { title: 'Chi tiết phòng trọ', category: 'Khám phá' }
+    } else {
+      pageMeta = { title: 'TroRoom', category: 'Quản lý' }
+    }
   }
 
   return (
@@ -257,7 +287,7 @@ export const MainLayout: React.FC = () => {
       >
         {/* LOGO BRAND */}
         <div
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate(hasToken ? '/dashboard' : '/')}
           style={{
             height: 74,
             padding: '0 20px',
@@ -297,7 +327,7 @@ export const MainLayout: React.FC = () => {
           </div>
         </div>
 
-        {/* MENU ITEMS (CLEAN TEXT DESIGN, NO EMOJIS) */}
+        {/* MENU ITEMS */}
         <nav
           style={{
             flex: 1,
@@ -321,7 +351,10 @@ export const MainLayout: React.FC = () => {
           {menuItems
             .filter((item) => item.enabled)
             .map((item) => {
-              const active = currentPath === item.path || (item.path !== '/dashboard' && currentPath.startsWith(item.path))
+              const active =
+                (item.path === '/search-rooms' && (currentPath === '/' || currentPath === '/search-rooms' || currentPath.startsWith('/listing/'))) ||
+                (item.path === '/dashboard' && currentPath === '/dashboard') ||
+                (item.path !== '/dashboard' && item.path !== '/search-rooms' && currentPath.startsWith(item.path))
 
               return (
                 <button
@@ -387,7 +420,7 @@ export const MainLayout: React.FC = () => {
             })}
         </nav>
 
-        {/* USER PROFILE & LOGOUT */}
+        {/* USER PROFILE & LOGOUT OR LOGIN BUTTONS */}
         <div
           style={{
             borderTop: '1px solid #e2e8f0',
@@ -395,81 +428,120 @@ export const MainLayout: React.FC = () => {
             background: '#ffffff',
           }}
         >
-          <div
-            style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: 10,
-              padding: '10px 12px',
-              marginBottom: 8,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div style={{ minWidth: 0, flex: 1, marginRight: 6 }}>
+          {hasToken ? (
+            <>
               <div
                 style={{
-                  color: '#1e293b',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 10,
+                  padding: '10px 12px',
+                  marginBottom: 8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                 }}
               >
-                {username || 'Tài khoản'}
+                <div style={{ minWidth: 0, flex: 1, marginRight: 6 }}>
+                  <div
+                    style={{
+                      color: '#1e293b',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {username || 'Tài khoản'}
+                  </div>
+                  <div style={{ color: '#64748b', fontSize: 11, marginTop: 1 }}>
+                    {roleLabel(role, true)}
+                  </div>
+                </div>
+
+                <span
+                  style={{
+                    display: 'inline-block',
+                    padding: '3px 7px',
+                    borderRadius: 4,
+                    background: '#eff6ff',
+                    color: '#2563eb',
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    border: '1px solid #bfdbfe',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {role}
+                </span>
               </div>
-              <div style={{ color: '#64748b', fontSize: 11, marginTop: 1 }}>
-                {roleLabel(role)}
-              </div>
+
+              <button
+                onClick={handleLogout}
+                style={{
+                  width: '100%',
+                  height: 36,
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#dc2626',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#fef2f2'
+                  e.currentTarget.style.borderColor = '#fecaca'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#ffffff'
+                  e.currentTarget.style.borderColor = '#cbd5e1'
+                }}
+              >
+                Đăng xuất
+              </button>
+            </>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button
+                onClick={() => navigate('/login')}
+                style={{
+                  width: '100%',
+                  height: 38,
+                  border: 'none',
+                  background: '#2563eb',
+                  color: '#ffffff',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                }}
+              >
+                Đăng nhập
+              </button>
+              <button
+                onClick={() => navigate('/register')}
+                style={{
+                  width: '100%',
+                  height: 36,
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#334155',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontWeight: 650,
+                }}
+              >
+                Đăng ký tài khoản
+              </button>
             </div>
-
-            <span
-              style={{
-                display: 'inline-block',
-                padding: '3px 7px',
-                borderRadius: 4,
-                background: '#eff6ff',
-                color: '#2563eb',
-                fontSize: 10.5,
-                fontWeight: 800,
-                border: '1px solid #bfdbfe',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {role}
-            </span>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            style={{
-              width: '100%',
-              height: 36,
-              border: '1px solid #cbd5e1',
-              background: '#ffffff',
-              color: '#dc2626',
-              borderRadius: 8,
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#fef2f2'
-              e.currentTarget.style.borderColor = '#fecaca'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#ffffff'
-              e.currentTarget.style.borderColor = '#cbd5e1'
-            }}
-          >
-            Đăng xuất
-          </button>
+          )}
         </div>
       </aside>
 
@@ -533,23 +605,58 @@ export const MainLayout: React.FC = () => {
               </span>
             </div>
 
-            <div
-              onClick={() => navigate('/profile')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                cursor: 'pointer',
-                padding: '6px 14px',
-                borderRadius: 8,
-                background: '#eff6ff',
-                border: '1px solid #bfdbfe',
-              }}
-            >
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#1d4ed8' }}>
-                {username || 'Hồ sơ cá nhân'}
-              </span>
-            </div>
+            {hasToken ? (
+              <div
+                onClick={() => navigate('/profile')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer',
+                  padding: '6px 14px',
+                  borderRadius: 8,
+                  background: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                }}
+              >
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#1d4ed8' }}>
+                  {username || 'Hồ sơ cá nhân'}
+                </span>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => navigate('/login')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    background: '#eff6ff',
+                    border: '1px solid #bfdbfe',
+                    color: '#2563eb',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Đăng nhập
+                </button>
+                <button
+                  onClick={() => navigate('/register')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    background: '#2563eb',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Đăng ký
+                </button>
+              </div>
+            )}
           </div>
         </header>
 
@@ -564,10 +671,12 @@ export const MainLayout: React.FC = () => {
             position: 'relative',
           }}
         >
-          {/* SLIDE BANNER */}
-          <div style={{ padding: '20px 28px 0', maxWidth: 1400, margin: '0 auto', boxSizing: 'border-box' }}>
-            <BannerCarousel />
-          </div>
+          {/* SLIDE BANNER (HIỂN THỊ KHI Ở CÁC TRANG QUẢN TRỊ / TỔNG QUAN) */}
+          {currentPath !== '/search-rooms' && currentPath !== '/' && !currentPath.startsWith('/listing/') && (
+            <div style={{ padding: '20px 28px 0', maxWidth: 1400, margin: '0 auto', boxSizing: 'border-box' }}>
+              <BannerCarousel />
+            </div>
+          )}
 
           {/* PAGE OUTLET CONTENT */}
           <div style={{ boxSizing: 'border-box', width: '100%' }}>

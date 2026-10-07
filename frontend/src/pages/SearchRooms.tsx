@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import Logo from '../components/Logo'
 
 const API = 'http://localhost:8080'
 
@@ -41,8 +40,6 @@ function SearchRooms() {
   const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  const token = localStorage.getItem('accessToken')
 
   const searchRooms = async (targetPage = 0, targetSort = sort) => {
     setLoading(true)
@@ -133,37 +130,6 @@ function SearchRooms() {
 
   return (
     <div className="search-page-wrapper">
-      {/* NAVIGATION BAR */}
-      <nav className="search-navbar">
-        <div className="nav-container">
-          <a href="/search-rooms" className="brand-logo-link">
-            <Logo size="sm" title="TroRoom" subtitle="Nền tảng tìm kiếm phòng trọ" />
-          </a>
-
-          <div className="nav-actions">
-            {token ? (
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <a href="/profile" className="nav-btn secondary">
-                  Hồ sơ cá nhân
-                </a>
-                <a href="/dashboard" className="nav-btn primary">
-                  Vào Dashboard
-                </a>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <a href="/login" className="nav-btn secondary">
-                  Đăng nhập
-                </a>
-                <a href="/register" className="nav-btn primary">
-                  Đăng ký
-                </a>
-              </div>
-            )}
-          </div>
-        </div>
-      </nav>
-
       <main className="search-main-content">
         <div className="content-container">
           {/* PAGE HERO HEADER */}
