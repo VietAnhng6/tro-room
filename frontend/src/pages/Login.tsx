@@ -73,7 +73,13 @@ function Login() {
         <div className="background-circle circle-two"></div>
       </div>
 
-      <div className="login-container">
+            <div className="login-container">
+              <a
+              href="/search-rooms"
+              className="preview-link"
+            >
+              ← Khám phá phòng trọ (Không cần đăng nhập)
+            </a>
         {/* Logo / giới thiệu */}
         <div className="login-brand">
           <div className="logo">
@@ -590,7 +596,27 @@ function Login() {
           color: #94a3b8;
           font-size: 11px;
         }
+        .preview-link {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          align-self: center;
+          width: fit-content;
+          margin: 0 auto 14px;
+          padding: 6px 12px;
+          border: 1px solid #dbeafe;
+          border-radius: 999px;
+          background: #ffffff;
+          color: #2563eb;
+          font-size: 12px;
+          font-weight: 700;
+          text-decoration: none;
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+        }
 
+        .preview-link:hover {
+          background: #eff6ff;
+        }
         @media (max-width: 480px) {
           .login-container {
             padding: 24px 16px;

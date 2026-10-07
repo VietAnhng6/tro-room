@@ -28,6 +28,9 @@ type ListingDetailData = {
   buildingName: string
   district: string
   address: string
+  landlordName: string
+  landlordPhone: string
+  landlordEmail: string
   images: { id: number; imageUrl: string; sortOrder: number }[]
   services: ServiceItem[]
   estimatedFixedMonthlyCost: number
@@ -312,6 +315,25 @@ function ListingDetail() {
               <p className="listing-address">
                 📍 <strong>{listing.buildingName}</strong> · {listing.address} ({listing.district || 'Hà Nội'})
               </p>
+              <div className="landlord-contact">
+                    <div className="landlord-contact-title"> Thông tin chủ nhà</div>
+
+                    <div className="landlord-contact-info">
+                      <span> {listing.landlordName || 'Chưa cập nhật'}</span>
+
+                      {listing.landlordPhone && (
+                        <a href={`tel:${listing.landlordPhone}`}>
+                           {listing.landlordPhone}
+                        </a>
+                      )}
+
+                      {listing.landlordEmail && (
+                        <a href={`mailto:${listing.landlordEmail}`}>
+                           {listing.landlordEmail}
+                        </a>
+                      )}
+                    </div>
+                  </div>
             </div>
 
             <div className="price-tag-hero">
@@ -762,6 +784,38 @@ function ListingDetail() {
           font-size: 14px;
           color: #64748b;
           margin: 0;
+        }
+                .landlord-contact {
+          margin-top: 14px;
+          padding: 12px 14px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+        }
+
+        .landlord-contact-title {
+          font-size: 13px;
+          font-weight: 800;
+          color: #334155;
+          margin-bottom: 7px;
+        }
+
+        .landlord-contact-info {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px 18px;
+          font-size: 13px;
+          color: #475569;
+        }
+
+        .landlord-contact-info a {
+          color: #2563eb;
+          text-decoration: none;
+          font-weight: 700;
+        }
+
+        .landlord-contact-info a:hover {
+          text-decoration: underline;
         }
 
         .price-tag-hero {
