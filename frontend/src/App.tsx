@@ -16,7 +16,7 @@ import AuditLogs from './pages/AuditLogs'
 import Admin from './pages/Admin'
 import MyRequests from './pages/MyRequests'
 import MainLayout from './components/MainLayout'
-     
+import Notifications from './pages/Notifications'     
 /*
  * Trang 403
  */
@@ -346,7 +346,13 @@ function App() {
       </ProtectedRoute>
     )
   }
-
+    if (path === '/notifications') {
+  return (
+    <MainLayout>
+      <Notifications />
+    </MainLayout>
+  )
+  }
     if (path === '/profile') {
     return (
       <ProtectedRoute path={path}>

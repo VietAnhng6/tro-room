@@ -17,6 +17,7 @@ function MainLayout({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<Role>('TENANT')
   const [username, setUsername] = useState('')
   const [pendingRequests, setPendingRequests] = useState(0)
+  const [unreadNotifications, setUnreadNotifications] = useState(0)
 
   useEffect(() => {
     setRole(localStorage.getItem('role') || 'TENANT')
@@ -41,7 +42,24 @@ function MainLayout({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {})
   }, [role])
+    useEffect(() => {
+  const token = localStorage.getItem('accessToken')
 
+  if (!token) return
+
+  fetch('http://localhost:8080/api/notifications/unread-count', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      if (data !== null) {
+        setUnreadNotifications(data)
+      }
+    })
+    .catch(() => {})
+    }, [role])
   const permissions = useMemo(() => {
     if (role === 'ADMIN') {
       return {
@@ -118,7 +136,7 @@ function MainLayout({ children }: { children: React.ReactNode }) {
     },
     {
       key: 'searchRooms',
-      icon: '🔍',
+      icon: '',
       title: 'Tìm phòng trọ',
       enabled: true,
       path: '/search-rooms',
@@ -150,6 +168,13 @@ function MainLayout({ children }: { children: React.ReactNode }) {
       title: 'Yêu cầu của tôi',
       enabled: role === 'TENANT',
       path: '/my-requests',
+    },
+    {
+    key: 'notifications',
+    icon: '',
+    title: 'Thông báo',
+    enabled: true,
+    path: '/notifications',
     },
     {
       key: 'tenant',
@@ -341,7 +366,7 @@ function MainLayout({ children }: { children: React.ReactNode }) {
 
                   {item.key === 'request' && pendingRequests > 0 && (
                     <span
-                      style={{
+                        style={{
                         marginLeft: 'auto',
                         minWidth: 20,
                         height: 20,
@@ -355,11 +380,33 @@ function MainLayout({ children }: { children: React.ReactNode }) {
                         alignItems: 'center',
                         justifyContent: 'center',
                         boxSizing: 'border-box',
-                      }}
+                        }}
                     >
-                      {pendingRequests}
+                        {pendingRequests}
                     </span>
-                  )}
+                    )}
+
+                    {item.key === 'notifications' && unreadNotifications > 0 && (
+                    <span
+                        style={{
+                        marginLeft: 'auto',
+                        minWidth: 20,
+                        height: 20,
+                        padding: '0 6px',
+                        borderRadius: 10,
+                        background: '#ef4444',
+                        color: '#ffffff',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxSizing: 'border-box',
+                        }}
+                    >
+                        {unreadNotifications}
+                    </span>
+                    )}
                 </button>
               )
             })}
