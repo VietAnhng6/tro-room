@@ -15,7 +15,8 @@ import Services from './pages/Services'
 import AuditLogs from './pages/AuditLogs'
 import Admin from './pages/Admin'
 import MyRequests from './pages/MyRequests'
-
+import MainLayout from './components/MainLayout'
+     
 /*
  * Trang 403
  */
@@ -289,14 +290,29 @@ function ProtectedRoute({
 
 function App() {
   const path = window.location.pathname
-
+  if (path === '/') {
+  return <SearchRooms />
+  }
+  if (path === '/login') {
+    return <Login />
+  }
   /*
    * Public routes
    */
 
   // S2-04: tìm kiếm phòng - không cần đăng nhập
   if (path === '/search-rooms') {
-    return <SearchRooms />
+  const token = localStorage.getItem('accessToken')
+
+  if (token) {
+    return (
+      <MainLayout>
+        <SearchRooms />
+      </MainLayout>
+    )
+  }
+
+  return <SearchRooms />
   }
 
   // S2-05/S2-06: chi tiết tin và gửi yêu cầu
@@ -331,43 +347,53 @@ function App() {
     )
   }
 
-  if (path === '/profile') {
+    if (path === '/profile') {
     return (
       <ProtectedRoute path={path}>
-        <Profile />
+        <MainLayout>
+          <Profile />
+        </MainLayout>
       </ProtectedRoute>
     )
   }
 
-  if (path === '/buildings') {
+    if (path === '/buildings') {
     return (
       <ProtectedRoute path={path}>
-        <Buildings />
+        <MainLayout>
+          <Buildings />
+        </MainLayout>
       </ProtectedRoute>
     )
   }
 
   // S2-10: cấu hình điện nước cho từng toà nhà
-  if (path.startsWith('/building-services/')) {
+    if (path.startsWith('/building-services/')) {
     return (
       <ProtectedRoute path="/buildings">
-        <BuildingServices />
+        <MainLayout>
+          <BuildingServices />
+        </MainLayout>
       </ProtectedRoute>
     )
   }
 
-  if (path === '/rooms') {
+    if (path === '/rooms') {
     return (
       <ProtectedRoute path={path}>
-        <Rooms />
+        <MainLayout>
+          <Rooms />
+        </MainLayout>
       </ProtectedRoute>
     )
   }
 
-  if (path === '/services') {
+    if (path === '/services') {
     return (
       <ProtectedRoute path={path}>
-        <Services />
+        <MainLayout>
+          <Services />
+        </MainLayout>
       </ProtectedRoute>
     )
   }
@@ -375,7 +401,9 @@ function App() {
   if (path === '/audit-logs') {
     return (
       <ProtectedRoute path={path}>
-        <AuditLogs />
+        <MainLayout>
+          <AuditLogs />
+        </MainLayout>
       </ProtectedRoute>
     )
   }
@@ -383,22 +411,28 @@ function App() {
   if (path === '/admin') {
     return (
       <ProtectedRoute path={path}>
-        <Admin />
+        <MainLayout>
+          <Admin />
+        </MainLayout>
       </ProtectedRoute>
     )
   }
   if (path === '/landlord/requests') {
     return (
       <ProtectedRoute path={path}>
+      <MainLayout>
         <LandlordRequests />
-      </ProtectedRoute>
+      </MainLayout>
+    </ProtectedRoute>
     )
   }
   if (path === '/my-requests') {
     return (
       <ProtectedRoute path={path}>
+      <MainLayout>
         <MyRequests />
-      </ProtectedRoute>
+      </MainLayout>
+    </ProtectedRoute>
     )
   }
   /*
@@ -412,8 +446,10 @@ function App() {
   if (comingSoon[path]) {
     return (
       <ProtectedRoute path={path}>
+      <MainLayout>
         <ComingSoon title={comingSoon[path]} />
-      </ProtectedRoute>
+      </MainLayout>
+    </ProtectedRoute>
     )
   }
 

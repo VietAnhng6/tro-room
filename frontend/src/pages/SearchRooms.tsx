@@ -147,9 +147,15 @@ function SearchRooms() {
               </a>
             ) : (
               <div style={{ display: 'flex', gap: '10px' }}>
-                <a href="/" className="nav-btn secondary">
+                <button
+                  type="button"
+                  className="nav-btn secondary"
+                  onClick={() => {
+                    window.location.href = '/login'
+                  }}
+                >
                   Đăng nhập
-                </a>
+                </button>
                 <a href="/register" className="nav-btn primary">
                   Đăng ký
                 </a>
