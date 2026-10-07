@@ -1,13 +1,12 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 
-export function Register() {
+function Register() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
-  const [isSuccessMsg, setIsSuccessMsg] = useState(false)
   const [loading, setLoading] = useState(false)
   const [otpStep, setOtpStep] = useState(false)
   const [otp, setOtp] = useState('')
@@ -17,33 +16,33 @@ export function Register() {
 
     if (!/^0\d{9}$/.test(phone)) {
       setMessage('Số điện thoại phải có 10 chữ số và bắt đầu bằng 0.')
-      setIsSuccessMsg(false)
       return
     }
 
     if (!/(?=.*[A-Za-z])(?=.*\d).{8,}/.test(password)) {
       setMessage('Mật khẩu phải có ít nhất 8 ký tự, gồm chữ và số.')
-      setIsSuccessMsg(false)
       return
     }
 
     setLoading(true)
     setMessage('')
-    setIsSuccessMsg(false)
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          phone,
-          email,
-          password,
-        }),
-      })
+      const response = await fetch(
+        'http://localhost:8080/api/auth/register',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name,
+            phone,
+            email,
+            password,
+          }),
+        }
+      )
 
       const data = await response.text()
 
@@ -51,14 +50,14 @@ export function Register() {
         throw new Error(data || 'Đăng ký thất bại')
       }
 
-      setMessage('Mã xác minh OTP đã được gửi thành công về Gmail của bạn!')
-      setIsSuccessMsg(true)
+      setMessage('Mã xác minh đã được gửi tới email Gmail của bạn.')
       setOtpStep(true)
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : 'Có lỗi xảy ra. Vui lòng thử lại.'
+        error instanceof Error
+          ? error.message
+          : 'Có lỗi xảy ra. Vui lòng thử lại.'
       )
-      setIsSuccessMsg(false)
     } finally {
       setLoading(false)
     }
@@ -69,25 +68,26 @@ export function Register() {
 
     if (!/^\d{6}$/.test(otp)) {
       setMessage('Mã OTP phải gồm 6 chữ số.')
-      setIsSuccessMsg(false)
       return
     }
 
     setLoading(true)
     setMessage('')
-    setIsSuccessMsg(false)
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/verify-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          otp,
-        }),
-      })
+      const response = await fetch(
+        'http://localhost:8080/api/auth/verify-email',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            otp,
+          }),
+        }
+      )
 
       const data = await response.text()
 
@@ -95,18 +95,19 @@ export function Register() {
         throw new Error(data || 'Xác minh email thất bại')
       }
 
-      setMessage('Xác minh email thành công! Đang chuyển đến trang đăng nhập...')
-      setIsSuccessMsg(true)
-
-      // Chuyển thẳng về trang đăng nhập
-      setTimeout(() => {
-        window.location.href = '/'
-      }, 1000)
+      setMessage('Xác minh email thành công! Bạn có thể đăng nhập.')
+      setOtp('')
+      setOtpStep(false)
+      setName('')
+      setPhone('')
+      setEmail('')
+      setPassword('')
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : 'Có lỗi xảy ra. Vui lòng thử lại.'
+        error instanceof Error
+          ? error.message
+          : 'Có lỗi xảy ra. Vui lòng thử lại.'
       )
-      setIsSuccessMsg(false)
     } finally {
       setLoading(false)
     }
@@ -128,95 +129,39 @@ export function Register() {
           <p>
             Tạo tài khoản để quản lý
             <br />
-            và tìm kiếm phòng trọ dễ dàng hơn
+            phòng trọ dễ dàng hơn
           </p>
         </div>
 
         <div className="register-card">
           <div className="register-header">
-            <h2>{otpStep ? 'Xác thực OTP Email' : 'Tạo tài khoản mới'}</h2>
-            <p>
-              {otpStep
-                ? 'Nhập mã gồm 6 số đã gửi về hòm thư Gmail của bạn'
-                : 'Điền thông tin để bắt đầu sử dụng TroRoom'}
-            </p>
+            <h2>Tạo tài khoản</h2>
+            <p>Điền thông tin để bắt đầu sử dụng TroRoom</p>
           </div>
 
-          {/* DÒNG THÔNG BÁO MÃ OTP / LỖI / THÀNH CÔNG (MÀU XANH LÁ RÕ RÀNG KHI GỬI THÀNH CÔNG) */}
-          {message && (
-            <div
-              className={`message-box ${
-                isSuccessMsg ||
-                message.includes('thành công') ||
-                message.includes('đã được gửi')
-                  ? 'message-success'
-                  : 'message-error'
-              }`}
-            >
-              <span>{message}</span>
-            </div>
-          )}
-
           {otpStep ? (
-            <form onSubmit={handleVerifyOtp} style={{ marginTop: '16px' }}>
-              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ fontSize: '13px', color: '#64748b' }}>
-                  Mã OTP đã được gửi tới email:
-                </div>
-                <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e40af', marginTop: '4px' }}>
-                  {email}
-                </div>
-              </div>
+            <form onSubmit={handleVerifyOtp}>
+              <h2>Xác minh email</h2>
 
-              {/* INPUT KHUNG NHẬP OTP TINH TẾ, ĐẸP MẮT */}
-              <div className="form-group" style={{ textAlign: 'center' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: '#334155' }}>
-                  Mã xác nhận 6 chữ số
-                </label>
-                <input
-                  type="text"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                  placeholder="• • • • • •"
-                  maxLength={6}
-                  inputMode="numeric"
-                  autoFocus
-                  required
-                  className="sleek-otp-input"
-                />
-              </div>
+              <p>
+                Mã OTP đã được gửi tới:
+                <br />
+                <strong>{email}</strong>
+              </p>
 
-              <button type="submit" disabled={loading} className="register-button" style={{ marginTop: '16px' }}>
-                {loading ? (
-                  <>
-                    <span className="spinner"></span>
-                    Đang xác minh...
-                  </>
-                ) : (
-                  'Xác thực & Đăng nhập ngay'
-                )}
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="Nhập mã OTP 6 số"
+                maxLength={6}
+                inputMode="numeric"
+                required
+              />
+
+              <button type="submit" disabled={loading} className="register-button">
+                {loading ? 'Đang xác minh...' : 'Xác minh email'}
               </button>
-
-              <div style={{ textAlign: 'center', marginTop: '16px' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOtpStep(false)
-                    setMessage('')
-                  }}
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    color: '#2563eb',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                  }}
-                >
-                  ← Quay lại sửa thông tin email
-                </button>
-              </div>
             </form>
           ) : (
             <form onSubmit={handleRegister}>
@@ -227,7 +172,7 @@ export function Register() {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Nhập họ và tên đầy đủ"
+                    placeholder="Nhập họ và tên"
                     required
                   />
                 </div>
@@ -247,7 +192,7 @@ export function Register() {
               </div>
 
               <div className="form-group">
-                <label>Email (nhận mã OTP)</label>
+                <label>Email</label>
                 <div className="input-wrapper">
                   <input
                     type="email"
@@ -291,7 +236,7 @@ export function Register() {
                   </button>
                 </div>
                 <p className="password-hint">
-                  Mật khẩu cần ít nhất 8 ký tự, gồm cả chữ và số
+                  Mật khẩu cần ít nhất 8 ký tự, gồm chữ và số
                 </p>
               </div>
 
@@ -303,13 +248,25 @@ export function Register() {
                 {loading ? (
                   <>
                     <span className="spinner"></span>
-                    Đang gửi mã xác minh...
+                    Đang tạo tài khoản...
                   </>
                 ) : (
-                  'Đăng ký tài khoản'
+                  'Tạo tài khoản'
                 )}
               </button>
             </form>
+          )}
+
+          {message && (
+            <div
+              className={
+                message.includes('thành công')
+                  ? 'message success'
+                  : 'message error'
+              }
+            >
+              {message}
+            </div>
           )}
 
           <div className="divider">
@@ -323,7 +280,7 @@ export function Register() {
         </div>
 
         <p className="copyright">
-          © 2026 TroRoom · Hệ thống quản lý phòng trọ
+          2026 TroRoom · Hệ thống quản lý phòng trọ
         </p>
       </div>
 
@@ -380,7 +337,7 @@ export function Register() {
           position: relative;
           z-index: 1;
           width: 100%;
-          max-width: 440px;
+          max-width: 430px;
           padding: 28px 20px;
         }
 
@@ -423,7 +380,7 @@ export function Register() {
         .register-brand p {
           margin: 5px 0 0;
           color: #64748b;
-          fontSize: 13px;
+          font-size: 13px;
           line-height: 1.5;
         }
 
@@ -438,82 +395,30 @@ export function Register() {
         }
 
         .register-header {
-          margin-bottom: 18px;
+          margin-bottom: 23px;
         }
 
         .register-header h2 {
           margin: 0 0 6px;
           font-size: 21px;
-          font-weight: 800;
-          color: #0f172a;
+          font-weight: 750;
         }
 
         .register-header p {
           margin: 0;
           color: #64748b;
-          font-size: 13.5px;
-          line-height: 1.4;
-        }
-
-        /* THÔNG BÁO OTP MÀU XANH / ĐỎ */
-        .message-box {
-          padding: 12px 14px;
-          border-radius: 10px;
           font-size: 13px;
-          font-weight: 650;
-          line-height: 1.45;
-          margin-bottom: 16px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .message-success {
-          background-color: #ecfdf5;
-          border: 1px solid #a7f3d0;
-          color: #047857;
-        }
-
-        .message-error {
-          background-color: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #dc2626;
-        }
-
-        /* KHUNG NHẬP OTP ĐẸP, MỊN MÀNG */
-        .sleek-otp-input {
-          width: 100%;
-          letter-spacing: 12px;
-          text-align: center;
-          font-size: 26px;
-          font-weight: 800;
-          font-family: monospace, -apple-system, sans-serif;
-          padding: 14px 16px;
-          border: 2px solid #93c5fd;
-          border-radius: 14px;
-          background: #f8fafc;
-          color: #1e3a8a;
-          outline: none;
-          box-sizing: border-box;
-          transition: all 0.2s ease;
-          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.06);
-        }
-
-        .sleek-otp-input:focus {
-          border-color: #2563eb;
-          background: #ffffff;
-          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
         }
 
         .form-group {
-          margin-bottom: 15px;
+          margin-bottom: 16px;
         }
 
         .form-group label {
           display: block;
-          margin-bottom: 6px;
+          margin-bottom: 7px;
           font-size: 13px;
-          font-weight: 700;
+          font-weight: 650;
           color: #334155;
         }
 
@@ -525,55 +430,62 @@ export function Register() {
 
         .input-wrapper input {
           width: 100%;
-          height: 44px;
-          padding: 0 14px;
-          border: 1.5px solid #cbd5e1;
+          height: 46px;
+          padding: 0 14px; /* Chỉnh lùi sát mép trái (14px) */
+          border: 1px solid #dbe2ea;
           border-radius: 11px;
-          font-size: 14px;
           outline: none;
-          color: #0f172a;
-          background: #ffffff;
-          transition: border-color 0.2s, box-shadow 0.2s;
+          background: #f8fafc;
+          color: #172033;
+          font-size: 14px;
+          transition: all 0.2s ease;
+        }
+
+        .input-wrapper input.password-input {
+          padding-right: 42px; /* Dành khoảng trống bên phải cho nút ẩn/hiện mật khẩu */
+        }
+
+        .input-wrapper input::placeholder {
+          color: #94a3b8;
         }
 
         .input-wrapper input:focus {
           border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-        }
-
-        .password-input {
-          padding-right: 44px !important;
+          background: white;
+          box-shadow:
+            0 0 0 4px rgba(37, 99, 235, 0.10);
         }
 
         .show-password {
           position: absolute;
-          right: 12px;
+          right: 10px;
           border: none;
           background: transparent;
-          color: #94a3b8;
           cursor: pointer;
+          font-size: 16px;
+          padding: 6px;
+          opacity: 0.7;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 4px;
         }
 
         .show-password:hover {
-          color: #475569;
+          opacity: 1;
         }
 
         .password-hint {
-          margin: 5px 0 0;
-          font-size: 11.5px;
-          color: #64748b;
+          margin: 6px 0 0;
+          font-size: 11px;
+          color: #94a3b8;
         }
 
         .register-button {
           width: 100%;
-          height: 46px;
-          margin-top: 10px;
+          height: 48px;
+          margin-top: 5px;
           border: none;
-          border-radius: 12px;
+          border-radius: 11px;
           background: linear-gradient(
             135deg,
             #2563eb,
@@ -581,19 +493,21 @@ export function Register() {
           );
           color: white;
           font-size: 15px;
-          font-weight: 750;
+          font-weight: 700;
           cursor: pointer;
-          box-shadow: 0 8px 20px rgba(37, 99, 235, 0.22);
+          box-shadow:
+            0 8px 18px rgba(37, 99, 235, 0.20);
+          transition: all 0.2s ease;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
-          transition: all 0.2s ease;
+          gap: 9px;
         }
 
         .register-button:hover:not(:disabled) {
           transform: translateY(-1px);
-          box-shadow: 0 12px 25px rgba(37, 99, 235, 0.30);
+          box-shadow:
+            0 12px 24px rgba(37, 99, 235, 0.28);
         }
 
         .register-button:disabled {
@@ -602,12 +516,12 @@ export function Register() {
         }
 
         .spinner {
-          width: 18px;
-          height: 18px;
-          border: 2px solid rgba(255, 255, 255, 0.3);
+          width: 17px;
+          height: 17px;
+          border: 2px solid rgba(255,255,255,0.4);
           border-top-color: white;
           border-radius: 50%;
-          animation: spin 0.8s linear infinite;
+          animation: spin 0.7s linear infinite;
         }
 
         @keyframes spin {
@@ -616,48 +530,75 @@ export function Register() {
           }
         }
 
-        .divider {
-          position: relative;
+        .message {
+          margin-top: 15px;
+          padding: 10px 12px;
+          border-radius: 99px;
+          font-size: 13px;
           text-align: center;
-          margin: 20px 0;
         }
 
-        .divider::before {
-          content: "";
-          position: absolute;
-          left: 0;
-          top: 50%;
-          width: 100%;
-          height: 1px;
-          background: #e2e8f0;
+        .message.success {
+          background: #ecfdf5;
+          color: #047857;
+          border: 1px solid #a7f3d0;
         }
 
-        .divider span {
-          position: relative;
-          background: white;
-          padding: 0 10px;
+        .message.error {
+          background: #fef2f2;
+          color: #dc2626;
+          border: 1px solid #fecaca;
+        }
+
+        .divider {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin: 20px 0 17px;
           color: #94a3b8;
           font-size: 12px;
         }
 
+        .divider::before,
+        .divider::after {
+          content: "";
+          flex: 1;
+          height: 1px;
+          background: #e2e8f0;
+        }
+
         .login-link {
           text-align: center;
-          font-size: 13.5px;
+          font-size: 13px;
           color: #64748b;
         }
 
         .login-link a {
           color: #2563eb;
+          font-weight: 700;
           text-decoration: none;
-          font-weight: 750;
-          margin-left: 4px;
+        }
+
+        .login-link a:hover {
+          text-decoration: underline;
         }
 
         .copyright {
+          margin: 18px 0 0;
           text-align: center;
-          margin-top: 20px;
           color: #94a3b8;
-          font-size: 12px;
+          font-size: 11px;
+        }
+
+        @media (max-width: 480px) {
+          .register-container {
+            padding: 20px 16px;
+          }
+
+          .register-card {
+            padding: 24px 20px;
+            border-radius: 17px;
+          }
         }
       `}</style>
     </div>

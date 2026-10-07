@@ -461,9 +461,8 @@ const emptyStyle: React.CSSProperties = {
 
 const thStyle: React.CSSProperties = {
   padding: '13px 14px',
-  textAlign: 'center',
+  textAlign: 'left',
   fontSize: 13,
-  fontWeight: 750,
   color: '#475569',
   borderBottom: '1px solid #e2e8f0',
 }
@@ -473,8 +472,7 @@ const tdStyle: React.CSSProperties = {
   borderBottom: '1px solid #f1f5f9',
   fontSize: 14,
   color: '#334155',
-  textAlign: 'center',
-  verticalAlign: 'middle',
+  verticalAlign: 'top',
 }
 
 const preStyle: React.CSSProperties = {

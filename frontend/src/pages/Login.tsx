@@ -49,19 +49,12 @@ function Login() {
       localStorage.setItem('accessToken', data.accessToken)
       localStorage.setItem('refreshToken', data.refreshToken)
       localStorage.setItem('role', data.role)
-      if (data.username) {
-        localStorage.setItem('username', data.username)
-      }
 
       setMessage('Đăng nhập thành công!')
 
       setTimeout(() => {
-        if (data.role === 'TENANT') {
-          window.location.href = '/dashboard'
-        } else {
-          window.location.href = '/dashboard'
-        }
-      }, 400)
+        window.location.href = '/dashboard'
+      }, 500)
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -81,30 +74,6 @@ function Login() {
       </div>
 
       <div className="login-container">
-        {/* NÚT QUAY LẠI TRANG CHỦ TÌM PHÒNG (KHÔNG CẦN ĐĂNG NHẬP) */}
-        <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <a
-            href="/"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '7px 16px',
-              borderRadius: 20,
-              background: '#ffffff',
-              color: '#2563eb',
-              fontSize: 13,
-              fontWeight: 700,
-              textDecoration: 'none',
-              boxShadow: '0 2px 8px rgba(37,99,235,0.12)',
-              border: '1px solid #bfdbfe',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            ← Khám phá phòng trọ (Không cần đăng nhập)
-          </a>
-        </div>
-
         {/* Logo / giới thiệu */}
         <div className="login-brand">
           <div className="logo">
@@ -124,7 +93,7 @@ function Login() {
         <div className="login-card">
           <div className="login-header">
             <h2>Chào mừng trở lại</h2>
-            <p>Đăng nhập để quản lý, đặt phòng hoặc cập nhật hồ sơ</p>
+            <p>Đăng nhập để tiếp tục sử dụng TroRoom</p>
           </div>
 
           <form onSubmit={handleLogin}>
@@ -173,6 +142,7 @@ function Login() {
                   aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
                   {showPassword ? (
+                    /* Icon Mắt ẩn (gạch chéo) */
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="18"
@@ -190,6 +160,7 @@ function Login() {
                       <line x1="2" x2="22" y1="2" y2="22" />
                     </svg>
                   ) : (
+                    /* Icon Mắt hiện (mở) */
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="18"
@@ -239,6 +210,40 @@ function Login() {
 
           <div className="divider">
             <span>hoặc</span>
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <a
+              href="/search-rooms"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                width: '100%',
+                height: '46px',
+                borderRadius: '11px',
+                background: '#eff6ff',
+                border: '1.5px solid #bfdbfe',
+                color: '#1d4ed8',
+                fontSize: '14px',
+                fontWeight: 700,
+                textDecoration: 'none',
+                transition: 'all 0.2s ease',
+                boxSizing: 'border-box',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#dbeafe'
+                e.currentTarget.style.borderColor = '#93c5fd'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#eff6ff'
+                e.currentTarget.style.borderColor = '#bfdbfe'
+              }}
+            >
+              <span>🔍</span>
+              <span>Tìm kiếm phòng trọ trống</span>
+            </a>
           </div>
 
           <div className="register-link">

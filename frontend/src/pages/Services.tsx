@@ -993,17 +993,14 @@ const inputStyle: React.CSSProperties = {
 }
 
 const thStyle: React.CSSProperties = {
-  textAlign: 'center',
+  textAlign: 'left',
   padding: '13px 16px',
   borderBottom: '1px solid #e2e8f0',
   color: '#475569',
   fontSize: 13,
-  fontWeight: 750,
-  whiteSpace: 'nowrap',
 }
 
 const tdStyle: React.CSSProperties = {
-  textAlign: 'center',
   padding: '15px 16px',
   borderBottom: '1px solid #e2e8f0',
   verticalAlign: 'middle',
