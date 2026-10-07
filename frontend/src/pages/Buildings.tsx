@@ -4,6 +4,7 @@ type Building = {
   id: number
   name: string
   address: string
+  district?: string | null
   floors: number
   managerId?: number | null
   managerName?: string | null
@@ -16,6 +17,7 @@ type Building = {
 type BuildingForm = {
   name: string
   address: string
+  district: string
   floors: string
   managerId: string
   note: string
@@ -30,9 +32,10 @@ function Buildings() {
   const [editingId, setEditingId] = useState<number | null>(null)
 
   const [form, setForm] = useState<BuildingForm>({
-    name: '',
-    address: '',
-    floors: '',
+  name: '',
+  address: '',
+  district: '',
+  floors: '',
     managerId: '',
     note: '',
   })
@@ -102,6 +105,7 @@ function Buildings() {
     setForm({
       name: '',
       address: '',
+      district: '',
       floors: '',
       managerId: '',
       note: '',
@@ -118,6 +122,7 @@ function Buildings() {
     setForm({
       name: '',
       address: '',
+      district: '',
       floors: '',
       managerId: '',
       note: '',
@@ -134,6 +139,7 @@ function Buildings() {
     setForm({
       name: building.name || '',
       address: building.address || '',
+      district: building.district || '',
       floors: String(building.floors || ''),
       managerId:
         building.managerId !== null &&
@@ -197,6 +203,7 @@ function Buildings() {
     const body = {
       name: form.name.trim(),
       address: form.address.trim(),
+      district: form.district.trim() || null,
       floors: Number(form.floors),
       managerId: form.managerId.trim()
         ? Number(form.managerId)
@@ -630,6 +637,25 @@ function Buildings() {
                   style={styles.input}
                 />
               </div>
+              
+                <div>
+                    <label style={styles.label}>
+                      Quận / Huyện
+                    </label>
+
+                    <input
+                      type="text"
+                      value={form.district}
+                      onChange={e =>
+                        setForm({
+                          ...form,
+                          district: e.target.value,
+                        })
+                      }
+                      placeholder="Ví dụ: Cầu Giấy"
+                      style={styles.input}
+                    />
+                </div>
 
               <div>
                 <label style={styles.label}>
