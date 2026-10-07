@@ -142,12 +142,17 @@ function SearchRooms() {
 
           <div className="nav-actions">
             {token ? (
-              <a href="/dashboard" className="nav-btn primary">
-                Vào Dashboard
-              </a>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <a href="/profile" className="nav-btn secondary">
+                  Hồ sơ cá nhân
+                </a>
+                <a href="/dashboard" className="nav-btn primary">
+                  Vào Dashboard
+                </a>
+              </div>
             ) : (
               <div style={{ display: 'flex', gap: '10px' }}>
-                <a href="/" className="nav-btn secondary">
+                <a href="/login" className="nav-btn secondary">
                   Đăng nhập
                 </a>
                 <a href="/register" className="nav-btn primary">

@@ -243,7 +243,7 @@ function hasRouteAccess(path: string, role: string | null) {
 }
 
 /*
- * Route được bảo vệ + kiểm tra quyền
+ * Route được bảo vệ + kiểm tra quyền (yêu cầu đăng nhập)
  */
 function ProtectedRoute({
   path,
@@ -256,7 +256,7 @@ function ProtectedRoute({
   const role = localStorage.getItem('role')
 
   if (!token) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/login" replace />
   }
 
   if (!hasRouteAccess(path, role)) {
@@ -266,7 +266,10 @@ function ProtectedRoute({
   return <>{children}</>
 }
 
-function PublicRoute({ children }: { children: React.ReactNode }) {
+/*
+ * Route đăng nhập / đăng ký: nếu đã đăng nhập thì chuyển vào /dashboard
+ */
+function PublicAuthRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('accessToken')
   if (token) {
     return <Navigate to="/dashboard" replace />
@@ -277,54 +280,48 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Public Unauthenticated Routes */}
-      <Route
-        path="/"
-        element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        }
-      />
+      {/* PUBLIC PORTAL: Xem phòng, tìm kiếm và chi tiết phòng mà KHÔNG CẦN ĐĂNG NHẬP */}
+      <Route path="/" element={<SearchRooms />} />
+      <Route path="/search-rooms" element={<SearchRooms />} />
+      <Route path="/listing/:id" element={<ListingDetail />} />
+
+      {/* AUTHENTICATION ROUTES */}
       <Route
         path="/login"
         element={
-          <PublicRoute>
+          <PublicAuthRoute>
             <Login />
-          </PublicRoute>
+          </PublicAuthRoute>
         }
       />
       <Route
         path="/register"
         element={
-          <PublicRoute>
+          <PublicAuthRoute>
             <Register />
-          </PublicRoute>
+          </PublicAuthRoute>
         }
       />
       <Route
         path="/forgot-password"
         element={
-          <PublicRoute>
+          <PublicAuthRoute>
             <ForgotPassword />
-          </PublicRoute>
+          </PublicAuthRoute>
         }
       />
       <Route
         path="/reset-password"
         element={
-          <PublicRoute>
+          <PublicAuthRoute>
             <ResetPassword />
-          </PublicRoute>
+          </PublicAuthRoute>
         }
       />
 
-      {/* Public Pages with their own independent search view */}
-      <Route path="/search-rooms" element={<SearchRooms />} />
-      <Route path="/listing/:id" element={<ListingDetail />} />
       <Route path="/403" element={<Forbidden />} />
 
-      {/* Protected Nested Routes Wrapped by MainLayout (Sidebar + Topbar + Carousel + Outlet) */}
+      {/* PROTECTED ROUTES: Yêu cầu đăng nhập để thêm hồ sơ, quản lý, xem yêu cầu */}
       <Route element={<MainLayout />}>
         <Route
           path="/dashboard"
@@ -425,16 +422,7 @@ export function AppRoutes() {
       </Route>
 
       {/* Catch-all fallback */}
-      <Route
-        path="*"
-        element={
-          localStorage.getItem('accessToken') ? (
-            <Navigate to="/dashboard" replace />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

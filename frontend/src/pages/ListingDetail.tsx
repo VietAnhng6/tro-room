@@ -97,6 +97,7 @@ function ListingDetail() {
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [notice, setNotice] = useState<Notice | null>(null)
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const token = localStorage.getItem('accessToken')
   const role = localStorage.getItem('role')
@@ -137,6 +138,7 @@ function ListingDetail() {
         type: 'info',
         text: 'Vui lòng đăng nhập tài khoản Khách thuê để gửi yêu cầu thuê hoặc đặt lịch xem phòng.',
       })
+      setShowLoginModal(true)
       return
     }
 
@@ -281,22 +283,32 @@ function ListingDetail() {
       {/* NAVBAR */}
       <nav className="detail-navbar">
         <div className="nav-container">
-          <a href="/search-rooms" style={{ textDecoration: 'none' }}>
+          <a href="/" style={{ textDecoration: 'none' }}>
             <Logo size="sm" title="TroRoom" subtitle="Quản lý & Tìm kiếm phòng trọ" />
           </a>
 
           <div className="nav-actions">
-            <a href="/search-rooms" className="nav-link-btn">
+            <a href="/" className="nav-link-btn">
               ← Danh sách phòng
             </a>
             {token ? (
-              <a href="/dashboard" className="nav-btn-primary">
-                Dashboard
-              </a>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <a href="/profile" className="nav-link-btn">
+                  Hồ sơ
+                </a>
+                <a href="/dashboard" className="nav-btn-primary">
+                  Dashboard
+                </a>
+              </div>
             ) : (
-              <a href="/" className="nav-btn-primary">
-                Đăng nhập
-              </a>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <a href="/login" className="nav-link-btn" style={{ border: '1px solid #cbd5e1', padding: '8px 16px', borderRadius: '8px' }}>
+                  Đăng nhập
+                </a>
+                <a href="/register" className="nav-btn-primary">
+                  Đăng ký
+                </a>
+              </div>
             )}
           </div>
         </div>
@@ -678,6 +690,140 @@ function ListingDetail() {
             />
             <div style={{ marginTop: '10px', color: '#ffffff', fontSize: '13px', opacity: 0.85 }}>
               Bấm ra ngoài hoặc nút đóng để quay lại
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL YÊU CẦU ĐĂNG NHẬP (GUEST LOGIN PROMPT MODAL) */}
+      {showLoginModal && (
+        <div
+          onClick={() => setShowLoginModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 3500,
+            padding: '20px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: 480,
+              background: '#ffffff',
+              borderRadius: 16,
+              padding: '28px 30px',
+              boxShadow: '0 25px 60px rgba(15,23,42,0.2)',
+              textAlign: 'center',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setShowLoginModal(false)}
+              style={{
+                position: 'absolute',
+                top: 14,
+                right: 14,
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: '#f1f5f9',
+                color: '#64748b',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 16,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              ✕
+            </button>
+
+            <div
+              style={{
+                width: 54,
+                height: 54,
+                borderRadius: 14,
+                background: '#eff6ff',
+                color: '#2563eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px',
+                fontSize: 24,
+                fontWeight: 800,
+              }}
+            >
+              TR
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 800, color: '#0f172a' }}>
+              Yêu cầu đăng nhập
+            </h3>
+
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: '#64748b', lineHeight: 1.5 }}>
+              Bạn cần đăng nhập tài khoản Khách thuê để gửi yêu cầu đặt lịch xem phòng hoặc thuê ngay. Sau khi đăng nhập, bạn có thể theo dõi trạng thái phản hồi từ chủ nhà.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <a
+                href="/login"
+                style={{
+                  display: 'block',
+                  padding: '12px 20px',
+                  background: 'linear-gradient(135deg, #2563eb, #4f46e5)',
+                  color: '#ffffff',
+                  borderRadius: 10,
+                  fontSize: 14.5,
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 14px rgba(37,99,235,0.25)',
+                }}
+              >
+                Đăng nhập ngay
+              </a>
+
+              <a
+                href="/register"
+                style={{
+                  display: 'block',
+                  padding: '11px 20px',
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  color: '#334155',
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+              >
+                Chưa có tài khoản? Đăng ký
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setShowLoginModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94a3b8',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: '6px 0',
+                }}
+              >
+                Để sau, tiếp tục xem phòng
+              </button>
             </div>
           </div>
         </div>
