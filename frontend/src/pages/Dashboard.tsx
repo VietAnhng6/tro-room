@@ -19,11 +19,28 @@ function Dashboard() {
   const [buildingCount, setBuildingCount] = useState(0)
   const [roomCount, setRoomCount] = useState(0)
   const [pendingRequests, setPendingRequests] = useState(0)
+  const [unreadNotifications, setUnreadNotifications] = useState(0)
   useEffect(() => {
     setRole(localStorage.getItem('role') || 'TENANT')
     setUsername(localStorage.getItem('username') || '')
   }, [])
+  useEffect(() => {
+  const token = localStorage.getItem('accessToken')
+  if (!token) return
 
+  fetch('http://localhost:8080/api/notifications/unread-count', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      if (data !== null) {
+        setUnreadNotifications(data)
+      }
+    })
+    .catch(() => {})
+  }, [])
   useEffect(() => {
     const loadDashboardStats = async () => {
       const token = localStorage.getItem('accessToken')
@@ -165,7 +182,7 @@ function Dashboard() {
     },
     {
       key: 'searchRooms',
-      icon: '🔍',
+      icon: '',
       title: 'Tìm phòng trọ',
       enabled: true,
       path: '/search-rooms',
@@ -197,6 +214,13 @@ function Dashboard() {
       title: 'Yêu cầu của tôi',
       enabled: role === 'TENANT',
       path: '/my-requests',
+    },
+    {
+      key: 'notifications',
+      icon: '',
+      title: 'Thông báo',
+      enabled: true,
+      path: '/notifications',
     },
     {
       key: 'tenant',
@@ -401,6 +425,26 @@ function Dashboard() {
                       {pendingRequests}
                     </span>
                   )}
+                  {item.key === 'notifications' && unreadNotifications > 0 && (
+                  <span
+                    style={{
+                      marginLeft: 'auto',
+                      minWidth: 20,
+                      height: 20,
+                      padding: '0 6px',
+                      borderRadius: 10,
+                      background: '#ef4444',
+                      color: '#fff',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {unreadNotifications}
+                  </span>
+                )}
                 </button>
               )
             })}

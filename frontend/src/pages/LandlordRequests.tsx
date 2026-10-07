@@ -117,7 +117,74 @@ function LandlordRequests() {
   useEffect(() => {
     load()
   }, [load])
+    async function approveRequest(id: number) {
+    if (!window.confirm('Bạn có chắc muốn đồng ý yêu cầu này?')) return
 
+    try {
+      const res = await fetch(`${API}/api/landlord/requests/${id}/approve`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok) {
+        alert(data?.message || 'Không thể duyệt yêu cầu')
+        return
+      }
+
+      await load()
+    } catch {
+      alert('Không thể kết nối tới máy chủ')
+    }
+  }
+
+  async function rejectRequest(id: number) {
+    const reason = window.prompt(
+      'Nhập lý do từ chối (ví dụ: ROOM_UNAVAILABLE, OTHER):',
+      'OTHER'
+    )
+
+    if (!reason) return
+
+    let note = ''
+
+    if (reason.toUpperCase() === 'OTHER') {
+      note = window.prompt('Nhập lý do chi tiết:') || ''
+
+      if (!note.trim()) {
+        alert('Vui lòng nhập lý do chi tiết.')
+        return
+      }
+    }
+
+    try {
+      const res = await fetch(`${API}/api/landlord/requests/${id}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          reason: reason.toUpperCase(),
+          note,
+        }),
+      })
+
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok) {
+        alert(data?.message || 'Không thể từ chối yêu cầu')
+        return
+      }
+
+      await load()
+    } catch {
+      alert('Không thể kết nối tới máy chủ')
+    }
+  }
   const selectStyle = {
     height: 38,
     padding: '0 10px',
@@ -246,7 +313,7 @@ function LandlordRequests() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#f1f5f9', textAlign: 'left' }}>
-              {['Mã yêu cầu', 'Khách thuê', 'Phòng', 'Loại', 'Ngày mong muốn', 'Trạng thái', 'Gửi lúc'].map(
+              {['Mã yêu cầu', 'Khách thuê', 'Phòng', 'Loại', 'Ngày mong muốn', 'Trạng thái', 'Gửi lúc', 'Thao tác'].map(
                 (h) => (
                   <th key={h} style={{ ...cellStyle, fontWeight: 700, color: '#475569' }}>
                     {h}
@@ -260,7 +327,7 @@ function LandlordRequests() {
             {!loading && items.length === 0 && !error && (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   style={{ ...cellStyle, textAlign: 'center', color: '#64748b', padding: 32 }}
                 >
                   Không có yêu cầu nào
@@ -318,7 +385,47 @@ function LandlordRequests() {
                   </td>
 
                   <td style={cellStyle}>{formatDateTime(r.createdAt)}</td>
+                  <td style={cellStyle}>
+                    {(r.status === 'OPEN' || r.status === 'SCHEDULED') && (
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => approveRequest(r.id)}
+                          style={{
+                            border: 'none',
+                            background: '#16a34a',
+                            color: '#fff',
+                            padding: '7px 12px',
+                            borderRadius: 7,
+                            cursor: 'pointer',
+                            fontSize: 12,
+                            fontWeight: 700,
+                          }}
+                        >
+                          ✓ Đồng ý
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => rejectRequest(r.id)}
+                          style={{
+                            border: 'none',
+                            background: '#dc2626',
+                            color: '#fff',
+                            padding: '7px 12px',
+                            borderRadius: 7,
+                            cursor: 'pointer',
+                            fontSize: 12,
+                            fontWeight: 700,
+                          }}
+                        >
+                          ✕ Từ chối
+                        </button>
+                      </div>
+                    )}
+                  </td>
                 </tr>
+                
               )
             })}
           </tbody>
