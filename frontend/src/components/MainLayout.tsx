@@ -138,7 +138,7 @@ function MainLayout({ children }: { children: React.ReactNode }) {
       key: 'searchRooms',
       icon: '',
       title: 'Tìm phòng trọ',
-      enabled: true,
+      enabled: role === 'TENANT',
       path: '/search-rooms',
     },
     {

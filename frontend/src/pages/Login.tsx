@@ -73,13 +73,30 @@ function Login() {
         <div className="background-circle circle-two"></div>
       </div>
 
-            <div className="login-container">
-              <a
-              href="/search-rooms"
-              className="preview-link"
-            >
-              ← Khám phá phòng trọ (Không cần đăng nhập)
-            </a>
+      <div className="login-container">
+        {/* NÚT XEM PHÒNG TRỌ KHÔNG CẦN ĐĂNG NHẬP */}
+        <div style={{ textAlign: 'center', marginBottom: 18 }}>
+          <a
+            href="/"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 20px',
+              borderRadius: 24,
+              background: '#ffffff',
+              color: '#2563eb',
+              fontSize: 13.5,
+              fontWeight: 700,
+              textDecoration: 'none',
+              boxShadow: '0 2px 10px rgba(37,99,235,0.12)',
+              border: '1.5px solid #bfdbfe',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            ← Khám phá phòng trọ (Không cần đăng nhập)
+          </a>
+        </div>
         {/* Logo / giới thiệu */}
         <div className="login-brand">
           <div className="logo">
@@ -214,45 +231,7 @@ function Login() {
             </div>
           )}
 
-          <div className="divider">
-            <span>hoặc</span>
-          </div>
-
-          <div style={{ marginBottom: '16px' }}>
-            <a
-              href="/search-rooms"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                width: '100%',
-                height: '46px',
-                borderRadius: '11px',
-                background: '#eff6ff',
-                border: '1.5px solid #bfdbfe',
-                color: '#1d4ed8',
-                fontSize: '14px',
-                fontWeight: 700,
-                textDecoration: 'none',
-                transition: 'all 0.2s ease',
-                boxSizing: 'border-box',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#dbeafe'
-                e.currentTarget.style.borderColor = '#93c5fd'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#eff6ff'
-                e.currentTarget.style.borderColor = '#bfdbfe'
-              }}
-            >
-              <span>🔍</span>
-              <span>Tìm kiếm phòng trọ trống</span>
-            </a>
-          </div>
-
-          <div className="register-link">
+          <div className="register-link" style={{ marginTop: '20px' }}>
             Chưa có tài khoản?
             <a href="/register"> Đăng ký ngay</a>
           </div>

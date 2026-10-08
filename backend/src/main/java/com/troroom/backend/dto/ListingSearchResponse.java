@@ -19,6 +19,7 @@ public record ListingSearchResponse(
         Long buildingId,
         String buildingName,
         String district,
-        String address
+        String address,
+        String imageUrl
 ) {
 }

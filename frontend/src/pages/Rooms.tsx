@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import RoomServicesModal from '../components/RoomServicesModal'
 import RoomImagesModal from '../components/RoomImagesModal'
 import CreateListingModal from '../components/CreateListingModal'
+import RoomOccupantsModal from '../components/RoomOccupantsModal'
 
 type RoomStatus = 'EMPTY' | 'DEPOSITED' | 'RENTED' | 'STOPPED'
 
@@ -58,6 +59,7 @@ function Rooms() {
   const [serviceModalRoom, setServiceModalRoom] = useState<Room | null>(null)
   const [imagesModalRoom, setImagesModalRoom] = useState<Room | null>(null)
   const [listingModalRoom, setListingModalRoom] = useState<Room | null>(null)
+  const [occupantsModalRoom, setOccupantsModalRoom] = useState<Room | null>(null)
 
   const [form, setForm] = useState({
     code: '',
@@ -860,10 +862,30 @@ function Rooms() {
                         <td style={{ padding: '16px' }}>
                           <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                             <button
+                              onClick={() => setOccupantsModalRoom(room)}
+                              title="Quản lý người đứng tên hợp đồng và người ở ghép (S3-02)"
+                              style={{
+                                border: '1px solid #c7d2fe',
+                                background: '#eef2ff',
+                                color: '#4338ca',
+                                borderRadius: 8,
+                                padding: '6px 10px',
+                                cursor: 'pointer',
+                                fontWeight: 700,
+                                fontSize: '12px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              Người ở
+                            </button>
+
+                            <button
                               onClick={() => setServiceModalRoom(room)}
                               title="Gán dịch vụ & đơn giá riêng cho phòng"
                               style={{
-                                border: '1px solid #93c5fd',
+                                border: '1px solid #bfdbfe',
                                 background: '#eff6ff',
                                 color: '#1d4ed8',
                                 borderRadius: 8,
@@ -876,7 +898,7 @@ function Rooms() {
                                 gap: '4px',
                               }}
                             >
-                              🛠️ Dịch vụ
+                              Dịch vụ
                             </button>
 
                             <button
@@ -1284,6 +1306,18 @@ function Rooms() {
           room={listingModalRoom}
           onClose={() => setListingModalRoom(null)}
           onSuccess={loadRooms}
+        />
+      )}
+
+      {/* ROOM OCCUPANTS & ROOMMATES MODAL (S3-02) */}
+      {occupantsModalRoom && (
+        <RoomOccupantsModal
+          roomId={occupantsModalRoom.id}
+          roomCode={occupantsModalRoom.code}
+          buildingName={occupantsModalRoom.buildingName}
+          maxPeople={occupantsModalRoom.maxPeople}
+          onClose={() => setOccupantsModalRoom(null)}
+          onUpdated={loadRooms}
         />
       )}
     </div>

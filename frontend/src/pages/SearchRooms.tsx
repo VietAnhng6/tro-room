@@ -15,6 +15,7 @@ type Listing = {
   buildingName: string
   district: string
   address: string
+  imageUrl?: string | null
 }
 
 type SearchResponse = {
@@ -424,9 +425,17 @@ function SearchRooms() {
                 {result.content.map((item) => (
                   <article key={item.id} className="room-card">
                     <div className="card-thumb-area">
-                      <div className="thumb-placeholder">
-                        <span>🏠</span>
-                      </div>
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl.startsWith('http') ? item.imageUrl : `${API}${item.imageUrl}`}
+                          alt={item.title}
+                          className="card-thumb-img"
+                        />
+                      ) : (
+                        <div className="thumb-placeholder-clean">
+                          <span className="placeholder-room-text">PHÒNG {item.roomCode}</span>
+                        </div>
+                      )}
                       <div className="card-room-badge">Phòng {item.roomCode}</div>
                       <div className="card-floor-badge">Tầng {item.floor}</div>
                     </div>
@@ -829,9 +838,10 @@ function SearchRooms() {
         }
 
         .card-thumb-area {
-          height: 180px;
-          background: linear-gradient(135deg, #1e293b, #334155);
+          height: 190px;
+          background: #1e293b;
           position: relative;
+          overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -841,11 +851,36 @@ function SearchRooms() {
         .listings-container.list-view .card-thumb-area {
           width: 240px;
           height: auto;
+          min-height: 180px;
         }
 
-        .thumb-placeholder {
-          font-size: 48px;
-          opacity: 0.8;
+        .card-thumb-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          transition: transform 0.3s ease;
+        }
+
+        .room-card:hover .card-thumb-img {
+          transform: scale(1.05);
+        }
+
+        .thumb-placeholder-clean {
+          width: 100%;
+          height: 100%;
+          min-height: 180px;
+          background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .placeholder-room-text {
+          font-size: 15px;
+          font-weight: 800;
+          letter-spacing: 1.5px;
+          color: rgba(255, 255, 255, 0.45);
         }
 
         .card-room-badge {
