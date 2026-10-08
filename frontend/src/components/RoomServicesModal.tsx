@@ -260,12 +260,13 @@ export const RoomServicesModal: React.FC<RoomServicesModalProps> = ({
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '20px' }}>🛠️</span>
               <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
                 Quản lý dịch vụ riêng - Phòng {roomCode}
               </h2>
             </div>
             {buildingName && (
-              <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>
+              <p style={{ margin: '4px 0 0 28px', fontSize: '13px', color: '#64748b' }}>
                 Thuộc tòa nhà: <strong>{buildingName}</strong>
               </p>
             )}
@@ -316,6 +317,7 @@ export const RoomServicesModal: React.FC<RoomServicesModalProps> = ({
               gap: '10px',
             }}
           >
+            <span style={{ fontSize: '18px' }}>ℹ️</span>
             <div>
               <strong>Ghi chú quan trọng:</strong> Cấu hình dịch vụ & đơn giá riêng chỉ áp dụng từ kỳ hóa đơn sau. Đơn giá riêng ưu tiên hơn đơn giá chung của tòa nhà.
             </div>
@@ -332,7 +334,7 @@ export const RoomServicesModal: React.FC<RoomServicesModalProps> = ({
                 fontSize: '13.5px',
               }}
             >
-              {error}
+              ⚠️ {error}
             </div>
           )}
 
@@ -347,7 +349,7 @@ export const RoomServicesModal: React.FC<RoomServicesModalProps> = ({
                 fontSize: '13.5px',
               }}
             >
-              {successMsg}
+              ✓ {successMsg}
             </div>
           )}
 

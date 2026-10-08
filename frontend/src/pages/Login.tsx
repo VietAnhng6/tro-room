@@ -49,19 +49,12 @@ function Login() {
       localStorage.setItem('accessToken', data.accessToken)
       localStorage.setItem('refreshToken', data.refreshToken)
       localStorage.setItem('role', data.role)
-      if (data.username) {
-        localStorage.setItem('username', data.username)
-      }
 
       setMessage('Đăng nhập thành công!')
 
       setTimeout(() => {
-        if (data.role === 'TENANT') {
-          window.location.href = '/dashboard'
-        } else {
-          window.location.href = '/dashboard'
-        }
-      }, 400)
+        window.location.href = '/dashboard'
+      }, 500)
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -104,7 +97,6 @@ function Login() {
             ← Khám phá phòng trọ (Không cần đăng nhập)
           </a>
         </div>
-
         {/* Logo / giới thiệu */}
         <div className="login-brand">
           <div className="logo">
@@ -124,7 +116,7 @@ function Login() {
         <div className="login-card">
           <div className="login-header">
             <h2>Chào mừng trở lại</h2>
-            <p>Đăng nhập để quản lý, đặt phòng hoặc cập nhật hồ sơ</p>
+            <p>Đăng nhập để tiếp tục sử dụng TroRoom</p>
           </div>
 
           <form onSubmit={handleLogin}>
@@ -173,6 +165,7 @@ function Login() {
                   aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
                   {showPassword ? (
+                    /* Icon Mắt ẩn (gạch chéo) */
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="18"
@@ -190,6 +183,7 @@ function Login() {
                       <line x1="2" x2="22" y1="2" y2="22" />
                     </svg>
                   ) : (
+                    /* Icon Mắt hiện (mở) */
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="18"
@@ -581,7 +575,27 @@ function Login() {
           color: #94a3b8;
           font-size: 11px;
         }
+        .preview-link {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          align-self: center;
+          width: fit-content;
+          margin: 0 auto 14px;
+          padding: 6px 12px;
+          border: 1px solid #dbeafe;
+          border-radius: 999px;
+          background: #ffffff;
+          color: #2563eb;
+          font-size: 12px;
+          font-weight: 700;
+          text-decoration: none;
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+        }
 
+        .preview-link:hover {
+          background: #eff6ff;
+        }
         @media (max-width: 480px) {
           .login-container {
             padding: 24px 16px;

@@ -3,7 +3,6 @@ package com.troroom.backend.service;
 import com.troroom.backend.entity.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -13,22 +12,24 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    private final SecretKey secretKey;
-    private static final long ACCESS_TOKEN_EXPIRATION = 30 * 60 * 1000; // 30 phút
+    private static final String SECRET =
+             System.getenv("JWT_SECRET");
 
-    // Inject secret key từ application.properties, kèm chuỗi mặc định an toàn nếu không tìm thấy key
-    public JwtService(
-            @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}") String secret) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-    }
+    private static final long ACCESS_TOKEN_EXPIRATION =
+            30 * 60 * 1000;
 
-    public SecretKey getSecretKey() {
-        return secretKey;
-    }
+    private final SecretKey secretKey =
+        Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+
+public SecretKey getSecretKey() {
+    return secretKey;
+}
 
     public String generateAccessToken(User user) {
+
         Date now = new Date();
-        Date expiration = new Date(now.getTime() + ACCESS_TOKEN_EXPIRATION);
+        Date expiration =
+                new Date(now.getTime() + ACCESS_TOKEN_EXPIRATION);
 
         return Jwts.builder()
                 .subject(user.getPhone())

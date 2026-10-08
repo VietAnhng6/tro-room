@@ -20,14 +20,16 @@ import java.util.List;
 public class LandlordRequestService {
     private static final int CONFLICT_MINUTES = 30;
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
-
+    private final NotificationService notificationService;
     private final LandlordRequestRepository repository;
     private final RentalRequestHistoryRepository historyRepository;
 
     public LandlordRequestService(LandlordRequestRepository repository,
-                                  RentalRequestHistoryRepository historyRepository) {
-        this.repository = repository;
-        this.historyRepository = historyRepository;
+                              RentalRequestHistoryRepository historyRepository,
+                              NotificationService notificationService) {
+    this.repository = repository;
+    this.historyRepository = historyRepository;
+    this.notificationService = notificationService;
     }
 
     /** Danh sách yêu cầu của các toà nhà thuộc Chủ nhà; mặc định mới nhất lên đầu. */
@@ -89,9 +91,12 @@ public class LandlordRequestService {
         r.setStatus(RentalRequest.Status.SCHEDULED);
         repository.save(r);
         historyRepository.save(new RentalRequestHistory(r, from, RentalRequest.Status.SCHEDULED.name(), landlord,
-                (reschedule ? "Đổi lịch xem phòng sang " : "Xác nhận lịch xem phòng lúc ") + TIME_FMT.format(scheduledAt)));
-        return toItem(r, LocalDateTime.now().minusHours(24));
-    }
+        (reschedule ? "Đổi lịch xem phòng sang " : "Xác nhận lịch xem phòng lúc ") + TIME_FMT.format(scheduledAt)));
+
+    notificationService.notifyRequestScheduled(r);
+
+    return toItem(r, LocalDateTime.now().minusHours(24));
+        }
 
     /**
      * S2-08: duyệt yêu cầu Thuê ngay (Mới -> Đã duyệt) và chuyển phòng sang Đã đặt cọc.
@@ -152,8 +157,11 @@ public class LandlordRequestService {
         r.setStatus(RentalRequest.Status.REJECTED);
         repository.save(r);
         historyRepository.save(new RentalRequestHistory(r, from, RentalRequest.Status.REJECTED.name(), landlord,
-                "Từ chối - " + rejectLabel(rr) + (cleanNote.isEmpty() ? "" : ": " + cleanNote)));
-        return toItem(r, LocalDateTime.now().minusHours(24));
+        "Từ chối - " + rejectLabel(rr) + (cleanNote.isEmpty() ? "" : ": " + cleanNote)));
+
+    notificationService.notifyRequestRejected(r);
+
+    return toItem(r, LocalDateTime.now().minusHours(24));
     }
 
     private RentalRequest load(User landlord, Long requestId) {

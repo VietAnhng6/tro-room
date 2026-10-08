@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Logo from '../components/Logo'
 
 const API = 'http://localhost:8080'
 
@@ -41,6 +42,8 @@ function SearchRooms() {
   const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const token = localStorage.getItem('accessToken')
 
   const searchRooms = async (targetPage = 0, targetSort = sort) => {
     setLoading(true)
@@ -131,6 +134,38 @@ function SearchRooms() {
 
   return (
     <div className="search-page-wrapper">
+      {/* NAVIGATION BAR */}
+      <nav className="search-navbar">
+        <div className="nav-container">
+          <a href="/search-rooms" className="brand-logo-link">
+            <Logo size="sm" title="TroRoom" subtitle="Nền tảng tìm kiếm phòng trọ" />
+          </a>
+
+          <div className="nav-actions">
+            {token ? (
+              <a href="/dashboard" className="nav-btn primary">
+                Vào Dashboard ➔
+              </a>
+            ) : (
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="nav-btn secondary"
+                  onClick={() => {
+                    window.location.href = '/login'
+                  }}
+                >
+                  Đăng nhập
+                </button>
+                <a href="/register" className="nav-btn primary">
+                  Đăng ký
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      </nav>
+
       <main className="search-main-content">
         <div className="content-container">
           {/* PAGE HERO HEADER */}
@@ -146,7 +181,7 @@ function SearchRooms() {
           <section className="filter-card">
             <div className="filter-card-header">
               <div className="filter-card-title">
-                Bộ lọc tìm kiếm kết hợp
+                <span style={{ color: '#2563eb' }}>🔍</span> Bộ lọc tìm kiếm kết hợp
               </div>
               <div className="price-presets">
                 <span className="preset-label">Khoảng giá nhanh:</span>
@@ -275,9 +310,9 @@ function SearchRooms() {
                     searchRooms(0, newSort)
                   }}
                 >
-                  <option value="newest">Tin mới nhất trước</option>
-                  <option value="price_asc">Giá: Thấp đến Cao</option>
-                  <option value="price_desc">Giá: Cao đến Thấp</option>
+                  <option value="newest">🕒 Tin mới nhất trước</option>
+                  <option value="price_asc">💵 Giá: Thấp đến Cao</option>
+                  <option value="price_desc">💎 Giá: Cao đến Thấp</option>
                 </select>
               </div>
             </div>
@@ -289,7 +324,7 @@ function SearchRooms() {
                 className="btn-filter-search"
                 onClick={() => searchRooms(0)}
               >
-                Tìm kiếm ngay
+                🔎 Tìm kiếm ngay
               </button>
 
               <button
@@ -297,7 +332,7 @@ function SearchRooms() {
                 className="btn-filter-clear"
                 onClick={clearFilters}
               >
-                Xóa bộ lọc
+                🔄 Xóa bộ lọc
               </button>
             </div>
           </section>
@@ -322,7 +357,7 @@ function SearchRooms() {
                 onClick={() => setViewMode('grid')}
                 title="Xem dạng lưới"
               >
-                Lưới
+                🔲 Lưới
               </button>
               <button
                 type="button"
@@ -330,7 +365,7 @@ function SearchRooms() {
                 onClick={() => setViewMode('list')}
                 title="Xem dạng danh sách"
               >
-                Danh sách
+                📋 Danh sách
               </button>
             </div>
           </div>
@@ -338,7 +373,7 @@ function SearchRooms() {
           {/* ERROR ALERT */}
           {error && (
             <div className="error-box">
-              {error}
+              ⚠️ {error}
             </div>
           )}
 
@@ -353,6 +388,7 @@ function SearchRooms() {
           {/* EMPTY STATE */}
           {!loading && !error && result && result.content.length === 0 && (
             <section className="empty-state-card">
+              <div className="empty-illustration">🏡</div>
               <h2 className="empty-title">Không tìm thấy phòng phù hợp</h2>
               <p className="empty-desc">
                 Rất tiếc, hiện tại không có phòng nào khớp với các tiêu chí tìm kiếm của bạn. Hãy thử nới rộng khoảng giá hoặc điều chỉnh diện tích để xem nhiều phòng hơn.
@@ -369,14 +405,14 @@ function SearchRooms() {
                     searchRooms(0)
                   }}
                 >
-                  Nới rộng khoảng giá & diện tích
+                  🎯 Nới rộng khoảng giá & diện tích
                 </button>
                 <button
                   type="button"
                   className="btn-reset-all"
                   onClick={clearFilters}
                 >
-                  Đặt lại tất cả bộ lọc
+                  🔄 Đặt lại tất cả bộ lọc
                 </button>
               </div>
             </section>
@@ -410,12 +446,12 @@ function SearchRooms() {
                       </h3>
 
                       <div className="card-location">
-                        <strong>{item.buildingName}</strong> · {item.district || item.address}
+                        📍 <strong>{item.buildingName}</strong> · {item.district || item.address}
                       </div>
 
                       <div className="card-specs">
-                        <span className="spec-tag">{item.area} m²</span>
-                        <span className="spec-tag">Tối đa {item.maxPeople} người</span>
+                        <span className="spec-tag">📐 {item.area} m²</span>
+                        <span className="spec-tag">👥 Tối đa {item.maxPeople} người</span>
                       </div>
 
                       <p className="card-desc">
@@ -430,7 +466,7 @@ function SearchRooms() {
                         </div>
 
                         <a href={`/listing/${item.id}`} className="btn-view-detail">
-                          Xem chi tiết
+                          Xem chi tiết ➔
                         </a>
                       </div>
                     </div>
