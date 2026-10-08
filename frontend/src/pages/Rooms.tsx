@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import RoomServicesModal from '../components/RoomServicesModal'
 import RoomImagesModal from '../components/RoomImagesModal'
 import CreateListingModal from '../components/CreateListingModal'
