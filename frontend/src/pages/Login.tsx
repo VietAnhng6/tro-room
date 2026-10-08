@@ -38,9 +38,9 @@ function Login() {
           )
         }
 
-        const message = await response.text()
+        const errText = await response.text()
         throw new Error(
-          message || 'Thông tin đăng nhập không chính xác'
+          errText || 'Thông tin đăng nhập không chính xác'
         )
       }
 
@@ -56,11 +56,16 @@ function Login() {
         window.location.href = '/dashboard'
       }, 500)
     } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : 'Có lỗi xảy ra. Vui lòng thử lại.'
-      )
+      const errStr = error instanceof Error ? error.message : String(error)
+      if (errStr.includes('Failed to fetch') || errStr.includes('NetworkError')) {
+        setMessage('Không thể kết nối đến máy chủ backend (http://localhost:8080). Vui lòng đảm bảo backend đang chạy.')
+      } else {
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : 'Có lỗi xảy ra. Vui lòng thử lại.'
+        )
+      }
     } finally {
       setLoading(false)
     }
@@ -85,18 +90,19 @@ function Login() {
               padding: '8px 20px',
               borderRadius: 24,
               background: '#ffffff',
-              color: '#2563eb',
+              color: '#eb6b40',
               fontSize: 13.5,
               fontWeight: 700,
               textDecoration: 'none',
-              boxShadow: '0 2px 10px rgba(37,99,235,0.12)',
-              border: '1.5px solid #bfdbfe',
+              boxShadow: '0 2px 10px rgba(235,107,64,0.12)',
+              border: '1.5px solid #fed7aa',
               transition: 'all 0.15s ease',
             }}
           >
             ← Khám phá phòng trọ (Không cần đăng nhập)
           </a>
         </div>
+
         {/* Logo / giới thiệu */}
         <div className="login-brand">
           <div className="logo">
@@ -256,9 +262,9 @@ function Login() {
           justify-content: center;
           background: linear-gradient(
             135deg,
-            #eff6ff 0%,
-            #f8fafc 45%,
-            #eef2ff 100%
+            #fff8f5 0%,
+            #fdfbf7 45%,
+            #fff4ee 100%
           );
           font-family:
             Inter,
@@ -287,7 +293,7 @@ function Login() {
           height: 420px;
           top: -180px;
           left: -130px;
-          background: rgba(37, 99, 235, 0.12);
+          background: rgba(235, 107, 64, 0.12);
         }
 
         .circle-two {
@@ -295,7 +301,7 @@ function Login() {
           height: 500px;
           right: -220px;
           bottom: -220px;
-          background: rgba(99, 102, 241, 0.12);
+          background: rgba(238, 118, 77, 0.10);
         }
 
         .login-container {
@@ -321,11 +327,11 @@ function Login() {
           border-radius: 18px;
           background: linear-gradient(
             135deg,
-            #2563eb,
-            #4f46e5
+            #eb6b40,
+            #f08050
           );
           box-shadow:
-            0 10px 25px rgba(37, 99, 235, 0.25);
+            0 10px 25px rgba(235, 107, 64, 0.25);
         }
 
         .logo span {
@@ -352,11 +358,11 @@ function Login() {
 
         .login-card {
           background: rgba(255, 255, 255, 0.96);
-          border: 1px solid rgba(226, 232, 240, 0.9);
+          border: 1px solid rgba(237, 232, 225, 0.9);
           border-radius: 20px;
           padding: 32px;
           box-shadow:
-            0 20px 60px rgba(15, 23, 42, 0.10);
+            0 20px 60px rgba(235, 107, 64, 0.08);
           backdrop-filter: blur(12px);
         }
 
@@ -398,12 +404,13 @@ function Login() {
 
         .password-label a {
           font-size: 12px;
-          color: #2563eb;
+          color: #eb6b40;
           text-decoration: none;
           font-weight: 600;
         }
 
         .password-label a:hover {
+          color: #dc592e;
           text-decoration: underline;
         }
 
@@ -421,7 +428,7 @@ function Login() {
           border: 1px solid #dbe2ea;
           border-radius: 11px;
           outline: none;
-          background: #f8fafc;
+          background: #fdfbf7;
           color: #172033;
           font-size: 14px;
           transition: all 0.2s ease;
@@ -432,10 +439,10 @@ function Login() {
         }
 
         .input-wrapper input:focus {
-          border-color: #2563eb;
+          border-color: #eb6b40;
           background: white;
           box-shadow:
-            0 0 0 4px rgba(37, 99, 235, 0.10);
+            0 0 0 4px rgba(235, 107, 64, 0.12);
         }
 
         .show-password {
@@ -456,8 +463,8 @@ function Login() {
         }
 
         .show-password:hover {
-          color: #1e293b;
-          background-color: #f1f5f9;
+          color: #eb6b40;
+          background-color: #fff3ec;
         }
 
         .login-button {
@@ -468,15 +475,15 @@ function Login() {
           border-radius: 11px;
           background: linear-gradient(
             135deg,
-            #2563eb,
-            #4f46e5
+            #eb6b40,
+            #f08050
           );
           color: white;
           font-size: 15px;
           font-weight: 700;
           cursor: pointer;
           box-shadow:
-            0 8px 18px rgba(37, 99, 235, 0.20);
+            0 8px 18px rgba(235, 107, 64, 0.25);
           transition:
             transform 0.2s ease,
             box-shadow 0.2s ease;
@@ -489,7 +496,7 @@ function Login() {
         .login-button:hover:not(:disabled) {
           transform: translateY(-1px);
           box-shadow:
-            0 12px 24px rgba(37, 99, 235, 0.28);
+            0 12px 24px rgba(235, 107, 64, 0.32);
         }
 
         .login-button:active:not(:disabled) {
@@ -522,6 +529,7 @@ function Login() {
           border-radius: 9px;
           font-size: 13px;
           text-align: center;
+          line-height: 1.4;
         }
 
         .message.success {
@@ -550,7 +558,7 @@ function Login() {
           content: "";
           flex: 1;
           height: 1px;
-          background: #e2e8f0;
+          background: #ede8e1;
         }
 
         .register-link {
@@ -560,12 +568,13 @@ function Login() {
         }
 
         .register-link a {
-          color: #2563eb;
+          color: #eb6b40;
           font-weight: 700;
           text-decoration: none;
         }
 
         .register-link a:hover {
+          color: #dc592e;
           text-decoration: underline;
         }
 
@@ -575,27 +584,7 @@ function Login() {
           color: #94a3b8;
           font-size: 11px;
         }
-        .preview-link {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          align-self: center;
-          width: fit-content;
-          margin: 0 auto 14px;
-          padding: 6px 12px;
-          border: 1px solid #dbeafe;
-          border-radius: 999px;
-          background: #ffffff;
-          color: #2563eb;
-          font-size: 12px;
-          font-weight: 700;
-          text-decoration: none;
-          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
-        }
 
-        .preview-link:hover {
-          background: #eff6ff;
-        }
         @media (max-width: 480px) {
           .login-container {
             padding: 24px 16px;
