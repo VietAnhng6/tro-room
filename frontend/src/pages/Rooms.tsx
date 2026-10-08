@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import RoomServicesModal from '../components/RoomServicesModal'
-import RoomImagesModal from '../components/RoomImagesModal'
+import RoomImagesSection from '../components/RoomImagesSection'
 import CreateListingModal from '../components/CreateListingModal'
 import RoomOccupantsModal from '../components/RoomOccupantsModal'
 
@@ -57,7 +57,6 @@ function Rooms() {
   const [showForm, setShowForm] = useState(false)
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
   const [serviceModalRoom, setServiceModalRoom] = useState<Room | null>(null)
-  const [imagesModalRoom, setImagesModalRoom] = useState<Room | null>(null)
   const [listingModalRoom, setListingModalRoom] = useState<Room | null>(null)
   const [occupantsModalRoom, setOccupantsModalRoom] = useState<Room | null>(null)
 
@@ -902,26 +901,6 @@ function Rooms() {
                             </button>
 
                             <button
-                              onClick={() => setImagesModalRoom(room)}
-                              title="Tải & quản lý ảnh thực tế của phòng"
-                              style={{
-                                border: '1px solid #cbd5e1',
-                                background: '#f8fafc',
-                                color: '#334155',
-                                borderRadius: 8,
-                                padding: '6px 10px',
-                                cursor: 'pointer',
-                                fontWeight: 700,
-                                fontSize: '12px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                              }}
-                            >
-                              🖼️ Ảnh
-                            </button>
-
-                            <button
                               onClick={() => setListingModalRoom(room)}
                               disabled={room.status !== 'EMPTY'}
                               title={
@@ -949,7 +928,7 @@ function Rooms() {
 
                             <button
                               onClick={() => openEdit(room)}
-                              title="Chỉnh sửa thông tin phòng"
+                              title="Chỉnh sửa thông tin và ảnh phòng"
                               style={{
                                 border: '1px solid #cbd5e1',
                                 background: '#fff',
@@ -1041,6 +1020,7 @@ function Rooms() {
             position: 'fixed',
             inset: 0,
             background: 'rgba(15,23,42,.45)',
+            backdropFilter: 'blur(3px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -1051,7 +1031,7 @@ function Rooms() {
           <div
             style={{
               width: '100%',
-              maxWidth: 560,
+              maxWidth: 680,
               maxHeight: '90vh',
               overflowY: 'auto',
               background: '#fff',
@@ -1074,10 +1054,11 @@ function Rooms() {
                     margin: 0,
                     color: '#0f172a',
                     fontSize: 22,
+                    fontWeight: 800,
                   }}
                 >
                   {editingRoom
-                    ? 'Chỉnh sửa phòng'
+                    ? `Chỉnh sửa phòng ${editingRoom.code}`
                     : 'Thêm phòng mới'}
                 </h2>
 
@@ -1088,7 +1069,9 @@ function Rooms() {
                     fontSize: 14,
                   }}
                 >
-                  Nhập thông tin phòng bên dưới.
+                  {editingRoom
+                    ? 'Cập nhật thông tin chi tiết và quản lý ảnh thực tế của phòng.'
+                    : 'Nhập thông tin phòng bên dưới.'}
                 </p>
               </div>
 
@@ -1235,6 +1218,36 @@ function Rooms() {
               </label>
             </div>
 
+            {/* QUẢN LÝ ẢNH PHÒNG TRỰC TIẾP TRONG FORM SỬA */}
+            {editingRoom ? (
+              <RoomImagesSection
+                roomId={editingRoom.id}
+                roomCode={form.code || editingRoom.code}
+                buildingName={editingRoom.buildingName}
+                onUpdated={loadRooms}
+              />
+            ) : (
+              <div
+                style={{
+                  marginTop: 20,
+                  padding: '14px 18px',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: 12,
+                  border: '1px dashed #cbd5e1',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  color: '#64748b',
+                  fontSize: 13,
+                }}
+              >
+                <span style={{ fontSize: 20 }}>🖼️</span>
+                <span>
+                  Sau khi nhấn <strong>Thêm phòng</strong>, bạn có thể chỉnh sửa và tải lên tối đa 8 ảnh thực tế của phòng.
+                </span>
+              </div>
+            )}
+
             <div
               style={{
                 display: 'flex',
@@ -1285,17 +1298,6 @@ function Rooms() {
           roomCode={serviceModalRoom.code}
           buildingName={serviceModalRoom.buildingName}
           onClose={() => setServiceModalRoom(null)}
-          onUpdated={loadRooms}
-        />
-      )}
-
-      {/* S2-02: ROOM IMAGES MODAL */}
-      {imagesModalRoom && (
-        <RoomImagesModal
-          roomId={imagesModalRoom.id}
-          roomCode={imagesModalRoom.code}
-          buildingName={imagesModalRoom.buildingName}
-          onClose={() => setImagesModalRoom(null)}
           onUpdated={loadRooms}
         />
       )}
