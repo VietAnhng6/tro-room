@@ -15,6 +15,7 @@ import Services from './pages/Services'
 import AuditLogs from './pages/AuditLogs'
 import Admin from './pages/Admin'
 import MyRequests from './pages/MyRequests'
+import Contracts from './pages/Contracts'
 import MainLayout from './components/MainLayout'
 import Notifications from './pages/Notifications'     
 /*
@@ -230,7 +231,6 @@ function hasRouteAccess(path: string, role: string | null) {
       '/dashboard',
       '/profile',
       '/tenants',
-      '/contracts',
       '/audit-logs',
       '/admin',
     ],
@@ -256,6 +256,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/dashboard',
       '/profile',
       '/my-requests',
+      '/contracts',
     ],
   }
 
@@ -441,12 +442,22 @@ function App() {
     </ProtectedRoute>
     )
   }
+
+  if (path === '/contracts') {
+    return (
+      <ProtectedRoute path={path}>
+        <MainLayout>
+          <Contracts />
+        </MainLayout>
+      </ProtectedRoute>
+    )
+  }
+
   /*
    * Các chức năng chưa triển khai
    */
   const comingSoon: Record<string, string> = {
     '/tenants': 'Người thuê',
-    '/contracts': 'Hợp đồng',
   }
 
   if (comingSoon[path]) {

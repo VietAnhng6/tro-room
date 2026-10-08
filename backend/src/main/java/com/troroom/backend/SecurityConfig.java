@@ -66,6 +66,8 @@ public class SecurityConfig {
 
                 .requestMatchers(HttpMethod.GET, "/api/room-images/*").permitAll()
 
+                .requestMatchers("/api/tenant/contracts/**").authenticated()
+
                 // Quyền được kiểm tra từ DB
                 .requestMatchers("/api/admin/**")
                 .access(permissionAuthorizationManager)
