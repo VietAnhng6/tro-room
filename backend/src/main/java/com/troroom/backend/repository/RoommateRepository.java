@@ -14,4 +14,8 @@ public interface RoommateRepository extends JpaRepository<Roommate, Long> {
     List<Roommate> findByRoomIdOrderByStartDateDesc(Long roomId);
 
     long countByRoomIdAndStatus(Long roomId, Roommate.Status status);
+
+    List<Roommate> findByPhoneAndStatus(String phone, Roommate.Status status);
+
+    boolean existsByRoomIdAndPhoneAndStatus(Long roomId, String phone, Roommate.Status status);
 }
