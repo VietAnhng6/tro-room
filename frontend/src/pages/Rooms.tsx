@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import RoomServicesModal from '../components/RoomServicesModal'
 import CreateListingModal from '../components/CreateListingModal'
+import RoomOccupantsModal from '../components/RoomOccupantsModal'
 
 type RoomStatus = 'EMPTY' | 'DEPOSITED' | 'RENTED' | 'STOPPED'
 
@@ -122,7 +122,6 @@ const compressImageFile = async (file: File): Promise<File> => {
 }
 
 function Rooms() {
-  const navigate = useNavigate()
   const [rooms, setRooms] = useState<Room[]>([])
   const [buildings, setBuildings] = useState<Building[]>([])
 
@@ -143,6 +142,7 @@ function Rooms() {
   // Other Modals
   const [serviceModalRoom, setServiceModalRoom] = useState<Room | null>(null)
   const [listingModalRoom, setListingModalRoom] = useState<Room | null>(null)
+  const [occupantsModalRoom, setOccupantsModalRoom] = useState<Room | null>(null)
 
   // Images state inside Edit Modal
   const [images, setImages] = useState<RoomImageItem[]>([])
@@ -200,7 +200,7 @@ function Rooms() {
       })
 
       if (res.status === 401) {
-        navigate('/')
+        window.location.href = '/'
         return
       }
 
@@ -328,7 +328,7 @@ function Rooms() {
       })
 
       if (res.status === 401) {
-        navigate('/')
+        window.location.href = '/'
         return
       }
 
@@ -878,6 +878,23 @@ function Rooms() {
                       {/* Thao tác */}
                       <td style={tdStyleCenter}>
                         <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
+                          <button
+                            onClick={() => setOccupantsModalRoom(room)}
+                            title="Quản lý người đứng tên hợp đồng và người ở ghép (S3-02)"
+                            style={{
+                              border: '1px solid #c7d2fe',
+                              background: '#eef2ff',
+                              color: '#4338ca',
+                              borderRadius: 6,
+                              padding: '6px 10px',
+                              cursor: 'pointer',
+                              fontWeight: 700,
+                              fontSize: '12px',
+                            }}
+                          >
+                            Người ở
+                          </button>
+
                           <button
                             onClick={() => setServiceModalRoom(room)}
                             title="Gán dịch vụ và đơn giá riêng cho phòng"
@@ -1691,6 +1708,18 @@ function Rooms() {
           room={listingModalRoom}
           onClose={() => setListingModalRoom(null)}
           onSuccess={loadRooms}
+        />
+      )}
+
+      {/* ROOM OCCUPANTS & ROOMMATES MODAL (S3-02) */}
+      {occupantsModalRoom && (
+        <RoomOccupantsModal
+          roomId={occupantsModalRoom.id}
+          roomCode={occupantsModalRoom.code}
+          buildingName={occupantsModalRoom.buildingName}
+          maxPeople={occupantsModalRoom.maxPeople}
+          onClose={() => setOccupantsModalRoom(null)}
+          onUpdated={loadRooms}
         />
       )}
     </div>

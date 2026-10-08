@@ -81,23 +81,23 @@ function Login() {
       </div>
 
       <div className="login-container">
-        {/* NÚT QUAY LẠI TRANG CHỦ TÌM PHÒNG (KHÔNG CẦN ĐĂNG NHẬP) */}
-        <div style={{ textAlign: 'center', marginBottom: 16 }}>
+        {/* NÚT XEM PHÒNG TRỌ KHÔNG CẦN ĐĂNG NHẬP */}
+        <div style={{ textAlign: 'center', marginBottom: 18 }}>
           <a
             href="/"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              padding: '7px 16px',
-              borderRadius: 20,
+              padding: '8px 20px',
+              borderRadius: 24,
               background: '#ffffff',
               color: '#2563eb',
-              fontSize: 13,
+              fontSize: 13.5,
               fontWeight: 700,
               textDecoration: 'none',
-              boxShadow: '0 2px 8px rgba(37,99,235,0.12)',
-              border: '1px solid #bfdbfe',
+              boxShadow: '0 2px 10px rgba(37,99,235,0.12)',
+              border: '1.5px solid #bfdbfe',
               transition: 'all 0.15s ease',
             }}
           >
@@ -237,11 +237,7 @@ function Login() {
             </div>
           )}
 
-          <div className="divider">
-            <span>hoặc</span>
-          </div>
-
-          <div className="register-link">
+          <div className="register-link" style={{ marginTop: '20px' }}>
             Chưa có tài khoản?
             <a href="/register"> Đăng ký ngay</a>
           </div>

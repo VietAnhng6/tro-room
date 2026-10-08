@@ -94,7 +94,7 @@ export const MainLayout: React.FC = () => {
         admin: true,
         landlordRequests: false,
         myRequests: false,
-        searchRooms: true,
+        searchRooms: false,
       }
     }
 
@@ -111,7 +111,7 @@ export const MainLayout: React.FC = () => {
         admin: false,
         landlordRequests: true,
         myRequests: false,
-        searchRooms: true,
+        searchRooms: false,
       }
     }
 
@@ -128,7 +128,7 @@ export const MainLayout: React.FC = () => {
         admin: false,
         landlordRequests: true,
         myRequests: false,
-        searchRooms: true,
+        searchRooms: false,
       }
     }
 
