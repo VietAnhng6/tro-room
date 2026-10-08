@@ -67,7 +67,16 @@ function LandlordRequests() {
   const [sort, setSort] = useState('newest')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-
+  const [contractRequest, setContractRequest] = useState<RequestItem | null>(null)
+  const [contractForm, setContractForm] = useState({
+  deposit: '',
+  startDate: '',
+  termMonths: '12',
+  billingCutoffDay: '1',
+  initialElectricity: '',
+  initialWater: '',
+  })
+  const [contractLoading, setContractLoading] = useState(false)
   const token = localStorage.getItem('accessToken')
 
   // Danh sách toà nhà cho bộ lọc
@@ -183,6 +192,60 @@ function LandlordRequests() {
       await load()
     } catch {
       alert('Không thể kết nối tới máy chủ')
+    }
+  }
+    async function createContract() {
+    if (!contractRequest) return
+
+    if (
+      !contractForm.startDate ||
+      contractForm.deposit === '' ||
+      !contractForm.termMonths ||
+      !contractForm.billingCutoffDay ||
+      contractForm.initialElectricity === '' ||
+      contractForm.initialWater === ''
+    ) {
+      alert('Vui lòng nhập đầy đủ thông tin hợp đồng.')
+      return
+    }
+
+    setContractLoading(true)
+
+    try {
+      const res = await fetch(
+        `${API}/api/landlord/requests/${contractRequest.id}/contract`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            requestId: contractRequest.id,
+            deposit: Number(contractForm.deposit),
+            startDate: contractForm.startDate,
+            termMonths: Number(contractForm.termMonths),
+            billingCutoffDay: Number(contractForm.billingCutoffDay),
+            initialElectricity: Number(contractForm.initialElectricity),
+            initialWater: Number(contractForm.initialWater),
+          }),
+        }
+      )
+
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok) {
+        alert(data?.message || 'Không thể tạo hợp đồng')
+        return
+      }
+
+      alert(`Tạo hợp đồng thành công: ${data.contractCode}`)
+      setContractRequest(null)
+      await load()
+    } catch {
+      alert('Không thể kết nối tới máy chủ')
+    } finally {
+      setContractLoading(false)
     }
   }
   const selectStyle = {
@@ -386,6 +449,34 @@ function LandlordRequests() {
 
                   <td style={cellStyle}>{formatDateTime(r.createdAt)}</td>
                   <td style={cellStyle}>
+                    {r.status === 'ACCEPTED' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setContractRequest(r)
+                        setContractForm({
+                          deposit: '',
+                          startDate: new Date().toISOString().split('T')[0],
+                          termMonths: '12',
+                          billingCutoffDay: '1',
+                          initialElectricity: '',
+                          initialWater: '',
+                        })
+                      }}
+                      style={{
+                        border: 'none',
+                        background: '#2563eb',
+                        color: '#fff',
+                        padding: '7px 12px',
+                        borderRadius: 7,
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                       Lập hợp đồng
+                    </button>
+                  )}
                     {(r.status === 'OPEN' || r.status === 'SCHEDULED') && (
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         <button
@@ -431,6 +522,228 @@ function LandlordRequests() {
           </tbody>
         </table>
       </div>
+
+      {contractRequest && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 20,
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 520,
+              background: '#fff',
+              borderRadius: 14,
+              padding: 24,
+              boxSizing: 'border-box',
+            }}
+          >
+            <h2 style={{ margin: '0 0 6px' }}>
+              Lập hợp đồng thuê
+            </h2>
+
+            <div
+              style={{
+                color: '#64748b',
+                fontSize: 13,
+                marginBottom: 20,
+              }}
+            >
+              {contractRequest.requestCode} · Phòng {contractRequest.roomCode}
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 14,
+              }}
+            >
+              <label>
+                <div style={{ fontSize: 13, marginBottom: 5 }}>
+                  Tiền cọc
+                </div>
+                <input
+                  type="number"
+                  min="0"
+                  value={contractForm.deposit}
+                  onChange={(e) =>
+                    setContractForm({
+                      ...contractForm,
+                      deposit: e.target.value,
+                    })
+                  }
+                  placeholder="VNĐ"
+                  style={{
+                    ...selectStyle,
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </label>
+
+              <label>
+                <div style={{ fontSize: 13, marginBottom: 5 }}>
+                  Ngày bắt đầu
+                </div>
+                <input
+                  type="date"
+                  value={contractForm.startDate}
+                  onChange={(e) =>
+                    setContractForm({
+                      ...contractForm,
+                      startDate: e.target.value,
+                    })
+                  }
+                  style={{
+                    ...selectStyle,
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </label>
+
+              <label>
+                <div style={{ fontSize: 13, marginBottom: 5 }}>
+                  Thời hạn (tháng)
+                </div>
+                <input
+                  type="number"
+                  min="1"
+                  value={contractForm.termMonths}
+                  onChange={(e) =>
+                    setContractForm({
+                      ...contractForm,
+                      termMonths: e.target.value,
+                    })
+                  }
+                  style={{
+                    ...selectStyle,
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </label>
+
+              <label>
+                <div style={{ fontSize: 13, marginBottom: 5 }}>
+                  Ngày chốt hóa đơn
+                </div>
+                <input
+                  type="number"
+                  min="1"
+                  max="28"
+                  value={contractForm.billingCutoffDay}
+                  onChange={(e) =>
+                    setContractForm({
+                      ...contractForm,
+                      billingCutoffDay: e.target.value,
+                    })
+                  }
+                  style={{
+                    ...selectStyle,
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </label>
+
+              <label>
+                <div style={{ fontSize: 13, marginBottom: 5 }}>
+                  Điện đầu kỳ
+                </div>
+                <input
+                  type="number"
+                  min="0"
+                  value={contractForm.initialElectricity}
+                  onChange={(e) =>
+                    setContractForm({
+                      ...contractForm,
+                      initialElectricity: e.target.value,
+                    })
+                  }
+                  style={{
+                    ...selectStyle,
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </label>
+
+              <label>
+                <div style={{ fontSize: 13, marginBottom: 5 }}>
+                  Nước đầu kỳ
+                </div>
+                <input
+                  type="number"
+                  min="0"
+                  value={contractForm.initialWater}
+                  onChange={(e) =>
+                    setContractForm({
+                      ...contractForm,
+                      initialWater: e.target.value,
+                    })
+                  }
+                  style={{
+                    ...selectStyle,
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </label>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                marginTop: 22,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setContractRequest(null)}
+                disabled={contractLoading}
+                style={{
+                  padding: '9px 16px',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 8,
+                  background: '#fff',
+                  cursor: 'pointer',
+                }}
+              >
+                Huỷ
+              </button>
+
+              <button
+                type="button"
+                onClick={createContract}
+                disabled={contractLoading}
+                style={{
+                  padding: '9px 16px',
+                  border: 'none',
+                  borderRadius: 8,
+                  background: '#2563eb',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                }}
+              >
+                {contractLoading ? 'Đang tạo...' : 'Tạo hợp đồng'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
