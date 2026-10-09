@@ -2,15 +2,18 @@ package com.troroom.backend.controller;
 
 import com.troroom.backend.dto.RoomResponse;
 import com.troroom.backend.entity.Building;
+import com.troroom.backend.entity.Listing;
 import com.troroom.backend.entity.Room;
 import com.troroom.backend.entity.User;
 import com.troroom.backend.repository.BuildingRepository;
+import com.troroom.backend.repository.ListingRepository;
 import com.troroom.backend.repository.RoomRepository;
 import com.troroom.backend.service.AuditLogService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,15 +26,18 @@ public class RoomController {
 
     private final RoomRepository roomRepository;
     private final BuildingRepository buildingRepository;
+    private final ListingRepository listingRepository;
     private final AuditLogService auditLogService;
 
     public RoomController(
             RoomRepository roomRepository,
             BuildingRepository buildingRepository,
+            ListingRepository listingRepository,
             AuditLogService auditLogService
     ) {
         this.roomRepository = roomRepository;
         this.buildingRepository = buildingRepository;
+        this.listingRepository = listingRepository;
         this.auditLogService = auditLogService;
     }
 
@@ -542,6 +548,7 @@ public ResponseEntity<?> getRooms(
      * =========================================================
      */
     @PutMapping("/{id}/status")
+    @Transactional
     public ResponseEntity<?> updateRoomStatus(
             Authentication authentication,
             @PathVariable Long id,
@@ -621,6 +628,18 @@ public ResponseEntity<?> getRooms(
         room.setStatus(status);
 
         roomRepository.save(room);
+
+        // Khi phòng chuyển sang Đang thuê, tất cả tin đăng của phòng
+        // chuyển sang Đã cho thuê trong cùng transaction. Nếu cập nhật
+        // tin đăng hoặc ghi audit thất bại, thay đổi trạng thái phòng cũng rollback.
+        if (status == Room.Status.RENTED) {
+            listingRepository.findAllByRoom(room).forEach(listing -> {
+                if (listing.getStatus() != Listing.Status.RENTED) {
+                    listing.setStatus(Listing.Status.RENTED);
+                    listingRepository.save(listing);
+                }
+            });
+        }
 
         auditLogService.log(
                 currentUser,
