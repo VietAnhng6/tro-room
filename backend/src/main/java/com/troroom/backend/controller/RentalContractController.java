@@ -9,14 +9,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.server.ResponseStatusException;
+import java.util.List;
 @RestController
 @RequestMapping("/api/landlord/requests")
 public class RentalContractController {
 
     private final RentalContractService contractService;
 
-    public RentalContractController(RentalContractService contractService) {
+    public RentalContractController(
+            RentalContractService contractService
+    ) {
         this.contractService = contractService;
     }
 
@@ -26,7 +29,21 @@ public class RentalContractController {
             @PathVariable Long id,
             @Valid @RequestBody RentalContractCreateRequest request
     ) {
-        User landlord = (User) authentication.getPrincipal();
+        if (authentication == null
+                || !(authentication.getPrincipal() instanceof User landlord)) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Vui lòng đăng nhập"
+            );
+        }
+
+        if (request.getRequestId() == null
+                || !request.getRequestId().equals(id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "ID yêu cầu thuê không khớp"
+            );
+        }
 
         RentalContract contract = contractService.createContract(
                 landlord,
@@ -39,8 +56,22 @@ public class RentalContractController {
                 request.getInitialWater()
         );
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(contract);
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(contract);
+        }
+        @GetMapping("/contracts")
+    public ResponseEntity<?> listContracts(Authentication authentication) {
+        if (authentication == null
+                || !(authentication.getPrincipal() instanceof User landlord)
+                || landlord.getRole() != User.Role.LANDLORD) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(java.util.Map.of("message", "Chỉ chủ nhà được xem hợp đồng"));
+        }
+
+        List<RentalContract> contracts =
+                contractService.listContractsByLandlord(landlord.getId());
+
+        return ResponseEntity.ok(contracts);
     }
 }
