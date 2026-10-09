@@ -163,6 +163,13 @@ function MainLayout({ children }: { children: React.ReactNode }) {
       path: '/landlord/requests',
     },
     {
+      key: 'meterReadings',
+      icon: '',
+      title: 'Ghi điện nước',
+      enabled: role === 'LANDLORD' || role === 'MANAGER',
+      path: '/meter-readings',
+    },
+    {
       key: 'myRequests',
       icon: '',
       title: 'Yêu cầu của tôi',

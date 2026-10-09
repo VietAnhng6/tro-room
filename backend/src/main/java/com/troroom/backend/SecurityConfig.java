@@ -85,6 +85,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/listings/**")
                 .access(permissionAuthorizationManager)
 
+                // S3-05: nhập chỉ số điện nước (Quản lý toà nhà, Chủ nhà)
+                .requestMatchers("/api/manager/**")
+                .access(permissionAuthorizationManager)
+
                 // Audit Log: chỉ ADMIN được xem
                 .requestMatchers("/api/audit-logs/**")
                 .hasRole("ADMIN")

@@ -16,6 +16,7 @@ import AuditLogs from './pages/AuditLogs'
 import Admin from './pages/Admin'
 import MyRequests from './pages/MyRequests'
 import Contracts from './pages/Contracts'
+import MeterReadings from './pages/MeterReadings'
 import MainLayout from './components/MainLayout'
 import Notifications from './pages/Notifications'     
 /*
@@ -242,6 +243,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/rooms',
       '/services',
       '/landlord/requests',
+      '/meter-readings',
     ],
 
     MANAGER: [
@@ -250,6 +252,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/buildings',
       '/rooms',
       '/services',
+      '/meter-readings',
     ],
 
     TENANT: [
@@ -440,6 +443,17 @@ function App() {
         <MyRequests />
       </MainLayout>
     </ProtectedRoute>
+    )
+  }
+
+  // S3-05: nhập chỉ số điện nước
+  if (path === '/meter-readings') {
+    return (
+      <ProtectedRoute path={path}>
+        <MainLayout>
+          <MeterReadings />
+        </MainLayout>
+      </ProtectedRoute>
     )
   }
 
