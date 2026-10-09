@@ -206,31 +206,55 @@ function BuildingServices() {
   return (
     <div style={pageStyle}>
       <div style={headerStyle}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <button
-            onClick={() => {
-              window.location.href = '/buildings'
-            }}
-            style={backStyle}
-          >
-            ← Danh sách toà nhà
-          </button>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8 }}>
+              <button
+                onClick={() => {
+                  window.location.href = '/buildings'
+                }}
+                style={backStyle}
+              >
+                ← Danh sách toà nhà
+              </button>
+            </div>
 
-          <h1 style={{ margin: '0 0 6px', fontSize: 27 }}>
-            Cấu hình điện nước
-          </h1>
+            <h1 style={{ margin: '0 0 6px', fontSize: 27, fontWeight: 800, color: '#0f172a' }}>
+              Cấu hình điện nước
+            </h1>
 
-          <p style={{ margin: 0, color: '#64748b' }}>
-            {buildingName ? `Toà nhà: ${buildingName}` : `Toà nhà #${buildingId}`} — chọn
-            cách tính tiền điện, nước theo chỉ số đồng hồ hoặc khoán theo đầu
-            người.
-          </p>
+            <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>
+              {buildingName ? `Toà nhà: ${buildingName}` : `Toà nhà #${buildingId}`} — chọn
+              cách tính tiền điện, nước theo chỉ số đồng hồ hoặc khoán theo đầu
+              người.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={() => {
+                window.location.href = '/dashboard'
+              }}
+              style={{
+                border: '1px solid #cbd5e1',
+                background: '#fff',
+                color: '#334155',
+                borderRadius: 9,
+                padding: '9px 15px',
+                cursor: 'pointer',
+                fontWeight: 650,
+                fontSize: 13.5,
+              }}
+            >
+              Tổng quan
+            </button>
+          </div>
         </div>
       </div>
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: 30 }}>
         <div style={noticeStyle}>
-          💡 Thay đổi cách tính hoặc đơn giá chỉ áp dụng từ{' '}
+          Thay đổi cách tính hoặc đơn giá chỉ áp dụng từ{' '}
           <strong>kỳ hoá đơn kế tiếp</strong>. Kỳ hiện tại vẫn giữ nguyên cấu
           hình cũ.
         </div>

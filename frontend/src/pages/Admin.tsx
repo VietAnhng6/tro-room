@@ -544,8 +544,8 @@ function Admin() {
                           }}
                         >
                           {user.active
-                            ? '🔒 Khóa'
-                            : '🔓 Mở khóa'}
+                            ? 'Khóa'
+                            : 'Mở khóa'}
                         </button>
                       </td>
                     </tr>
@@ -649,18 +649,22 @@ const secondaryButton: React.CSSProperties = {
 }
 
 const thStyle: React.CSSProperties = {
-  textAlign: 'left',
+  textAlign: 'center',
   padding: '13px 14px',
   borderBottom: '1px solid #e2e8f0',
   color: '#475569',
   fontSize: 13,
+  fontWeight: 750,
+  whiteSpace: 'nowrap',
 }
 
 const tdStyle: React.CSSProperties = {
+  textAlign: 'center',
   padding: '14px',
   borderBottom: '1px solid #f1f5f9',
   color: '#334155',
   fontSize: 14,
+  verticalAlign: 'middle',
 }
 
 export default Admin

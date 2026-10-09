@@ -38,9 +38,9 @@ function Login() {
           )
         }
 
-        const errText = await response.text()
+        const message = await response.text()
         throw new Error(
-          errText || 'Thông tin đăng nhập không chính xác'
+          message || 'Thông tin đăng nhập không chính xác'
         )
       }
 
@@ -49,23 +49,25 @@ function Login() {
       localStorage.setItem('accessToken', data.accessToken)
       localStorage.setItem('refreshToken', data.refreshToken)
       localStorage.setItem('role', data.role)
+      if (data.username) {
+        localStorage.setItem('username', data.username)
+      }
 
       setMessage('Đăng nhập thành công!')
 
       setTimeout(() => {
-        window.location.href = '/dashboard'
-      }, 500)
+        if (data.role === 'TENANT') {
+          window.location.href = '/dashboard'
+        } else {
+          window.location.href = '/dashboard'
+        }
+      }, 400)
     } catch (error) {
-      const errStr = error instanceof Error ? error.message : String(error)
-      if (errStr.includes('Failed to fetch') || errStr.includes('NetworkError')) {
-        setMessage('Không thể kết nối đến máy chủ backend (http://localhost:8080). Vui lòng đảm bảo backend đang chạy.')
-      } else {
-        setMessage(
-          error instanceof Error
-            ? error.message
-            : 'Có lỗi xảy ra. Vui lòng thử lại.'
-        )
-      }
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'Có lỗi xảy ra. Vui lòng thử lại.'
+      )
     } finally {
       setLoading(false)
     }
@@ -79,23 +81,23 @@ function Login() {
       </div>
 
       <div className="login-container">
-        {/* NÚT XEM PHÒNG TRỌ KHÔNG CẦN ĐĂNG NHẬP */}
-        <div style={{ textAlign: 'center', marginBottom: 18 }}>
+        {/* NÚT QUAY LẠI TRANG CHỦ TÌM PHÒNG (KHÔNG CẦN ĐĂNG NHẬP) */}
+        <div style={{ textAlign: 'center', marginBottom: 16 }}>
           <a
             href="/"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              padding: '8px 20px',
-              borderRadius: 24,
+              padding: '7px 16px',
+              borderRadius: 20,
               background: '#ffffff',
-              color: '#eb6b40',
-              fontSize: 13.5,
+              color: '#2563eb',
+              fontSize: 13,
               fontWeight: 700,
               textDecoration: 'none',
-              boxShadow: '0 2px 10px rgba(235,107,64,0.12)',
-              border: '1.5px solid #fed7aa',
+              boxShadow: '0 2px 8px rgba(37,99,235,0.12)',
+              border: '1px solid #bfdbfe',
               transition: 'all 0.15s ease',
             }}
           >
@@ -122,7 +124,7 @@ function Login() {
         <div className="login-card">
           <div className="login-header">
             <h2>Chào mừng trở lại</h2>
-            <p>Đăng nhập để tiếp tục sử dụng TroRoom</p>
+            <p>Đăng nhập để quản lý, đặt phòng hoặc cập nhật hồ sơ</p>
           </div>
 
           <form onSubmit={handleLogin}>
@@ -171,7 +173,6 @@ function Login() {
                   aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
                   {showPassword ? (
-                    /* Icon Mắt ẩn (gạch chéo) */
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="18"
@@ -189,7 +190,6 @@ function Login() {
                       <line x1="2" x2="22" y1="2" y2="22" />
                     </svg>
                   ) : (
-                    /* Icon Mắt hiện (mở) */
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="18"
@@ -237,7 +237,11 @@ function Login() {
             </div>
           )}
 
-          <div className="register-link" style={{ marginTop: '20px' }}>
+          <div className="divider">
+            <span>hoặc</span>
+          </div>
+
+          <div className="register-link">
             Chưa có tài khoản?
             <a href="/register"> Đăng ký ngay</a>
           </div>
@@ -262,9 +266,9 @@ function Login() {
           justify-content: center;
           background: linear-gradient(
             135deg,
-            #fff8f5 0%,
-            #fdfbf7 45%,
-            #fff4ee 100%
+            #eff6ff 0%,
+            #f8fafc 45%,
+            #eef2ff 100%
           );
           font-family:
             Inter,
@@ -293,7 +297,7 @@ function Login() {
           height: 420px;
           top: -180px;
           left: -130px;
-          background: rgba(235, 107, 64, 0.12);
+          background: rgba(37, 99, 235, 0.12);
         }
 
         .circle-two {
@@ -301,7 +305,7 @@ function Login() {
           height: 500px;
           right: -220px;
           bottom: -220px;
-          background: rgba(238, 118, 77, 0.10);
+          background: rgba(99, 102, 241, 0.12);
         }
 
         .login-container {
@@ -327,11 +331,11 @@ function Login() {
           border-radius: 18px;
           background: linear-gradient(
             135deg,
-            #eb6b40,
-            #f08050
+            #2563eb,
+            #4f46e5
           );
           box-shadow:
-            0 10px 25px rgba(235, 107, 64, 0.25);
+            0 10px 25px rgba(37, 99, 235, 0.25);
         }
 
         .logo span {
@@ -358,11 +362,11 @@ function Login() {
 
         .login-card {
           background: rgba(255, 255, 255, 0.96);
-          border: 1px solid rgba(237, 232, 225, 0.9);
+          border: 1px solid rgba(226, 232, 240, 0.9);
           border-radius: 20px;
           padding: 32px;
           box-shadow:
-            0 20px 60px rgba(235, 107, 64, 0.08);
+            0 20px 60px rgba(15, 23, 42, 0.10);
           backdrop-filter: blur(12px);
         }
 
@@ -404,13 +408,12 @@ function Login() {
 
         .password-label a {
           font-size: 12px;
-          color: #eb6b40;
+          color: #2563eb;
           text-decoration: none;
           font-weight: 600;
         }
 
         .password-label a:hover {
-          color: #dc592e;
           text-decoration: underline;
         }
 
@@ -428,7 +431,7 @@ function Login() {
           border: 1px solid #dbe2ea;
           border-radius: 11px;
           outline: none;
-          background: #fdfbf7;
+          background: #f8fafc;
           color: #172033;
           font-size: 14px;
           transition: all 0.2s ease;
@@ -439,10 +442,10 @@ function Login() {
         }
 
         .input-wrapper input:focus {
-          border-color: #eb6b40;
+          border-color: #2563eb;
           background: white;
           box-shadow:
-            0 0 0 4px rgba(235, 107, 64, 0.12);
+            0 0 0 4px rgba(37, 99, 235, 0.10);
         }
 
         .show-password {
@@ -463,8 +466,8 @@ function Login() {
         }
 
         .show-password:hover {
-          color: #eb6b40;
-          background-color: #fff3ec;
+          color: #1e293b;
+          background-color: #f1f5f9;
         }
 
         .login-button {
@@ -475,15 +478,15 @@ function Login() {
           border-radius: 11px;
           background: linear-gradient(
             135deg,
-            #eb6b40,
-            #f08050
+            #2563eb,
+            #4f46e5
           );
           color: white;
           font-size: 15px;
           font-weight: 700;
           cursor: pointer;
           box-shadow:
-            0 8px 18px rgba(235, 107, 64, 0.25);
+            0 8px 18px rgba(37, 99, 235, 0.20);
           transition:
             transform 0.2s ease,
             box-shadow 0.2s ease;
@@ -496,7 +499,7 @@ function Login() {
         .login-button:hover:not(:disabled) {
           transform: translateY(-1px);
           box-shadow:
-            0 12px 24px rgba(235, 107, 64, 0.32);
+            0 12px 24px rgba(37, 99, 235, 0.28);
         }
 
         .login-button:active:not(:disabled) {
@@ -529,7 +532,6 @@ function Login() {
           border-radius: 9px;
           font-size: 13px;
           text-align: center;
-          line-height: 1.4;
         }
 
         .message.success {
@@ -558,7 +560,7 @@ function Login() {
           content: "";
           flex: 1;
           height: 1px;
-          background: #ede8e1;
+          background: #e2e8f0;
         }
 
         .register-link {
@@ -568,13 +570,12 @@ function Login() {
         }
 
         .register-link a {
-          color: #eb6b40;
+          color: #2563eb;
           font-weight: 700;
           text-decoration: none;
         }
 
         .register-link a:hover {
-          color: #dc592e;
           text-decoration: underline;
         }
 
