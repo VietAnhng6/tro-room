@@ -187,12 +187,11 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '20px' }}>📢</span>
               <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
                 Đăng tin cho thuê - Phòng {room.code}
               </h2>
             </div>
-            <p style={{ margin: '4px 0 0 28px', fontSize: '13px', color: '#64748b' }}>
+            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>
               Tòa nhà: <strong>{room.buildingName}</strong> · Tự động đồng bộ thông số phòng, ảnh & dịch vụ
             </p>
           </div>
@@ -242,7 +241,6 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                 gap: '12px',
               }}
             >
-              <span style={{ fontSize: '22px' }}>🚫</span>
               <div>
                 <strong>Không thể đăng tin:</strong> Phòng hiện đang ở trạng thái <strong>{room.status}</strong>. Nút đăng tin đã bị vô hiệu hóa vì chỉ phòng đang trống mới được phép đăng tin cho thuê.
               </div>
@@ -264,7 +262,6 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                 gap: '8px',
               }}
             >
-              <span>⚠️</span>
               <div>
                 <strong>Cảnh báo:</strong> Ngày hết hạn được chọn ở trong quá khứ. Tin đăng sẽ không hiển thị trên kết quả tìm kiếm.
               </div>
@@ -282,7 +279,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                 fontSize: '13.5px',
               }}
             >
-              ⚠️ {error}
+              {error}
             </div>
           )}
 
@@ -297,7 +294,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                 fontSize: '13.5px',
               }}
             >
-              ✓ {successMsg}
+              {successMsg}
             </div>
           )}
 
@@ -311,7 +308,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
             }}
           >
             <div style={{ fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '10px' }}>
-              ⚡ Thông tin tự động điền từ hệ thống phòng:
+              Thông tin tự động điền từ hệ thống phòng:
             </div>
             <div
               style={{
@@ -414,10 +411,10 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                     backgroundColor: '#ffffff',
                   }}
                 >
-                  <option value="PUBLISHED">🟢 Đang hiển thị (Công khai cho khách)</option>
-                  <option value="DRAFT">📝 Bản nháp (Chưa công khai)</option>
-                  <option value="HIDDEN">⏸️ Tạm ẩn (Ẩn khỏi tìm kiếm)</option>
-                  <option value="RENTED">🔒 Đã cho thuê</option>
+                  <option value="PUBLISHED">Đang hiển thị (Công khai cho khách)</option>
+                  <option value="DRAFT">Bản nháp (Chưa công khai)</option>
+                  <option value="HIDDEN">Tạm ẩn (Ẩn khỏi tìm kiếm)</option>
+                  <option value="RENTED">Đã cho thuê</option>
                 </select>
               </div>
 
@@ -485,7 +482,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                   transition: 'all 0.2s ease',
                 }}
               >
-                {submitting ? 'Đang tạo tin...' : '🚀 Xác nhận & Đăng tin'}
+                {submitting ? 'Đang tạo tin...' : 'Xác nhận & Đăng tin'}
               </button>
             </div>
           </form>

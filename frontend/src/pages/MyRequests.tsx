@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react'
 
-type RequestStatus =
+export type RequestStatus =
   | 'OPEN'
   | 'SCHEDULED'
   | 'ACCEPTED'
   | 'REJECTED'
   | 'CANCELLED'
   | 'COMPLETED'
+  | string
 
-type RequestType = 'VIEWING' | 'RENT_NOW'
+export type RequestType = 'VIEWING' | 'RENT_NOW' | string
 
-type RentalRequest = {
+export type RentalRequest = {
   id: number
   code: string
   listingId: number
@@ -28,59 +29,77 @@ type RentalRequest = {
   createdAt: string
 }
 
+export type HistoryItem = {
+  id: number
+  changedAt: string
+  actorName: string
+  actorRole: string
+  fromStatus: string | null
+  toStatus: string
+  note: string | null
+  reason: string | null
+}
+
 const API = 'http://localhost:8080'
 
-const statusLabel: Record<RequestStatus, string> = {
-  OPEN: 'Mới',
-  SCHEDULED: 'Đã hẹn lịch',
+const statusLabel: Record<string, string> = {
+  OPEN: 'Mới gửi',
+  SCHEDULED: 'Đã hẹn lịch xem phòng',
   ACCEPTED: 'Đã duyệt',
-  REJECTED: 'Từ chối',
+  REJECTED: 'Bị từ chối',
   CANCELLED: 'Đã huỷ',
-  COMPLETED: 'Đã xong',
+  COMPLETED: 'Hoàn tất',
 }
 
-const statusColor: Record<
-  RequestStatus,
-  { bg: string; color: string }
-> = {
-  OPEN: { bg: '#eff6ff', color: '#1d4ed8' },
-  SCHEDULED: { bg: '#fef3c7', color: '#92400e' },
-  ACCEPTED: { bg: '#dcfce7', color: '#166534' },
-  REJECTED: { bg: '#fef2f2', color: '#b91c1c' },
-  CANCELLED: { bg: '#f1f5f9', color: '#475569' },
-  COMPLETED: { bg: '#e0e7ff', color: '#4338ca' },
+const statusColor: Record<string, { bg: string; color: string; border: string }> = {
+  OPEN: { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+  SCHEDULED: { bg: '#fef3c7', color: '#92400e', border: '#fde68a' },
+  ACCEPTED: { bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' },
+  REJECTED: { bg: '#fef2f2', color: '#b91c1c', border: '#fecaca' },
+  CANCELLED: { bg: '#f1f5f9', color: '#64748b', border: '#cbd5e1' },
+  COMPLETED: { bg: '#e0e7ff', color: '#4338ca', border: '#c7d2fe' },
 }
 
-const typeLabel: Record<RequestType, string> = {
+const typeLabel: Record<string, string> = {
   VIEWING: 'Xem phòng',
   RENT_NOW: 'Thuê ngay',
 }
 
+function formatDate(value: string | null): string {
+  if (!value) return '—'
+  if (value.includes('T')) value = value.split('T')[0]
+  const [year, month, day] = value.split('-')
+  return `${day}/${month}/${year}`
+}
+
 function formatDateTime(value: string | null): string {
-  if (!value) return ''
-
-  const normalized = value.includes('T')
-    ? value
-    : value.replace(' ', 'T')
-
+  if (!value) return '—'
+  const normalized = value.includes('T') ? value : value.replace(' ', 'T')
   const date = new Date(normalized)
-
   if (Number.isNaN(date.getTime())) return value
-
-  const dd = String(date.getDate()).padStart(2, '0')
-  const mm = String(date.getMonth() + 1).padStart(2, '0')
-  const yyyy = date.getFullYear()
-  const hh = String(date.getHours()).padStart(2, '0')
-  const mi = String(date.getMinutes()).padStart(2, '0')
-
-  return `${dd}/${mm}/${yyyy} ${hh}:${mi}`
+  return date.toLocaleString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
 }
 
 function MyRequests() {
   const [requests, setRequests] = useState<RentalRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [cancellingId, setCancellingId] = useState<number | null>(null)
+  const [successMsg, setSuccessMsg] = useState('')
+
+  // Cancel modal state
+  const [cancellingRequest, setCancellingRequest] = useState<RentalRequest | null>(null)
+  const [isCancelling, setIsCancelling] = useState(false)
+
+  // History timeline modal state
+  const [historyReq, setHistoryReq] = useState<RentalRequest | null>(null)
+  const [historyList, setHistoryList] = useState<HistoryItem[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
 
   const token = localStorage.getItem('accessToken')
 
@@ -113,11 +132,7 @@ function MyRequests() {
       const data: RentalRequest[] = await res.json()
       setRequests(data)
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Không thể tải danh sách yêu cầu.'
-      )
+      setError(err instanceof Error ? err.message : 'Không thể tải danh sách yêu cầu.')
     } finally {
       setLoading(false)
     }
@@ -125,78 +140,74 @@ function MyRequests() {
 
   useEffect(() => {
     loadRequests()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function cancelRequest(request: RentalRequest) {
-    if (
-      !window.confirm(
-        `Bạn có chắc muốn huỷ yêu cầu ${request.code}? Huỷ rồi sẽ không khôi phục được.`
-      )
-    ) {
-      return
-    }
+  // S2-09: Khách tự hủy yêu cầu
+  async function confirmCancel() {
+    if (!cancellingRequest) return
 
-    setCancellingId(request.id)
-
+    setIsCancelling(true)
     try {
-      const res = await fetch(
-        `${API}/api/rental-requests/${request.id}/cancel`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
-
-      if (res.status === 401) {
-        localStorage.clear()
-        window.location.href = '/'
-        return
-      }
+      const res = await fetch(`${API}/api/rental-requests/${cancellingRequest.id}/cancel`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
 
       if (!res.ok) {
         const text = await res.text()
-
-        let message = 'Không thể huỷ yêu cầu.'
-
+        let msg = 'Không thể huỷ yêu cầu.'
         try {
           const data = JSON.parse(text)
-          message = data.message || message
-        } catch {
-          // Response không phải JSON
-        }
-
-        throw new Error(message)
+          msg = data.message || msg
+        } catch {}
+        throw new Error(msg)
       }
 
+      setSuccessMsg(`Đã huỷ thành công yêu cầu ${cancellingRequest.code}.`)
+      setCancellingRequest(null)
       await loadRequests()
     } catch (err) {
-      alert(
-        err instanceof Error
-          ? err.message
-          : 'Không thể huỷ yêu cầu.'
-      )
+      alert(err instanceof Error ? err.message : 'Không thể huỷ yêu cầu.')
     } finally {
-      setCancellingId(null)
+      setIsCancelling(false)
     }
   }
 
-  const canCancel = (status: RequestStatus) =>
-    status === 'OPEN' || status === 'SCHEDULED'
+  // S2-08/S2-09: Xem lịch sử xử lý của yêu cầu
+  async function openHistory(req: RentalRequest) {
+    setHistoryReq(req)
+    setLoadingHistory(true)
+    setHistoryList([])
+
+    try {
+      const res = await fetch(`${API}/api/tenant/requests/${req.id}/history`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('Không thể tải lịch sử')
+      const data: HistoryItem[] = await res.json()
+      setHistoryList(data)
+    } catch {
+      setHistoryList([])
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  const canCancel = (status: RequestStatus) => status === 'OPEN' || status === 'SCHEDULED'
 
   return (
     <div
       style={{
         minHeight: '100vh',
         background: '#f8fafc',
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif',
-        padding: 28,
+        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        padding: '30px 24px',
+        boxSizing: 'border-box',
       }}
     >
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto' }}>
         {/* HEADER */}
         <div
           style={{
@@ -205,59 +216,93 @@ function MyRequests() {
             alignItems: 'center',
             gap: 20,
             marginBottom: 26,
+            flexWrap: 'wrap',
           }}
         >
           <div>
-            <div
-              style={{
-                color: '#64748b',
-                fontSize: 14,
-                marginBottom: 6,
-              }}
-            >
+            <div style={{ color: '#64748b', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
               TroRoom / Khách thuê
             </div>
-
-            <h1
-              style={{
-                margin: 0,
-                color: '#0f172a',
-                fontSize: 30,
-                fontWeight: 800,
-              }}
-            >
-              Yêu cầu của tôi
+            <h1 style={{ margin: 0, color: '#0f172a', fontSize: 26, fontWeight: 800 }}>
+              Yêu cầu thuê phòng của tôi
             </h1>
-
-            <p
-              style={{
-                margin: '7px 0 0',
-                color: '#64748b',
-              }}
-            >
-              Theo dõi trạng thái các yêu cầu thuê đã gửi.
+            <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: 14 }}>
+              Theo dõi tiến độ, lịch hẹn xem phòng và kết quả duyệt từ các chủ nhà.
             </p>
           </div>
 
-          <button
-            onClick={() => {
-              window.location.href = '/dashboard'
-            }}
-            style={{
-              border: '1px solid #e2e8f0',
-              background: '#fff',
-              color: '#475569',
-              borderRadius: 9,
-              padding: '9px 13px',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            ← Dashboard
-          </button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={() => {
+                window.location.href = '/search-rooms'
+              }}
+              style={{
+                border: '1.5px solid #bfdbfe',
+                background: '#eff6ff',
+                color: '#1d4ed8',
+                borderRadius: 10,
+                padding: '10px 18px',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: 13.5,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              Tìm phòng khác
+            </button>
+
+            <button
+              onClick={() => {
+                window.location.href = '/dashboard'
+              }}
+              style={{
+                border: '1px solid #cbd5e1',
+                background: '#fff',
+                color: '#334155',
+                borderRadius: 10,
+                padding: '10px 18px',
+                cursor: 'pointer',
+                fontWeight: 650,
+                fontSize: 13.5,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              Về Tổng quan
+            </button>
+          </div>
         </div>
 
-        {/* ERROR */}
+        {/* FEEDBACK MESSAGES */}
+        {successMsg && (
+          <div
+            style={{
+              background: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              color: '#047857',
+              borderRadius: 12,
+              padding: '14px 18px',
+              marginBottom: 20,
+              fontSize: 14,
+              fontWeight: 600,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <div>{successMsg}</div>
+            <button
+              onClick={() => setSuccessMsg('')}
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#047857', fontWeight: 700 }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {error && (
           <div
             style={{
@@ -265,8 +310,10 @@ function MyRequests() {
               border: '1px solid #fecaca',
               color: '#b91c1c',
               borderRadius: 12,
-              padding: 15,
-              marginBottom: 18,
+              padding: '14px 18px',
+              marginBottom: 20,
+              fontSize: 14,
+              fontWeight: 600,
             }}
           >
             {error}
@@ -280,89 +327,63 @@ function MyRequests() {
             border: '1px solid #e2e8f0',
             borderRadius: 16,
             overflow: 'hidden',
-            boxShadow: '0 4px 14px rgba(15,23,42,.04)',
+            boxShadow: '0 4px 16px rgba(15,23,42,0.04)',
           }}
         >
           {loading ? (
-            <div
-              style={{
-                padding: 50,
-                textAlign: 'center',
-                color: '#64748b',
-              }}
-            >
-              Đang tải danh sách yêu cầu...
+            <div style={{ padding: 60, textAlign: 'center', color: '#64748b', fontSize: 15 }}>
+              Đang tải danh sách yêu cầu của bạn...
             </div>
           ) : requests.length === 0 ? (
-            <div
-              style={{
-                padding: 60,
-                textAlign: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 42,
-                  marginBottom: 12,
-                }}
-              >
-                📋
+            <div style={{ padding: '70px 20px', textAlign: 'center' }}>
+              <div style={{ color: '#0f172a', fontSize: 20, fontWeight: 800, marginBottom: 6 }}>
+                Bạn chưa gửi yêu cầu thuê phòng nào
               </div>
-
-              <div
+              <div style={{ color: '#64748b', fontSize: 14, marginBottom: 20 }}>
+                Hãy khám phá các phòng trọ đang cho thuê trên hệ thống và gửi yêu cầu xem phòng!
+              </div>
+              <button
+                onClick={() => {
+                  window.location.href = '/search-rooms'
+                }}
                 style={{
-                  color: '#0f172a',
-                  fontSize: 18,
+                  padding: '12px 24px',
+                  background: 'linear-gradient(135deg, #2563eb, #4f46e5)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 10,
                   fontWeight: 700,
-                  marginBottom: 6,
-                }}
-              >
-                Chưa có yêu cầu nào
-              </div>
-
-              <div
-                style={{
-                  color: '#64748b',
                   fontSize: 14,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(37,99,235,0.25)',
                 }}
               >
-                Khi bạn gửi yêu cầu thuê, trạng thái sẽ hiển thị ở đây.
-              </div>
+                Khám phá phòng trọ ngay
+              </button>
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
-              <table
-                style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  minWidth: 980,
-                }}
-              >
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1050 }}>
                 <thead>
-                  <tr
-                    style={{
-                      background: '#f8fafc',
-                      borderBottom: '1px solid #e2e8f0',
-                    }}
-                  >
+                  <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0', textAlign: 'center' }}>
                     {[
                       'Mã yêu cầu',
-                      'Phòng',
+                      'Phòng & Tòa nhà',
                       'Loại',
-                      'Ngày gửi',
+                      'Ngày mong muốn',
                       'Trạng thái',
-                      'Lịch hẹn',
-                      'Lý do từ chối',
+                      'Lịch hẹn xem phòng',
+                      'Lý do / Phản hồi',
                       'Thao tác',
                     ].map((header) => (
                       <th
                         key={header}
                         style={{
-                          textAlign: 'left',
-                          padding: '15px 16px',
-                          color: '#64748b',
+                          textAlign: 'center',
+                          padding: '16px 18px',
+                          color: '#475569',
                           fontSize: 13,
-                          fontWeight: 700,
+                          fontWeight: 750,
                           whiteSpace: 'nowrap',
                         }}
                       >
@@ -374,153 +395,161 @@ function MyRequests() {
 
                 <tbody>
                   {requests.map((request) => {
-                    const status = statusColor[request.status]
+                    const status = statusColor[request.status] || statusColor.CANCELLED
 
                     return (
-                      <tr
-                        key={request.id}
-                        style={{
-                          borderBottom: '1px solid #f1f5f9',
-                        }}
-                      >
-                        <td
-                          style={{
-                            padding: '16px',
-                            fontWeight: 800,
-                            color: '#0f172a',
-                          }}
-                        >
-                          {request.code}
+                      <tr key={request.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        {/* Mã yêu cầu */}
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
+                          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 14 }}>{request.code}</div>
+                          <div style={{ color: '#64748b', fontSize: 12, marginTop: 2 }}>
+                            {formatDateTime(request.createdAt)}
+                          </div>
                         </td>
 
-                        <td style={{ padding: '16px' }}>
-                          <div
-                            style={{
-                              color: '#334155',
-                              fontWeight: 600,
-                            }}
-                          >
+                        {/* Phòng & Tòa */}
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
+                          <div style={{ color: '#0f172a', fontWeight: 800, fontSize: 14 }}>
                             Phòng {request.roomCode}
                           </div>
-
-                          <div
-                            style={{
-                              color: '#94a3b8',
-                              fontSize: 12,
-                            }}
-                          >
+                          <div style={{ color: '#64748b', fontSize: 12.5, marginTop: 2 }}>
                             {request.buildingName}
                           </div>
                         </td>
 
-                        <td
-                          style={{
-                            padding: '16px',
-                            color: '#334155',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {typeLabel[request.type]}
+                        {/* Loại */}
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
+                          <span
+                            style={{
+                              fontWeight: 700,
+                              fontSize: 12.5,
+                              color: request.type === 'RENT_NOW' ? '#b45309' : '#4338ca',
+                              background: request.type === 'RENT_NOW' ? '#fef3c7' : '#e0e7ff',
+                              padding: '4px 10px',
+                              borderRadius: 8,
+                              display: 'inline-block',
+                            }}
+                          >
+                            {typeLabel[request.type] || request.type}
+                          </span>
                         </td>
 
-                        <td
-                          style={{
-                            padding: '16px',
-                            color: '#334155',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {formatDateTime(request.createdAt)}
+                        {/* Ngày mong muốn */}
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center', fontSize: 13.5, fontWeight: 600, color: '#334155' }}>
+                          {formatDate(request.desiredDate)}
+                          <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>{request.peopleCount} người ở</div>
                         </td>
 
-                        <td style={{ padding: '16px' }}>
+                        {/* Trạng thái */}
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
                           <span
                             style={{
                               display: 'inline-block',
                               borderRadius: 999,
-                              padding: '7px 11px',
+                              padding: '5px 12px',
+                              fontSize: 12,
+                              fontWeight: 800,
                               background: status.bg,
                               color: status.color,
-                              fontWeight: 700,
-                              fontSize: 12,
+                              border: `1px solid ${status.border}`,
                             }}
                           >
-                            {statusLabel[request.status]}
+                            {statusLabel[request.status] || request.status}
                           </span>
                         </td>
 
-                        <td
-                          style={{
-                            padding: '16px',
-                            color: '#334155',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {formatDateTime(request.appointmentAt) || '—'}
+                        {/* Lịch hẹn xem phòng */}
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
+                          {request.appointmentAt ? (
+                            <span
+                              style={{
+                                color: '#92400e',
+                                background: '#fef3c7',
+                                padding: '5px 10px',
+                                borderRadius: 8,
+                                fontWeight: 750,
+                                fontSize: 12.5,
+                                border: '1px solid #fde68a',
+                                display: 'inline-block',
+                              }}
+                            >
+                              {formatDateTime(request.appointmentAt)}
+                            </span>
+                          ) : (
+                            <span style={{ color: '#94a3b8', fontSize: 13 }}>—</span>
+                          )}
                         </td>
 
-                        <td
-                          style={{
-                            padding: '16px',
-                            color:
-                              request.status === 'REJECTED'
-                                ? '#b91c1c'
-                                : '#94a3b8',
-                            maxWidth: 220,
-                          }}
-                        >
-                          {request.rejectReason || '—'}
+                        {/* Lý do / Phản hồi */}
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center', maxWidth: 200 }}>
+                          {request.rejectReason ? (
+                            <div style={{ color: '#dc2626', fontSize: 12.5, fontWeight: 600 }}>
+                              {request.rejectReason}
+                            </div>
+                          ) : request.message ? (
+                            <div style={{ color: '#475569', fontSize: 12.5, fontStyle: 'italic' }}>
+                              "{request.message}"
+                            </div>
+                          ) : (
+                            <span style={{ color: '#94a3b8', fontSize: 13 }}>—</span>
+                          )}
                         </td>
 
-                        <td style={{ padding: '16px' }}>
-                          <div
-                            style={{
-                              display: 'flex',
-                              gap: 8,
-                              flexWrap: 'nowrap',
-                            }}
-                          >
+                        {/* Thao tác */}
+                        <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 7, flexWrap: 'nowrap', justifyContent: 'center' }}>
                             <button
                               onClick={() => {
-                                window.location.href = `/listing?id=${request.listingId}`
+                                window.location.href = `/listing/${request.listingId}`
                               }}
                               style={{
                                 border: '1px solid #cbd5e1',
                                 background: '#fff',
-                                color: '#334155',
-                                borderRadius: 9,
-                                padding: '8px 12px',
+                                color: '#2563eb',
+                                borderRadius: 8,
+                                padding: '7px 11px',
                                 cursor: 'pointer',
-                                fontWeight: 600,
+                                fontWeight: 700,
+                                fontSize: 12.5,
                                 whiteSpace: 'nowrap',
                               }}
                             >
                               Xem tin
                             </button>
 
+                            <button
+                              onClick={() => openHistory(request)}
+                              style={{
+                                border: '1px solid #cbd5e1',
+                                background: '#fff',
+                                color: '#475569',
+                                borderRadius: 8,
+                                padding: '7px 11px',
+                                cursor: 'pointer',
+                                fontWeight: 650,
+                                fontSize: 12.5,
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              Lịch sử
+                            </button>
+
                             {canCancel(request.status) && (
                               <button
-                                onClick={() => cancelRequest(request)}
-                                disabled={cancellingId === request.id}
+                                onClick={() => setCancellingRequest(request)}
                                 style={{
                                   border: '1px solid #fecaca',
-                                  background: '#fff',
+                                  background: '#fef2f2',
                                   color: '#dc2626',
-                                  borderRadius: 9,
-                                  padding: '8px 12px',
-                                  cursor:
-                                    cancellingId === request.id
-                                      ? 'not-allowed'
-                                      : 'pointer',
-                                  fontWeight: 600,
+                                  borderRadius: 8,
+                                  padding: '7px 11px',
+                                  cursor: 'pointer',
+                                  fontWeight: 700,
+                                  fontSize: 12.5,
                                   whiteSpace: 'nowrap',
-                                  opacity:
-                                    cancellingId === request.id ? 0.6 : 1,
                                 }}
                               >
-                                {cancellingId === request.id
-                                  ? 'Đang huỷ...'
-                                  : 'Huỷ'}
+                                Huỷ
                               </button>
                             )}
                           </div>
@@ -534,6 +563,223 @@ function MyRequests() {
           )}
         </div>
       </div>
+
+      {/* MODAL XÁC NHẬN HỦY YÊU CẦU (S2-09) */}
+      {cancellingRequest && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15,23,42,0.6)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 20,
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 440,
+              background: '#fff',
+              borderRadius: 16,
+              padding: 26,
+              textAlign: 'center',
+              boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
+            }}
+          >
+            <h3 style={{ margin: '0 0 10px', fontSize: 19, fontWeight: 800, color: '#0f172a' }}>
+              Xác nhận huỷ yêu cầu?
+            </h3>
+            <p style={{ margin: '0 0 20px', fontSize: 14, color: '#64748b', lineHeight: 1.6 }}>
+              Bạn có chắc chắn muốn huỷ yêu cầu <strong>{cancellingRequest.code}</strong> (Phòng {cancellingRequest.roomCode})? Thao tác này <strong>không thể khôi phục</strong>.
+            </p>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button
+                onClick={() => setCancellingRequest(null)}
+                style={{
+                  flex: 1,
+                  padding: '11px 16px',
+                  border: '1px solid #cbd5e1',
+                  background: '#fff',
+                  borderRadius: 9,
+                  fontWeight: 650,
+                  cursor: 'pointer',
+                }}
+              >
+                Giữ lại
+              </button>
+              <button
+                onClick={confirmCancel}
+                disabled={isCancelling}
+                style={{
+                  flex: 1,
+                  padding: '11px 16px',
+                  border: 'none',
+                  background: '#dc2626',
+                  color: '#fff',
+                  borderRadius: 9,
+                  fontWeight: 700,
+                  cursor: isCancelling ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(220,38,38,0.25)',
+                }}
+              >
+                {isCancelling ? 'Đang huỷ...' : 'Xác nhận huỷ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL LỊCH SỬ XỬ LÝ (S2-08 / S2-09) */}
+      {historyReq && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15,23,42,0.6)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 20,
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 540,
+              maxHeight: '85vh',
+              display: 'flex',
+              flexDirection: 'column',
+              background: '#fff',
+              borderRadius: 18,
+              boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                padding: '18px 24px',
+                borderBottom: '1px solid #e2e8f0',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: '#f8fafc',
+              }}
+            >
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
+                  Tiến trình xử lý yêu cầu {historyReq.code}
+                </h3>
+                <div style={{ color: '#64748b', fontSize: 13, marginTop: 3 }}>
+                  Phòng {historyReq.roomCode} · {historyReq.buildingName}
+                </div>
+              </div>
+              <button
+                onClick={() => setHistoryReq(null)}
+                style={{ border: 'none', background: '#e2e8f0', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+              {loadingHistory ? (
+                <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Đang tải lịch sử...</div>
+              ) : historyList.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Chưa có bản ghi lịch sử nào.</div>
+              ) : (
+                <div style={{ position: 'relative', paddingLeft: 24 }}>
+                  {/* Vertical Line */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 10,
+                      bottom: 10,
+                      left: 7,
+                      width: 2,
+                      background: '#cbd5e1',
+                    }}
+                  />
+
+                  {historyList.map((item, index) => (
+                    <div key={item.id || index} style={{ position: 'relative', marginBottom: 22 }}>
+                      {/* Dot */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          left: -24,
+                          top: 4,
+                          width: 16,
+                          height: 16,
+                          borderRadius: '50%',
+                          background: index === historyList.length - 1 ? '#2563eb' : '#94a3b8',
+                          border: '3px solid #fff',
+                          boxShadow: '0 0 0 1px #cbd5e1',
+                        }}
+                      />
+
+                      <div style={{ background: '#f8fafc', padding: '14px 16px', borderRadius: 12, border: '1px solid #e2e8f0' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                          <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>
+                            {item.toStatus ? statusLabel[item.toStatus] || item.toStatus : 'Cập nhật'}
+                          </span>
+                          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>
+                            {formatDateTime(item.changedAt)}
+                          </span>
+                        </div>
+
+                        <div style={{ fontSize: 13, color: '#475569' }}>
+                          Bởi: <strong>{item.actorName || 'Hệ thống'}</strong>
+                        </div>
+
+                        {(item.note || item.reason) && (
+                          <div
+                            style={{
+                              marginTop: 8,
+                              padding: '8px 12px',
+                              background: '#fff',
+                              borderRadius: 8,
+                              border: '1px solid #e2e8f0',
+                              fontSize: 13,
+                              color: '#334155',
+                            }}
+                          >
+                            {item.reason && <div>Lý do: <strong>{item.reason}</strong></div>}
+                            {item.note && <div style={{ marginTop: item.reason ? 3 : 0 }}>Ghi chú: {item.note}</div>}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', background: '#f8fafc' }}>
+              <button
+                onClick={() => setHistoryReq(null)}
+                style={{
+                  padding: '9px 20px',
+                  background: '#2563eb',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
