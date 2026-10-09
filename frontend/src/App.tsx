@@ -18,6 +18,7 @@ import Rooms from './pages/Rooms'
 import Services from './pages/Services'
 import AuditLogs from './pages/AuditLogs'
 import Admin from './pages/Admin'
+import Invoices from './pages/Invoices'
 
 /*
  * Trang 403 Forbidden
@@ -220,6 +221,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/rooms',
       '/services',
       '/landlord/requests',
+      '/invoices',
     ],
     MANAGER: [
       '/dashboard',
@@ -228,6 +230,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/rooms',
       '/services',
       '/landlord/requests',
+      '/invoices',
     ],
     TENANT: [
       '/dashboard',
@@ -361,6 +364,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute path="/services">
               <Services />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/invoices"
+          element={
+            <ProtectedRoute path="/invoices">
+              <Invoices />
             </ProtectedRoute>
           }
         />

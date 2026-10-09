@@ -47,11 +47,38 @@ public class PermissionDataInitializer {
                     "LISTING_MANAGE"
             );
 
+            // S3-05: nhập chỉ số điện nước
+            addIfNotExists(
+                    repository,
+                    User.Role.LANDLORD,
+                    "METER_MANAGE"
+            );
+
+            // S3-06: phát hành và xem hoá đơn tháng
+            addIfNotExists(
+                    repository,
+                    User.Role.LANDLORD,
+                    "INVOICE_MANAGE"
+            );
+
             // MANAGER
             addIfNotExists(
                     repository,
                     User.Role.MANAGER,
                     "ROOM_MANAGE"
+            );
+
+            addIfNotExists(
+                    repository,
+                    User.Role.MANAGER,
+                    "METER_MANAGE"
+            );
+
+            // S3-06: quản lý xem hoá đơn tháng
+            addIfNotExists(
+                    repository,
+                    User.Role.MANAGER,
+                    "INVOICE_MANAGE"
             );
 
             // TENANT
