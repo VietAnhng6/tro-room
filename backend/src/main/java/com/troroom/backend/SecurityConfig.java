@@ -66,8 +66,6 @@ public class SecurityConfig {
 
                 .requestMatchers(HttpMethod.GET, "/api/room-images/*").permitAll()
 
-                .requestMatchers("/api/tenant/contracts/**").authenticated()
-
                 // Quyền được kiểm tra từ DB
                 .requestMatchers("/api/admin/**")
                 .access(permissionAuthorizationManager)
@@ -83,10 +81,6 @@ public class SecurityConfig {
 
                 
                 .requestMatchers("/api/listings/**")
-                .access(permissionAuthorizationManager)
-
-                // S3-05: nhập chỉ số điện nước (Quản lý toà nhà, Chủ nhà)
-                .requestMatchers("/api/manager/**")
                 .access(permissionAuthorizationManager)
 
                 // Audit Log: chỉ ADMIN được xem

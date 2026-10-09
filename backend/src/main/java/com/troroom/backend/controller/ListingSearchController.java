@@ -18,14 +18,11 @@ import java.util.Map;
 public class ListingSearchController {
 
     private final ListingRepository listingRepository;
-    private final com.troroom.backend.repository.RoomImageRepository roomImageRepository;
 
     public ListingSearchController(
-            ListingRepository listingRepository,
-            com.troroom.backend.repository.RoomImageRepository roomImageRepository
+            ListingRepository listingRepository
     ) {
         this.listingRepository = listingRepository;
-        this.roomImageRepository = roomImageRepository;
     }
 
     @GetMapping("/search")
@@ -160,9 +157,6 @@ public class ListingSearchController {
 
         Room room = listing.getRoom();
 
-        var images = roomImageRepository.findByRoomOrderBySortOrderAsc(room);
-        String imageUrl = images.isEmpty() ? null : "/api/room-images/" + images.get(0).getId();
-
         return new ListingSearchResponse(
                 listing.getId(),
                 listing.getTitle(),
@@ -179,9 +173,8 @@ public class ListingSearchController {
 
                 room.getBuilding().getId(),
                 room.getBuilding().getName(),
-                room.getBuilding().getAddress(),
-                room.getBuilding().getAddress(),
-                imageUrl
+                room.getBuilding().getDistrict(),
+                room.getBuilding().getAddress()
         );
     }
 }
