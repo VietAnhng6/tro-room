@@ -57,7 +57,6 @@ public class BuildingController {
 
         String name = (String) request.get("name");
         String address = (String) request.get("address");
-        String district = (String) request.get("district");
 
         Integer floors = request.get("floors") == null
                 ? null
@@ -121,11 +120,6 @@ public class BuildingController {
 
         building.setName(name.trim());
         building.setAddress(address.trim());
-        building.setDistrict(
-                district == null || district.isBlank()
-                        ? null
-                        : district.trim()
-        );
         building.setFloors(floors);
         building.setLandlord(landlord);
         building.setManager(manager);
@@ -216,7 +210,6 @@ public class BuildingController {
 
         String name = (String) request.get("name");
         String address = (String) request.get("address");
-        String district = (String) request.get("district");
 
         Integer floors = request.get("floors") == null
                 ? null
@@ -284,13 +277,8 @@ public class BuildingController {
             building.setManager(manager);
         }
 
-                building.setName(name.trim());
+        building.setName(name.trim());
         building.setAddress(address.trim());
-        building.setDistrict(
-                district == null || district.isBlank()
-                        ? null
-                        : district.trim()
-        );
         building.setFloors(floors);
         building.setNote(note);
 
@@ -536,10 +524,6 @@ public ResponseEntity<?> activateBuilding(
                                     building.getAddress()
                             );
 
-                            item.put(
-                                "district",
-                                building.getDistrict()
-                                );
                             item.put(
                                     "floors",
                                     building.getFloors()
