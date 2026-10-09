@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Logo from '../components/Logo'
 
 const API = 'http://localhost:8080'
 
@@ -14,6 +15,7 @@ type Listing = {
   buildingName: string
   district: string
   address: string
+  imageUrl?: string | null
 }
 
 type SearchResponse = {
@@ -40,6 +42,8 @@ function SearchRooms() {
   const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const token = localStorage.getItem('accessToken')
 
   const searchRooms = async (targetPage = 0, targetSort = sort) => {
     setLoading(true)
@@ -130,6 +134,38 @@ function SearchRooms() {
 
   return (
     <div className="search-page-wrapper">
+      {/* NAVIGATION BAR */}
+      <nav className="search-navbar">
+        <div className="nav-container">
+          <a href="/search-rooms" className="brand-logo-link">
+            <Logo size="sm" title="TroRoom" subtitle="Nền tảng tìm kiếm phòng trọ" />
+          </a>
+
+          <div className="nav-actions">
+            {token ? (
+              <a href="/dashboard" className="nav-btn primary">
+                Vào Dashboard ➔
+              </a>
+            ) : (
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="nav-btn secondary"
+                  onClick={() => {
+                    window.location.href = '/login'
+                  }}
+                >
+                  Đăng nhập
+                </button>
+                <a href="/register" className="nav-btn primary">
+                  Đăng ký
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      </nav>
+
       <main className="search-main-content">
         <div className="content-container">
           {/* PAGE HERO HEADER */}
@@ -145,7 +181,7 @@ function SearchRooms() {
           <section className="filter-card">
             <div className="filter-card-header">
               <div className="filter-card-title">
-                Bộ lọc tìm kiếm kết hợp
+                <span style={{ color: '#2563eb' }}>🔍</span> Bộ lọc tìm kiếm kết hợp
               </div>
               <div className="price-presets">
                 <span className="preset-label">Khoảng giá nhanh:</span>
@@ -274,9 +310,9 @@ function SearchRooms() {
                     searchRooms(0, newSort)
                   }}
                 >
-                  <option value="newest">Tin mới nhất trước</option>
-                  <option value="price_asc">Giá: Thấp đến Cao</option>
-                  <option value="price_desc">Giá: Cao đến Thấp</option>
+                  <option value="newest">🕒 Tin mới nhất trước</option>
+                  <option value="price_asc">💵 Giá: Thấp đến Cao</option>
+                  <option value="price_desc">💎 Giá: Cao đến Thấp</option>
                 </select>
               </div>
             </div>
@@ -288,7 +324,7 @@ function SearchRooms() {
                 className="btn-filter-search"
                 onClick={() => searchRooms(0)}
               >
-                Tìm kiếm ngay
+                🔎 Tìm kiếm ngay
               </button>
 
               <button
@@ -296,7 +332,7 @@ function SearchRooms() {
                 className="btn-filter-clear"
                 onClick={clearFilters}
               >
-                Xóa bộ lọc
+                🔄 Xóa bộ lọc
               </button>
             </div>
           </section>
@@ -321,7 +357,7 @@ function SearchRooms() {
                 onClick={() => setViewMode('grid')}
                 title="Xem dạng lưới"
               >
-                Lưới
+                🔲 Lưới
               </button>
               <button
                 type="button"
@@ -329,7 +365,7 @@ function SearchRooms() {
                 onClick={() => setViewMode('list')}
                 title="Xem dạng danh sách"
               >
-                Danh sách
+                📋 Danh sách
               </button>
             </div>
           </div>
@@ -337,7 +373,7 @@ function SearchRooms() {
           {/* ERROR ALERT */}
           {error && (
             <div className="error-box">
-              {error}
+              ⚠️ {error}
             </div>
           )}
 
@@ -352,6 +388,7 @@ function SearchRooms() {
           {/* EMPTY STATE */}
           {!loading && !error && result && result.content.length === 0 && (
             <section className="empty-state-card">
+              <div className="empty-illustration">🏡</div>
               <h2 className="empty-title">Không tìm thấy phòng phù hợp</h2>
               <p className="empty-desc">
                 Rất tiếc, hiện tại không có phòng nào khớp với các tiêu chí tìm kiếm của bạn. Hãy thử nới rộng khoảng giá hoặc điều chỉnh diện tích để xem nhiều phòng hơn.
@@ -368,14 +405,14 @@ function SearchRooms() {
                     searchRooms(0)
                   }}
                 >
-                  Nới rộng khoảng giá & diện tích
+                  🎯 Nới rộng khoảng giá & diện tích
                 </button>
                 <button
                   type="button"
                   className="btn-reset-all"
                   onClick={clearFilters}
                 >
-                  Đặt lại tất cả bộ lọc
+                  🔄 Đặt lại tất cả bộ lọc
                 </button>
               </div>
             </section>
@@ -388,6 +425,17 @@ function SearchRooms() {
                 {result.content.map((item) => (
                   <article key={item.id} className="room-card">
                     <div className="card-thumb-area">
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl.startsWith('http') ? item.imageUrl : `${API}${item.imageUrl}`}
+                          alt={item.title}
+                          className="card-thumb-img"
+                        />
+                      ) : (
+                        <div className="thumb-placeholder-clean">
+                          <span className="placeholder-room-text">PHÒNG {item.roomCode}</span>
+                        </div>
+                      )}
                       <div className="card-room-badge">Phòng {item.roomCode}</div>
                       <div className="card-floor-badge">Tầng {item.floor}</div>
                     </div>
@@ -398,12 +446,12 @@ function SearchRooms() {
                       </h3>
 
                       <div className="card-location">
-                        <strong>{item.buildingName}</strong> · {item.district || item.address}
+                        📍 <strong>{item.buildingName}</strong> · {item.district || item.address}
                       </div>
 
                       <div className="card-specs">
-                        <span className="spec-tag">{item.area} m²</span>
-                        <span className="spec-tag">Tối đa {item.maxPeople} người</span>
+                        <span className="spec-tag">📐 {item.area} m²</span>
+                        <span className="spec-tag">👥 Tối đa {item.maxPeople} người</span>
                       </div>
 
                       <p className="card-desc">
@@ -418,7 +466,7 @@ function SearchRooms() {
                         </div>
 
                         <a href={`/listing/${item.id}`} className="btn-view-detail">
-                          Xem chi tiết
+                          Xem chi tiết ➔
                         </a>
                       </div>
                     </div>
@@ -790,9 +838,10 @@ function SearchRooms() {
         }
 
         .card-thumb-area {
-          height: 180px;
-          background: linear-gradient(135deg, #1e293b, #334155);
+          height: 190px;
+          background: #1e293b;
           position: relative;
+          overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -802,11 +851,36 @@ function SearchRooms() {
         .listings-container.list-view .card-thumb-area {
           width: 240px;
           height: auto;
+          min-height: 180px;
         }
 
-        .thumb-placeholder {
-          font-size: 48px;
-          opacity: 0.8;
+        .card-thumb-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          transition: transform 0.3s ease;
+        }
+
+        .room-card:hover .card-thumb-img {
+          transform: scale(1.05);
+        }
+
+        .thumb-placeholder-clean {
+          width: 100%;
+          height: 100%;
+          min-height: 180px;
+          background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .placeholder-room-text {
+          font-size: 15px;
+          font-weight: 800;
+          letter-spacing: 1.5px;
+          color: rgba(255, 255, 255, 0.45);
         }
 
         .card-room-badge {

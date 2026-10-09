@@ -1,12 +1,8 @@
-import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import MainLayout from './layouts/MainLayout'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import SearchRooms from './pages/SearchRooms'
 import ListingDetail from './pages/ListingDetail'
 import LandlordRequests from './pages/LandlordRequests'
-import MyRequests from './pages/MyRequests'
 import ResetPassword from './pages/ResetPassword'
 import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
@@ -18,9 +14,13 @@ import Rooms from './pages/Rooms'
 import Services from './pages/Services'
 import AuditLogs from './pages/AuditLogs'
 import Admin from './pages/Admin'
-
+import MyRequests from './pages/MyRequests'
+import Contracts from './pages/Contracts'
+import MeterReadings from './pages/MeterReadings'
+import MainLayout from './components/MainLayout'
+import Notifications from './pages/Notifications'     
 /*
- * Trang 403 Forbidden
+ * Trang 403
  */
 function Forbidden() {
   return (
@@ -31,18 +31,21 @@ function Forbidden() {
       <div className="forbidden-content">
         <div className="forbidden-circle">
           <span>403</span>
+          <div className="forbidden-lock">🔒</div>
         </div>
 
         <h1>Bạn không có quyền truy cập trang này</h1>
 
-        <p>Tài khoản của bạn không được phân quyền để truy cập chức năng này.</p>
+        <p>
+          Tài khoản của bạn không được phép truy cập chức năng này.
+        </p>
 
         <button
           onClick={() => {
             window.location.href = '/dashboard'
           }}
         >
-          Quay về Tổng quan
+          🏠 Quay về Tổng quan
         </button>
       </div>
 
@@ -148,7 +151,7 @@ function Forbidden() {
           margin: 0 auto 28px;
           max-width: 560px;
           color: #64748b;
-          fontSize: 16px;
+          font-size: 16px;
           line-height: 1.6;
         }
 
@@ -191,10 +194,30 @@ function Forbidden() {
           bottom: -280px;
           background: rgba(129, 140, 248, 0.10);
         }
+
+        @media (max-width: 600px) {
+          .forbidden-circle {
+            width: 210px;
+            height: 210px;
+          }
+
+          .forbidden-circle span {
+            font-size: 65px;
+          }
+
+          .forbidden-content h1 {
+            font-size: 23px;
+          }
+
+          .forbidden-content p {
+            font-size: 14px;
+          }
+        }
       `}</style>
     </div>
   )
 }
+
 
 /*
  * Kiểm tra quyền truy cập route theo role
@@ -209,10 +232,10 @@ function hasRouteAccess(path: string, role: string | null) {
       '/dashboard',
       '/profile',
       '/tenants',
-      '/contracts',
       '/audit-logs',
       '/admin',
     ],
+
     LANDLORD: [
       '/dashboard',
       '/profile',
@@ -220,30 +243,31 @@ function hasRouteAccess(path: string, role: string | null) {
       '/rooms',
       '/services',
       '/landlord/requests',
+      '/meter-readings',
     ],
+
     MANAGER: [
       '/dashboard',
       '/profile',
       '/buildings',
       '/rooms',
       '/services',
-      '/landlord/requests',
+      '/meter-readings',
     ],
+
     TENANT: [
       '/dashboard',
       '/profile',
       '/my-requests',
-      '/search-rooms',
+      '/contracts',
     ],
   }
 
-  // Base path matching
-  const allowed = permissions[role] || []
-  return allowed.some((p) => path === p || path.startsWith(p + '/'))
+  return permissions[role]?.includes(path) ?? false
 }
 
 /*
- * Route được bảo vệ + kiểm tra quyền (yêu cầu đăng nhập)
+ * Route được bảo vệ + kiểm tra quyền
  */
 function ProtectedRoute({
   path,
@@ -256,184 +280,223 @@ function ProtectedRoute({
   const role = localStorage.getItem('role')
 
   if (!token) {
-    return <Navigate to="/login" replace />
+    window.location.href = '/'
+    return null
   }
 
   if (!hasRouteAccess(path, role)) {
-    return <Navigate to="/403" replace />
+    window.location.href = '/403'
+    return null
   }
 
   return <>{children}</>
-}
-
-/*
- * Route đăng nhập / đăng ký: nếu đã đăng nhập thì chuyển vào /dashboard
- */
-function PublicAuthRoute({ children }: { children: React.ReactNode }) {
-  const token = localStorage.getItem('accessToken')
-  if (token) {
-    return <Navigate to="/dashboard" replace />
-  }
-  return <>{children}</>
-}
-
-export function AppRoutes() {
-  return (
-    <Routes>
-      {/* AUTHENTICATION ROUTES (Standalone pages without sidebar) */}
-      <Route
-        path="/login"
-        element={
-          <PublicAuthRoute>
-            <Login />
-          </PublicAuthRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <PublicAuthRoute>
-            <Register />
-          </PublicAuthRoute>
-        }
-      />
-      <Route
-        path="/forgot-password"
-        element={
-          <PublicAuthRoute>
-            <ForgotPassword />
-          </PublicAuthRoute>
-        }
-      />
-      <Route
-        path="/reset-password"
-        element={
-          <PublicAuthRoute>
-            <ResetPassword />
-          </PublicAuthRoute>
-        }
-      />
-
-      <Route path="/403" element={<Forbidden />} />
-
-      {/* ALL MAIN ROUTES WRAPPED BY MAINLAYOUT (Retains Sidebar on left) */}
-      <Route element={<MainLayout />}>
-        {/* Public Room Browsing Routes */}
-        <Route path="/" element={<SearchRooms />} />
-        <Route path="/search-rooms" element={<SearchRooms />} />
-        <Route path="/listing/:id" element={<ListingDetail />} />
-
-        {/* Protected System Pages */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute path="/dashboard">
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/buildings"
-          element={
-            <ProtectedRoute path="/buildings">
-              <Buildings />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/building-services/:buildingId"
-          element={
-            <ProtectedRoute path="/buildings">
-              <BuildingServices />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/rooms"
-          element={
-            <ProtectedRoute path="/rooms">
-              <Rooms />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/services"
-          element={
-            <ProtectedRoute path="/services">
-              <Services />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/landlord/requests"
-          element={
-            <ProtectedRoute path="/landlord/requests">
-              <LandlordRequests />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/my-requests"
-          element={
-            <ProtectedRoute path="/my-requests">
-              <MyRequests />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/tenants"
-          element={
-            <ProtectedRoute path="/tenants">
-              <ComingSoon title="Danh sách người thuê" />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/contracts"
-          element={
-            <ProtectedRoute path="/contracts">
-              <ComingSoon title="Quản lý hợp đồng" />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute path="/profile">
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/audit-logs"
-          element={
-            <ProtectedRoute path="/audit-logs">
-              <AuditLogs />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute path="/admin">
-              <Admin />
-            </ProtectedRoute>
-          }
-        />
-      </Route>
-
-      {/* Catch-all fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  )
 }
 
 function App() {
+  const path = window.location.pathname
+  if (path === '/') {
+  return <SearchRooms />
+  }
+  if (path === '/login') {
+    return <Login />
+  }
+  /*
+   * Public routes
+   */
+
+  // S2-04: tìm kiếm phòng - không cần đăng nhập
+  if (path === '/search-rooms') {
+  const token = localStorage.getItem('accessToken')
+
+  if (token) {
+    return (
+      <MainLayout>
+        <SearchRooms />
+      </MainLayout>
+    )
+  }
+
+  return <SearchRooms />
+  }
+
+  // S2-05/S2-06: chi tiết tin và gửi yêu cầu
+  if (path.startsWith('/listing/')) {
+    return <ListingDetail />
+  }
+
+  if (path === '/register') {
+    return <Register />
+  }
+
+  if (path === '/forgot-password') {
+    return <ForgotPassword />
+  }
+
+  if (path === '/reset-password') {
+    return <ResetPassword />
+  }
+
+  if (path === '/403') {
+    return <Forbidden />
+  }
+
+  /*
+   * Protected routes
+   */
+  if (path === '/dashboard') {
+    return (
+      <ProtectedRoute path={path}>
+        <Dashboard />
+      </ProtectedRoute>
+    )
+  }
+    if (path === '/notifications') {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <MainLayout>
+      <Notifications />
+    </MainLayout>
   )
+  }
+    if (path === '/profile') {
+    return (
+      <ProtectedRoute path={path}>
+        <MainLayout>
+          <Profile />
+        </MainLayout>
+      </ProtectedRoute>
+    )
+  }
+
+    if (path === '/buildings') {
+    return (
+      <ProtectedRoute path={path}>
+        <MainLayout>
+          <Buildings />
+        </MainLayout>
+      </ProtectedRoute>
+    )
+  }
+
+  // S2-10: cấu hình điện nước cho từng toà nhà
+    if (path.startsWith('/building-services/')) {
+    return (
+      <ProtectedRoute path="/buildings">
+        <MainLayout>
+          <BuildingServices />
+        </MainLayout>
+      </ProtectedRoute>
+    )
+  }
+
+    if (path === '/rooms') {
+    return (
+      <ProtectedRoute path={path}>
+        <MainLayout>
+          <Rooms />
+        </MainLayout>
+      </ProtectedRoute>
+    )
+  }
+
+    if (path === '/services') {
+    return (
+      <ProtectedRoute path={path}>
+        <MainLayout>
+          <Services />
+        </MainLayout>
+      </ProtectedRoute>
+    )
+  }
+
+  if (path === '/audit-logs') {
+    return (
+      <ProtectedRoute path={path}>
+        <MainLayout>
+          <AuditLogs />
+        </MainLayout>
+      </ProtectedRoute>
+    )
+  }
+
+  if (path === '/admin') {
+    return (
+      <ProtectedRoute path={path}>
+        <MainLayout>
+          <Admin />
+        </MainLayout>
+      </ProtectedRoute>
+    )
+  }
+  if (path === '/landlord/requests') {
+    return (
+      <ProtectedRoute path={path}>
+      <MainLayout>
+        <LandlordRequests />
+      </MainLayout>
+    </ProtectedRoute>
+    )
+  }
+  if (path === '/my-requests') {
+    return (
+      <ProtectedRoute path={path}>
+      <MainLayout>
+        <MyRequests />
+      </MainLayout>
+    </ProtectedRoute>
+    )
+  }
+
+  // S3-05: nhập chỉ số điện nước
+  if (path === '/meter-readings') {
+    return (
+      <ProtectedRoute path={path}>
+        <MainLayout>
+          <MeterReadings />
+        </MainLayout>
+      </ProtectedRoute>
+    )
+  }
+
+  if (path === '/contracts') {
+    return (
+      <ProtectedRoute path={path}>
+        <MainLayout>
+          <Contracts />
+        </MainLayout>
+      </ProtectedRoute>
+    )
+  }
+
+  /*
+   * Các chức năng chưa triển khai
+   */
+  const comingSoon: Record<string, string> = {
+    '/tenants': 'Người thuê',
+  }
+
+  if (comingSoon[path]) {
+    return (
+      <ProtectedRoute path={path}>
+      <MainLayout>
+        <ComingSoon title={comingSoon[path]} />
+      </MainLayout>
+    </ProtectedRoute>
+    )
+  }
+
+  /*
+   * Nếu đang đăng nhập nhưng URL không tồn tại
+   * → đưa về Tổng quan
+   */
+  if (localStorage.getItem('accessToken')) {
+    window.location.href = '/dashboard'
+    return null
+  }
+
+  /*
+   * Chưa đăng nhập → Login
+   */
+  return <Login />
 }
 
 export default App

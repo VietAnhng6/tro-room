@@ -105,7 +105,7 @@ public class ListingService {
         }
 
         Room room = listing.getRoom();
-
+        var landlord = room.getBuilding().getLandlord();
         List<ListingDetailResponse.ImageItem> images =
                 roomImageRepository.findByRoomOrderBySortOrderAsc(room)
                         .stream()
@@ -149,6 +149,9 @@ public class ListingService {
                         ? ""
                         : room.getBuilding().getDistrict(),
                 room.getBuilding().getAddress(),
+                landlord.getName(),
+                landlord.getPhone(),
+                landlord.getEmail(),
                 images,
                 services,
                 fixedMonthlyCost,

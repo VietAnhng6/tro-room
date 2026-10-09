@@ -91,6 +91,10 @@ public class PermissionAuthorizationManager
             return "LISTING_MANAGE";
         }
 
+        if (uri.startsWith("/api/manager/")) {
+            return "METER_MANAGE";
+        }
+
         if (uri.startsWith("/api/profile")) {
             return "PROFILE_VIEW";
         }
