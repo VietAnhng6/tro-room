@@ -47,24 +47,11 @@ public class PermissionDataInitializer {
                     "LISTING_MANAGE"
             );
 
-            // S3-05: nhập chỉ số điện nước
-            addIfNotExists(
-                    repository,
-                    User.Role.LANDLORD,
-                    "METER_MANAGE"
-            );
-
             // MANAGER
             addIfNotExists(
                     repository,
                     User.Role.MANAGER,
                     "ROOM_MANAGE"
-            );
-
-            addIfNotExists(
-                    repository,
-                    User.Role.MANAGER,
-                    "METER_MANAGE"
             );
 
             // TENANT
