@@ -19,7 +19,7 @@ import Services from './pages/Services'
 import AuditLogs from './pages/AuditLogs'
 import Admin from './pages/Admin'
 import Invoices from './pages/Invoices'
-
+import Contracts from './pages/Contracts'
 /*
  * Trang 403 Forbidden
  */
@@ -206,13 +206,11 @@ function hasRouteAccess(path: string, role: string | null) {
   }
 
   const permissions: Record<string, string[]> = {
-    ADMIN: [
-      '/dashboard',
-      '/profile',
-      '/tenants',
-      '/contracts',
-      '/audit-logs',
-      '/admin',
+      ADMIN: [
+    '/dashboard',
+    '/profile',
+    '/audit-logs',
+    '/admin',
     ],
     LANDLORD: [
       '/dashboard',
@@ -222,6 +220,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/services',
       '/landlord/requests',
       '/invoices',
+      '/contracts',
     ],
     MANAGER: [
       '/dashboard',
@@ -403,7 +402,7 @@ export function AppRoutes() {
           path="/contracts"
           element={
             <ProtectedRoute path="/contracts">
-              <ComingSoon title="Quản lý hợp đồng" />
+              <Contracts />
             </ProtectedRoute>
           }
         />

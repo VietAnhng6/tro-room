@@ -67,6 +67,26 @@ const REJECT_REASONS = [
   { value: 'OTHER', label: 'Lý do khác' },
 ]
 
+const contractInputStyle: React.CSSProperties = {
+  display: 'block',
+  width: '100%',
+  height: 42,
+  padding: '0 10px',
+  marginTop: 6,
+  border: '1px solid #cbd5e1',
+  borderRadius: 8,
+  boxSizing: 'border-box',
+  fontSize: 14,
+}
+
+function getToday() {
+  const date = new Date()
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function formatDate(value: string | null) {
   if (!value) return '—'
   if (value.includes('T')) value = value.split('T')[0]
@@ -97,30 +117,46 @@ function LandlordRequests() {
   const [error, setError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
 
-  // Modals state
+  // Modal hẹn lịch
   const [schedulingReq, setSchedulingReq] = useState<RequestItem | null>(null)
   const [appointmentTime, setAppointmentTime] = useState('')
   const [scheduleForce, setScheduleForce] = useState(false)
   const [scheduleConflictMsg, setScheduleConflictMsg] = useState('')
   const [isScheduling, setIsScheduling] = useState(false)
 
+  // Modal từ chối
   const [rejectingReq, setRejectingReq] = useState<RequestItem | null>(null)
   const [rejectReason, setRejectReason] = useState('ALREADY_RENTED')
   const [rejectNote, setRejectNote] = useState('')
   const [isRejecting, setIsRejecting] = useState(false)
 
+  // Modal lịch sử
   const [historyReq, setHistoryReq] = useState<RequestItem | null>(null)
   const [historyList, setHistoryList] = useState<HistoryItem[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
 
+  // Modal duyệt thuê
   const [approvingReq, setApprovingReq] = useState<RequestItem | null>(null)
   const [isApproving, setIsApproving] = useState(false)
 
+  // Modal lập hợp đồng
+  const [contractReq, setContractReq] = useState<RequestItem | null>(null)
+  const [isCreatingContract, setIsCreatingContract] = useState(false)
+  const [contractForm, setContractForm] = useState({
+    deposit: '',
+    startDate: getToday(),
+    termMonths: '12',
+    billingCutoffDay: '1',
+    initialElectricity: '0',
+    initialWater: '0',
+  })
+
   const token = localStorage.getItem('accessToken')
 
-  // Load buildings for filter
+  // Tải danh sách tòa nhà
   useEffect(() => {
     if (!token) return
+
     fetch(`${API}/api/buildings`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -129,8 +165,12 @@ function LandlordRequests() {
       .catch(() => setBuildings([]))
   }, [token])
 
+  // Tải danh sách yêu cầu
   const load = useCallback(async () => {
-    if (!token) return
+    if (!token) {
+      setLoading(false)
+      return
+    }
 
     setLoading(true)
     setError('')
@@ -162,13 +202,15 @@ function LandlordRequests() {
   }, [token, status, buildingId, sort])
 
   useEffect(() => {
-    load()
+    void load()
   }, [load])
 
   // S2-08: Hẹn lịch xem phòng
   const handleOpenSchedule = (req: RequestItem) => {
     setSchedulingReq(req)
-    setAppointmentTime(req.scheduledAt ? req.scheduledAt.substring(0, 16) : '')
+    setAppointmentTime(
+      req.scheduledAt ? req.scheduledAt.substring(0, 16) : '',
+    )
     setScheduleForce(false)
     setScheduleConflictMsg('')
   }
@@ -183,31 +225,40 @@ function LandlordRequests() {
     setScheduleConflictMsg('')
 
     try {
-      const res = await fetch(`${API}/api/landlord/requests/${schedulingReq.id}/schedule`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const res = await fetch(
+        `${API}/api/landlord/requests/${schedulingReq.id}/schedule`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            scheduledAt: appointmentTime,
+            force: scheduleForce,
+          }),
         },
-        body: JSON.stringify({
-          scheduledAt: appointmentTime,
-          force: scheduleForce,
-        }),
-      })
+      )
 
       const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
         if (data.code === 'SCHEDULE_CONFLICT') {
-          setScheduleConflictMsg(data.message || 'Cảnh báo: Đã có lịch hẹn xem phòng khác cùng phòng trong khoảng 30 phút.')
+          setScheduleConflictMsg(
+            data.message ||
+              'Cảnh báo: Đã có lịch hẹn xem phòng khác cùng phòng trong khoảng 30 phút.',
+          )
           return
         }
+
         throw new Error(data.message || 'Không thể lưu lịch hẹn')
       }
 
-      setSuccessMsg(`Đã xác nhận lịch hẹn cho yêu cầu ${schedulingReq.requestCode}!`)
+      setSuccessMsg(
+        `Đã xác nhận lịch hẹn cho yêu cầu ${schedulingReq.requestCode}!`,
+      )
       setSchedulingReq(null)
-      load()
+      await load()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Có lỗi khi đặt lịch')
     } finally {
@@ -215,31 +266,158 @@ function LandlordRequests() {
     }
   }
 
-  // S2-08: Duyệt yêu cầu Thuê ngay
+  // S2-08: Duyệt yêu cầu thuê ngay
   const handleApprove = async () => {
     if (!approvingReq) return
+
     setIsApproving(true)
+
     try {
-      const res = await fetch(`${API}/api/landlord/requests/${approvingReq.id}/approve`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const res = await fetch(
+        `${API}/api/landlord/requests/${approvingReq.id}/approve`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         },
-      })
+      )
 
       const data = await res.json().catch(() => ({}))
+
       if (!res.ok) {
         throw new Error(data.message || 'Không thể duyệt yêu cầu thuê.')
       }
 
-      setSuccessMsg(`Đã duyệt yêu cầu ${approvingReq.requestCode}! Phòng đã chuyển sang trạng thái "Đã đặt cọc".`)
+      setSuccessMsg(
+        `Đã duyệt yêu cầu ${approvingReq.requestCode}! Phòng đã chuyển sang trạng thái "Đã đặt cọc".`,
+      )
       setApprovingReq(null)
-      load()
+      await load()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Lỗi khi duyệt yêu cầu')
     } finally {
       setIsApproving(false)
+    }
+  }
+
+  // S3-01: Mở form lập hợp đồng
+  const handleOpenContract = (req: RequestItem) => {
+    setContractReq(req)
+    setContractForm({
+      deposit: '',
+      startDate: getToday(),
+      termMonths: '12',
+      billingCutoffDay: '1',
+      initialElectricity: '0',
+      initialWater: '0',
+    })
+  }
+
+  // S3-01: Tạo hợp đồng thuê
+  const handleCreateContract = async () => {
+    if (!contractReq) return
+
+    if (!token) {
+      alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+      return
+    }
+
+    if (contractReq.type !== 'RENT_NOW' || contractReq.status !== 'ACCEPTED') {
+      alert('Chỉ có thể lập hợp đồng cho yêu cầu thuê ngay đã được duyệt.')
+      return
+    }
+
+    const deposit = Number(contractForm.deposit)
+    const termMonths = Number(contractForm.termMonths)
+    const billingCutoffDay = Number(contractForm.billingCutoffDay)
+    const initialElectricity = Number(contractForm.initialElectricity)
+    const initialWater = Number(contractForm.initialWater)
+
+    if (
+      contractForm.deposit.trim() === '' ||
+      !Number.isSafeInteger(deposit) ||
+      deposit < 0
+    ) {
+      alert('Tiền cọc phải là số nguyên không âm.')
+      return
+    }
+
+    if (
+      !contractForm.startDate ||
+      contractForm.startDate < getToday()
+    ) {
+      alert('Ngày bắt đầu thuê không được ở quá khứ.')
+      return
+    }
+
+    if (!Number.isInteger(termMonths) || termMonths < 1) {
+      alert('Thời hạn thuê phải ít nhất 1 tháng.')
+      return
+    }
+
+    if (
+      !Number.isInteger(billingCutoffDay) ||
+      billingCutoffDay < 1 ||
+      billingCutoffDay > 28
+    ) {
+      alert('Ngày chốt hóa đơn phải từ 1 đến 28.')
+      return
+    }
+
+    if (
+      !Number.isSafeInteger(initialElectricity) ||
+      initialElectricity < 0 ||
+      !Number.isSafeInteger(initialWater) ||
+      initialWater < 0
+    ) {
+      alert('Chỉ số điện và nước phải là số nguyên không âm.')
+      return
+    }
+
+    setIsCreatingContract(true)
+
+    try {
+      const res = await fetch(
+        `${API}/api/landlord/requests/${contractReq.id}/contract`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            requestId: contractReq.id,
+            deposit,
+            startDate: contractForm.startDate,
+            termMonths,
+            billingCutoffDay,
+            initialElectricity,
+            initialWater,
+          }),
+        },
+      )
+
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        throw new Error(
+          data.message || data.error || 'Không thể lập hợp đồng.',
+        )
+      }
+
+      setSuccessMsg(
+        `Đã lập hợp đồng thành công cho yêu cầu ${contractReq.requestCode}.`,
+      )
+      setContractReq(null)
+      await load()
+    } catch (err) {
+      alert(
+        err instanceof Error ? err.message : 'Có lỗi khi lập hợp đồng.',
+      )
+    } finally {
+      setIsCreatingContract(false)
     }
   }
 
@@ -252,33 +430,39 @@ function LandlordRequests() {
 
   const handleConfirmReject = async () => {
     if (!rejectingReq) return
+
     if (rejectReason === 'OTHER' && !rejectNote.trim()) {
       alert('Vui lòng nhập ghi chú lý do từ chối cụ thể.')
       return
     }
 
     setIsRejecting(true)
+
     try {
-      const res = await fetch(`${API}/api/landlord/requests/${rejectingReq.id}/reject`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const res = await fetch(
+        `${API}/api/landlord/requests/${rejectingReq.id}/reject`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            reason: rejectReason,
+            note: rejectNote.trim(),
+          }),
         },
-        body: JSON.stringify({
-          reason: rejectReason,
-          note: rejectNote.trim(),
-        }),
-      })
+      )
 
       const data = await res.json().catch(() => ({}))
+
       if (!res.ok) {
         throw new Error(data.message || 'Không thể từ chối yêu cầu.')
       }
 
       setSuccessMsg(`Đã từ chối yêu cầu ${rejectingReq.requestCode}.`)
       setRejectingReq(null)
-      load()
+      await load()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Lỗi khi từ chối yêu cầu')
     } finally {
@@ -293,10 +477,15 @@ function LandlordRequests() {
     setHistoryList([])
 
     try {
-      const res = await fetch(`${API}/api/landlord/requests/${req.id}/history`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await fetch(
+        `${API}/api/landlord/requests/${req.id}/history`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      )
+
       if (!res.ok) throw new Error('Không thể tải lịch sử.')
+
       const data: HistoryItem[] = await res.json()
       setHistoryList(data)
     } catch {
@@ -312,7 +501,8 @@ function LandlordRequests() {
         minHeight: '100vh',
         background: '#f8fafc',
         color: '#0f172a',
-        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        fontFamily:
+          'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         padding: '30px 24px',
         boxSizing: 'border-box',
       }}
@@ -330,14 +520,33 @@ function LandlordRequests() {
           }}
         >
           <div>
-            <div style={{ color: '#64748b', fontSize: 13, marginBottom: 4, fontWeight: 600 }}>
+            <div
+              style={{
+                color: '#64748b',
+                fontSize: 13,
+                marginBottom: 4,
+                fontWeight: 600,
+              }}
+            >
               TroRoom / Quản lý yêu cầu
             </div>
-            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#0f172a' }}>
+
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 26,
+                fontWeight: 800,
+                color: '#0f172a',
+              }}
+            >
               Quản lý yêu cầu thuê & xem phòng
             </h1>
-            <div style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>
-              Theo dõi, xác nhận lịch hẹn, duyệt thuê ngay và xử lý các yêu cầu từ khách thuê.
+
+            <div
+              style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}
+            >
+              Theo dõi, xác nhận lịch hẹn, duyệt thuê ngay và xử lý các yêu
+              cầu từ khách thuê.
             </div>
           </div>
 
@@ -409,7 +618,13 @@ function LandlordRequests() {
             <div>{successMsg}</div>
             <button
               onClick={() => setSuccessMsg('')}
-              style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#047857', fontWeight: 700 }}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                color: '#047857',
+                fontWeight: 700,
+              }}
             >
               ✕
             </button>
@@ -449,7 +664,12 @@ function LandlordRequests() {
           }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: '#64748b' }}>Trạng thái</label>
+            <label
+              style={{ fontSize: 12, fontWeight: 700, color: '#64748b' }}
+            >
+              Trạng thái
+            </label>
+
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
@@ -470,11 +690,17 @@ function LandlordRequests() {
               <option value="ACCEPTED">Đã duyệt</option>
               <option value="REJECTED">Từ chối</option>
               <option value="CANCELLED">Đã huỷ</option>
+              <option value="COMPLETED">Hoàn tất</option>
             </select>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: '#64748b' }}>Tòa nhà</label>
+            <label
+              style={{ fontSize: 12, fontWeight: 700, color: '#64748b' }}
+            >
+              Tòa nhà
+            </label>
+
             <select
               value={buildingId}
               onChange={(e) => setBuildingId(e.target.value)}
@@ -499,7 +725,12 @@ function LandlordRequests() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: '#64748b' }}>Sắp xếp</label>
+            <label
+              style={{ fontSize: 12, fontWeight: 700, color: '#64748b' }}
+            >
+              Sắp xếp
+            </label>
+
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
@@ -519,7 +750,15 @@ function LandlordRequests() {
             </select>
           </div>
 
-          <div style={{ marginLeft: 'auto', alignSelf: 'flex-end', color: '#64748b', fontSize: 13.5, fontWeight: 600 }}>
+          <div
+            style={{
+              marginLeft: 'auto',
+              alignSelf: 'flex-end',
+              color: '#64748b',
+              fontSize: 13.5,
+              fontWeight: 600,
+            }}
+          >
             {loading ? 'Đang tải dữ liệu...' : `Tổng số: ${items.length} yêu cầu`}
           </div>
         </div>
@@ -535,9 +774,21 @@ function LandlordRequests() {
           }}
         >
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1100 }}>
+            <table
+              style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                minWidth: 1100,
+              }}
+            >
               <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0', textAlign: 'center' }}>
+                <tr
+                  style={{
+                    background: '#f8fafc',
+                    borderBottom: '1.5px solid #e2e8f0',
+                    textAlign: 'center',
+                  }}
+                >
                   {[
                     'Mã yêu cầu',
                     'Khách thuê',
@@ -568,9 +819,32 @@ function LandlordRequests() {
               <tbody>
                 {!loading && items.length === 0 && !error && (
                   <tr>
-                    <td colSpan={8} style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: '#334155' }}>Không có yêu cầu nào phù hợp</div>
-                      <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 4 }}>Hãy thử thay đổi bộ lọc tìm kiếm.</div>
+                    <td
+                      colSpan={8}
+                      style={{
+                        textAlign: 'center',
+                        padding: '60px 20px',
+                        color: '#64748b',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 16,
+                          fontWeight: 700,
+                          color: '#334155',
+                        }}
+                      >
+                        Không có yêu cầu nào phù hợp
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          color: '#94a3b8',
+                          marginTop: 4,
+                        }}
+                      >
+                        Hãy thử thay đổi bộ lọc tìm kiếm.
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -590,8 +864,23 @@ function LandlordRequests() {
                       }}
                     >
                       {/* Mã yêu cầu */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
-                        <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 14 }}>{r.requestCode}</div>
+                      <td
+                        style={{
+                          padding: '16px 18px',
+                          verticalAlign: 'middle',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontWeight: 800,
+                            color: '#0f172a',
+                            fontSize: 14,
+                          }}
+                        >
+                          {r.requestCode}
+                        </div>
+
                         {r.overdue && (
                           <div
                             style={{
@@ -613,26 +902,86 @@ function LandlordRequests() {
                       </td>
 
                       {/* Khách thuê */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
-                        <div style={{ fontWeight: 700, color: '#1e293b', fontSize: 14 }}>{r.tenantName}</div>
-                        <div style={{ color: '#2563eb', fontSize: 13, marginTop: 2, fontWeight: 600 }}>{r.tenantPhone}</div>
-                        <div style={{ color: '#64748b', fontSize: 12, marginTop: 2 }}>{r.expectedPeople} người ở</div>
+                      <td
+                        style={{
+                          padding: '16px 18px',
+                          verticalAlign: 'middle',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontWeight: 700,
+                            color: '#1e293b',
+                            fontSize: 14,
+                          }}
+                        >
+                          {r.tenantName}
+                        </div>
+                        <div
+                          style={{
+                            color: '#2563eb',
+                            fontSize: 13,
+                            marginTop: 2,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {r.tenantPhone}
+                        </div>
+                        <div
+                          style={{
+                            color: '#64748b',
+                            fontSize: 12,
+                            marginTop: 2,
+                          }}
+                        >
+                          {r.expectedPeople} người ở
+                        </div>
                       </td>
 
                       {/* Phòng & Tòa nhà */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
-                        <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 14 }}>Phòng {r.roomCode}</div>
-                        <div style={{ color: '#64748b', fontSize: 13, marginTop: 2 }}>{r.buildingName}</div>
+                      <td
+                        style={{
+                          padding: '16px 18px',
+                          verticalAlign: 'middle',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontWeight: 800,
+                            color: '#0f172a',
+                            fontSize: 14,
+                          }}
+                        >
+                          Phòng {r.roomCode}
+                        </div>
+                        <div
+                          style={{
+                            color: '#64748b',
+                            fontSize: 13,
+                            marginTop: 2,
+                          }}
+                        >
+                          {r.buildingName}
+                        </div>
                       </td>
 
                       {/* Loại yêu cầu */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
+                      <td
+                        style={{
+                          padding: '16px 18px',
+                          verticalAlign: 'middle',
+                          textAlign: 'center',
+                        }}
+                      >
                         <span
                           style={{
                             fontWeight: 700,
                             fontSize: 13,
                             color: r.type === 'RENT_NOW' ? '#b45309' : '#4338ca',
-                            background: r.type === 'RENT_NOW' ? '#fef3c7' : '#e0e7ff',
+                            background:
+                              r.type === 'RENT_NOW' ? '#fef3c7' : '#e0e7ff',
                             padding: '4px 10px',
                             borderRadius: 8,
                             display: 'inline-block',
@@ -640,6 +989,7 @@ function LandlordRequests() {
                         >
                           {TYPE_LABEL[r.type] || r.type}
                         </span>
+
                         {r.message && (
                           <div
                             style={{
@@ -657,10 +1007,23 @@ function LandlordRequests() {
                       </td>
 
                       {/* Ngày mong muốn */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
-                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 13.5 }}>
+                      <td
+                        style={{
+                          padding: '16px 18px',
+                          verticalAlign: 'middle',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontWeight: 700,
+                            color: '#0f172a',
+                            fontSize: 13.5,
+                          }}
+                        >
                           {formatDate(r.desiredDate)}
                         </div>
+
                         {r.scheduledAt && (
                           <div
                             style={{
@@ -680,7 +1043,13 @@ function LandlordRequests() {
                       </td>
 
                       {/* Trạng thái */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
+                      <td
+                        style={{
+                          padding: '16px 18px',
+                          verticalAlign: 'middle',
+                          textAlign: 'center',
+                        }}
+                      >
                         <span
                           style={{
                             display: 'inline-block',
@@ -698,13 +1067,34 @@ function LandlordRequests() {
                       </td>
 
                       {/* Gửi lúc */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center', color: '#64748b', fontSize: 12.5 }}>
+                      <td
+                        style={{
+                          padding: '16px 18px',
+                          verticalAlign: 'middle',
+                          textAlign: 'center',
+                          color: '#64748b',
+                          fontSize: 12.5,
+                        }}
+                      >
                         {formatDateTime(r.createdAt)}
                       </td>
 
                       {/* Thao tác */}
-                      <td style={{ padding: '16px 18px', verticalAlign: 'middle', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
+                      <td
+                        style={{
+                          padding: '16px 18px',
+                          verticalAlign: 'middle',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: 6,
+                            flexWrap: 'wrap',
+                            justifyContent: 'center',
+                          }}
+                        >
                           {(isNew || isScheduled) && (
                             <button
                               onClick={() => handleOpenSchedule(r)}
@@ -759,8 +1149,27 @@ function LandlordRequests() {
                             </button>
                           )}
 
+                          {/* S3-01: Chỉ lập hợp đồng cho yêu cầu thuê ngay đã duyệt */}
+                          {r.type === 'RENT_NOW' && r.status === 'ACCEPTED' && (
+                            <button
+                              onClick={() => handleOpenContract(r)}
+                              style={{
+                                padding: '6px 11px',
+                                background: '#eef2ff',
+                                border: '1px solid #c7d2fe',
+                                color: '#4338ca',
+                                borderRadius: 7,
+                                fontSize: 12.5,
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Lập hợp đồng
+                            </button>
+                          )}
+
                           <button
-                            onClick={() => handleOpenHistory(r)}
+                            onClick={() => void handleOpenHistory(r)}
                             style={{
                               padding: '6px 11px',
                               background: '#ffffff',
@@ -810,28 +1219,77 @@ function LandlordRequests() {
               boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-              <h3 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: '#0f172a' }}>
-                {schedulingReq.status === 'SCHEDULED' ? 'Đổi lịch hẹn xem phòng' : 'Xác nhận lịch hẹn xem phòng'}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 18,
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: 19,
+                  fontWeight: 800,
+                  color: '#0f172a',
+                }}
+              >
+                {schedulingReq.status === 'SCHEDULED'
+                  ? 'Đổi lịch hẹn xem phòng'
+                  : 'Xác nhận lịch hẹn xem phòng'}
               </h3>
+
               <button
                 onClick={() => setSchedulingReq(null)}
-                style={{ border: 'none', background: '#f1f5f9', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer' }}
+                style={{
+                  border: 'none',
+                  background: '#f1f5f9',
+                  borderRadius: '50%',
+                  width: 32,
+                  height: 32,
+                  cursor: 'pointer',
+                }}
               >
                 ✕
               </button>
             </div>
 
-            <div style={{ background: '#f8fafc', padding: 14, borderRadius: 10, marginBottom: 18, fontSize: 13.5 }}>
-              <div>Yêu cầu: <strong>{schedulingReq.requestCode}</strong></div>
-              <div style={{ marginTop: 4 }}>Khách thuê: <strong>{schedulingReq.tenantName}</strong> ({schedulingReq.tenantPhone})</div>
-              <div style={{ marginTop: 4 }}>Phòng: <strong>{schedulingReq.roomCode}</strong> · Tòa: <strong>{schedulingReq.buildingName}</strong></div>
+            <div
+              style={{
+                background: '#f8fafc',
+                padding: 14,
+                borderRadius: 10,
+                marginBottom: 18,
+                fontSize: 13.5,
+              }}
+            >
+              <div>
+                Yêu cầu: <strong>{schedulingReq.requestCode}</strong>
+              </div>
+              <div style={{ marginTop: 4 }}>
+                Khách thuê: <strong>{schedulingReq.tenantName}</strong> (
+                {schedulingReq.tenantPhone})
+              </div>
+              <div style={{ marginTop: 4 }}>
+                Phòng: <strong>{schedulingReq.roomCode}</strong> · Tòa:{' '}
+                <strong>{schedulingReq.buildingName}</strong>
+              </div>
             </div>
 
             <div style={{ marginBottom: 18 }}>
-              <label style={{ display: 'block', fontSize: 13.5, fontWeight: 700, color: '#334155', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  color: '#334155',
+                  marginBottom: 6,
+                }}
+              >
                 Chọn ngày và giờ hẹn *
               </label>
+
               <input
                 type="datetime-local"
                 value={appointmentTime}
@@ -865,7 +1323,17 @@ function LandlordRequests() {
                 }}
               >
                 <div>{scheduleConflictMsg}</div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, cursor: 'pointer', fontWeight: 700 }}>
+
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    marginTop: 8,
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={scheduleForce}
@@ -876,7 +1344,13 @@ function LandlordRequests() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: 10,
+                justifyContent: 'flex-end',
+              }}
+            >
               <button
                 onClick={() => setSchedulingReq(null)}
                 style={{
@@ -890,8 +1364,9 @@ function LandlordRequests() {
               >
                 Hủy bỏ
               </button>
+
               <button
-                onClick={handleConfirmSchedule}
+                onClick={() => void handleConfirmSchedule()}
                 disabled={isScheduling}
                 style={{
                   padding: '10px 20px',
@@ -936,26 +1411,68 @@ function LandlordRequests() {
               boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-              <h3 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: '#dc2626' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 18,
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: 19,
+                  fontWeight: 800,
+                  color: '#dc2626',
+                }}
+              >
                 Từ chối yêu cầu thuê
               </h3>
+
               <button
                 onClick={() => setRejectingReq(null)}
-                style={{ border: 'none', background: '#f1f5f9', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer' }}
+                style={{
+                  border: 'none',
+                  background: '#f1f5f9',
+                  borderRadius: '50%',
+                  width: 32,
+                  height: 32,
+                  cursor: 'pointer',
+                }}
               >
                 ✕
               </button>
             </div>
 
-            <div style={{ background: '#fef2f2', padding: 14, borderRadius: 10, marginBottom: 18, fontSize: 13.5 }}>
-              <div>Từ chối yêu cầu <strong>{rejectingReq.requestCode}</strong> của khách <strong>{rejectingReq.tenantName}</strong>.</div>
+            <div
+              style={{
+                background: '#fef2f2',
+                padding: 14,
+                borderRadius: 10,
+                marginBottom: 18,
+                fontSize: 13.5,
+              }}
+            >
+              <div>
+                Từ chối yêu cầu <strong>{rejectingReq.requestCode}</strong> của
+                khách <strong>{rejectingReq.tenantName}</strong>.
+              </div>
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13.5, fontWeight: 750, color: '#334155', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13.5,
+                  fontWeight: 750,
+                  color: '#334155',
+                  marginBottom: 6,
+                }}
+              >
                 Lý do từ chối *
               </label>
+
               <select
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
@@ -978,14 +1495,30 @@ function LandlordRequests() {
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 13.5, fontWeight: 750, color: '#334155', marginBottom: 6 }}>
-                Ghi chú thêm {rejectReason === 'OTHER' && <span style={{ color: '#dc2626' }}>*</span>}
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13.5,
+                  fontWeight: 750,
+                  color: '#334155',
+                  marginBottom: 6,
+                }}
+              >
+                Ghi chú thêm{' '}
+                {rejectReason === 'OTHER' && (
+                  <span style={{ color: '#dc2626' }}>*</span>
+                )}
               </label>
+
               <textarea
                 value={rejectNote}
                 onChange={(e) => setRejectNote(e.target.value)}
                 rows={3}
-                placeholder={rejectReason === 'OTHER' ? 'Nhập chi tiết lý do từ chối...' : 'Nhập lời nhắn gửi đến khách thuê (không bắt buộc)...'}
+                placeholder={
+                  rejectReason === 'OTHER'
+                    ? 'Nhập chi tiết lý do từ chối...'
+                    : 'Nhập lời nhắn gửi đến khách thuê (không bắt buộc)...'
+                }
                 style={{
                   width: '100%',
                   padding: '10px 12px',
@@ -998,7 +1531,13 @@ function LandlordRequests() {
               />
             </div>
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: 10,
+                justifyContent: 'flex-end',
+              }}
+            >
               <button
                 onClick={() => setRejectingReq(null)}
                 style={{
@@ -1012,8 +1551,9 @@ function LandlordRequests() {
               >
                 Hủy bỏ
               </button>
+
               <button
-                onClick={handleConfirmReject}
+                onClick={() => void handleConfirmReject()}
                 disabled={isRejecting}
                 style={{
                   padding: '10px 20px',
@@ -1059,14 +1599,39 @@ function LandlordRequests() {
               boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
             }}
           >
-            <h3 style={{ margin: '0 0 10px', fontSize: 20, fontWeight: 800, color: '#0f172a' }}>
+            <h3
+              style={{
+                margin: '0 0 10px',
+                fontSize: 20,
+                fontWeight: 800,
+                color: '#0f172a',
+              }}
+            >
               Xác nhận duyệt yêu cầu thuê?
             </h3>
-            <p style={{ margin: '0 0 20px', fontSize: 14, color: '#64748b', lineHeight: 1.6 }}>
-              Khi duyệt yêu cầu <strong>{approvingReq.requestCode}</strong> của khách <strong>{approvingReq.tenantName}</strong>, phòng <strong>{approvingReq.roomCode}</strong> sẽ tự động chuyển sang trạng thái <strong>"Đã đặt cọc"</strong> để bạn tiến hành lập hợp đồng thuê.
+
+            <p
+              style={{
+                margin: '0 0 20px',
+                fontSize: 14,
+                color: '#64748b',
+                lineHeight: 1.6,
+              }}
+            >
+              Khi duyệt yêu cầu <strong>{approvingReq.requestCode}</strong> của
+              khách <strong>{approvingReq.tenantName}</strong>, phòng{' '}
+              <strong>{approvingReq.roomCode}</strong> sẽ tự động chuyển sang
+              trạng thái <strong>"Đã đặt cọc"</strong> để bạn tiến hành lập hợp
+              đồng thuê.
             </p>
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: 10,
+                justifyContent: 'center',
+              }}
+            >
               <button
                 onClick={() => setApprovingReq(null)}
                 style={{
@@ -1081,8 +1646,9 @@ function LandlordRequests() {
               >
                 Hủy bỏ
               </button>
+
               <button
-                onClick={handleApprove}
+                onClick={() => void handleApprove()}
                 disabled={isApproving}
                 style={{
                   flex: 1,
@@ -1142,29 +1708,64 @@ function LandlordRequests() {
               }}
             >
               <div>
-                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: 18,
+                    fontWeight: 800,
+                    color: '#0f172a',
+                  }}
+                >
                   Lịch sử xử lý yêu cầu {historyReq.requestCode}
                 </h3>
-                <div style={{ color: '#64748b', fontSize: 13, marginTop: 3 }}>
-                  Khách thuê: {historyReq.tenantName} · Phòng: {historyReq.roomCode}
+
+                <div
+                  style={{ color: '#64748b', fontSize: 13, marginTop: 3 }}
+                >
+                  Khách thuê: {historyReq.tenantName} · Phòng:{' '}
+                  {historyReq.roomCode}
                 </div>
               </div>
+
               <button
                 onClick={() => setHistoryReq(null)}
-                style={{ border: 'none', background: '#e2e8f0', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer' }}
+                style={{
+                  border: 'none',
+                  background: '#e2e8f0',
+                  borderRadius: '50%',
+                  width: 32,
+                  height: 32,
+                  cursor: 'pointer',
+                }}
               >
                 ✕
               </button>
             </div>
 
-            <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+            <div style={{ padding: 24, overflowY: 'auto', flex: 1 }}>
               {loadingHistory ? (
-                <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Đang tải lịch sử...</div>
+                <div
+                  style={{
+                    textAlign: 'center',
+                    padding: 40,
+                    color: '#64748b',
+                  }}
+                >
+                  Đang tải lịch sử...
+                </div>
               ) : historyList.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Chưa có bản ghi lịch sử nào.</div>
+                <div
+                  style={{
+                    textAlign: 'center',
+                    padding: 40,
+                    color: '#64748b',
+                  }}
+                >
+                  Chưa có bản ghi lịch sử nào.
+                </div>
               ) : (
                 <div style={{ position: 'relative', paddingLeft: 24 }}>
-                  {/* Vertical Line */}
+                  {/* Đường thời gian */}
                   <div
                     style={{
                       position: 'absolute',
@@ -1177,8 +1778,11 @@ function LandlordRequests() {
                   />
 
                   {historyList.map((item, index) => (
-                    <div key={item.id || index} style={{ position: 'relative', marginBottom: 24 }}>
-                      {/* Dot */}
+                    <div
+                      key={item.id || index}
+                      style={{ position: 'relative', marginBottom: 24 }}
+                    >
+                      {/* Điểm trên timeline */}
                       <div
                         style={{
                           position: 'absolute',
@@ -1187,24 +1791,65 @@ function LandlordRequests() {
                           width: 16,
                           height: 16,
                           borderRadius: '50%',
-                          background: index === historyList.length - 1 ? '#2563eb' : '#94a3b8',
+                          background:
+                            index === historyList.length - 1
+                              ? '#2563eb'
+                              : '#94a3b8',
                           border: '3px solid #fff',
                           boxShadow: '0 0 0 1px #cbd5e1',
                         }}
                       />
 
-                      <div style={{ background: '#f8fafc', padding: '14px 16px', borderRadius: 12, border: '1px solid #e2e8f0' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                          <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>
-                            {item.toStatus ? STATUS_LABEL[item.toStatus] || item.toStatus : 'Cập nhật'}
+                      <div
+                        style={{
+                          background: '#f8fafc',
+                          padding: '14px 16px',
+                          borderRadius: 12,
+                          border: '1px solid #e2e8f0',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: 6,
+                            gap: 10,
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontWeight: 800,
+                              fontSize: 14,
+                              color: '#0f172a',
+                            }}
+                          >
+                            {item.toStatus
+                              ? STATUS_LABEL[item.toStatus] || item.toStatus
+                              : 'Cập nhật'}
                           </span>
-                          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>
+
+                          <span
+                            style={{
+                              fontSize: 12,
+                              color: '#64748b',
+                              fontWeight: 600,
+                            }}
+                          >
                             {formatDateTime(item.changedAt)}
                           </span>
                         </div>
 
-                        <div style={{ fontSize: 13, color: '#475569', marginBottom: 4 }}>
-                          Thực hiện bởi: <strong>{item.actorName || 'Hệ thống'}</strong> {item.actorRole && `(${item.actorRole})`}
+                        <div
+                          style={{
+                            fontSize: 13,
+                            color: '#475569',
+                            marginBottom: 4,
+                          }}
+                        >
+                          Thực hiện bởi: <strong>{item.actorName || 'Hệ thống'}</strong>{' '}
+                          {item.actorRole && `(${item.actorRole})`}
                         </div>
 
                         {(item.note || item.reason) && (
@@ -1219,8 +1864,16 @@ function LandlordRequests() {
                               color: '#334155',
                             }}
                           >
-                            {item.reason && <div>Lý do: <strong>{item.reason}</strong></div>}
-                            {item.note && <div style={{ marginTop: item.reason ? 3 : 0 }}>Ghi chú: {item.note}</div>}
+                            {item.reason && (
+                              <div>
+                                Lý do: <strong>{item.reason}</strong>
+                              </div>
+                            )}
+                            {item.note && (
+                              <div style={{ marginTop: item.reason ? 3 : 0 }}>
+                                Ghi chú: {item.note}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1230,7 +1883,15 @@ function LandlordRequests() {
               )}
             </div>
 
-            <div style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', background: '#f8fafc' }}>
+            <div
+              style={{
+                padding: '16px 24px',
+                borderTop: '1px solid #e2e8f0',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                background: '#f8fafc',
+              }}
+            >
               <button
                 onClick={() => setHistoryReq(null)}
                 style={{
@@ -1247,6 +1908,289 @@ function LandlordRequests() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* MODAL LẬP HỢP ĐỒNG (S3-01) */}
+      {contractReq && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15,23,42,0.65)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1100,
+            padding: 20,
+            overflowY: 'auto',
+          }}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              void handleCreateContract()
+            }}
+            style={{
+              width: '100%',
+              maxWidth: 560,
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              background: '#fff',
+              borderRadius: 16,
+              padding: 26,
+              boxSizing: 'border-box',
+              boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 18,
+                gap: 12,
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: 20,
+                  fontWeight: 800,
+                  color: '#0f172a',
+                }}
+              >
+                Lập hợp đồng thuê
+              </h3>
+
+              <button
+                type="button"
+                onClick={() => setContractReq(null)}
+                disabled={isCreatingContract}
+                style={{
+                  border: 'none',
+                  background: '#f1f5f9',
+                  borderRadius: '50%',
+                  width: 32,
+                  height: 32,
+                  flexShrink: 0,
+                  cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                padding: 14,
+                borderRadius: 10,
+                marginBottom: 18,
+                fontSize: 13.5,
+                lineHeight: 1.8,
+              }}
+            >
+              <div>
+                Mã yêu cầu: <strong>{contractReq.requestCode}</strong>
+              </div>
+              <div>
+                Khách thuê: <strong>{contractReq.tenantName}</strong>
+              </div>
+              <div>
+                Số điện thoại: <strong>{contractReq.tenantPhone}</strong>
+              </div>
+              <div>
+                Phòng: <strong>{contractReq.roomCode}</strong>
+              </div>
+              <div>
+                Tòa nhà: <strong>{contractReq.buildingName}</strong>
+              </div>
+              <div style={{ color: '#64748b', marginTop: 4 }}>
+                Giá thuê được lấy từ dữ liệu phòng ở máy chủ.
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+                gap: 14,
+              }}
+            >
+              <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>
+                Tiền cọc (VNĐ) *
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  required
+                  value={contractForm.deposit}
+                  onChange={(e) =>
+                    setContractForm({
+                      ...contractForm,
+                      deposit: e.target.value,
+                    })
+                  }
+                  placeholder="Nhập tiền cọc"
+                  style={contractInputStyle}
+                />
+              </label>
+
+              <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>
+                Ngày bắt đầu thuê *
+                <input
+                  type="date"
+                  required
+                  min={getToday()}
+                  value={contractForm.startDate}
+                  onChange={(e) =>
+                    setContractForm({
+                      ...contractForm,
+                      startDate: e.target.value,
+                    })
+                  }
+                  style={contractInputStyle}
+                />
+              </label>
+
+              <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>
+                Thời hạn thuê (tháng) *
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  step="1"
+                  value={contractForm.termMonths}
+                  onChange={(e) =>
+                    setContractForm({
+                      ...contractForm,
+                      termMonths: e.target.value,
+                    })
+                  }
+                  style={contractInputStyle}
+                />
+              </label>
+
+              <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>
+                Ngày chốt hóa đơn (1–28) *
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  max="28"
+                  step="1"
+                  value={contractForm.billingCutoffDay}
+                  onChange={(e) =>
+                    setContractForm({
+                      ...contractForm,
+                      billingCutoffDay: e.target.value,
+                    })
+                  }
+                  style={contractInputStyle}
+                />
+              </label>
+
+              <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>
+                Chỉ số điện ban đầu *
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="1"
+                  value={contractForm.initialElectricity}
+                  onChange={(e) =>
+                    setContractForm({
+                      ...contractForm,
+                      initialElectricity: e.target.value,
+                    })
+                  }
+                  style={contractInputStyle}
+                />
+              </label>
+
+              <label style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>
+                Chỉ số nước ban đầu *
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="1"
+                  value={contractForm.initialWater}
+                  onChange={(e) =>
+                    setContractForm({
+                      ...contractForm,
+                      initialWater: e.target.value,
+                    })
+                  }
+                  style={contractInputStyle}
+                />
+              </label>
+            </div>
+
+            <div
+              style={{
+                background: '#fffbeb',
+                border: '1px solid #fde68a',
+                color: '#92400e',
+                padding: '10px 12px',
+                borderRadius: 8,
+                fontSize: 12.5,
+                lineHeight: 1.5,
+                marginTop: 16,
+              }}
+            >
+              Kiểm tra kỹ tiền cọc, ngày bắt đầu và chỉ số điện nước trước khi
+              xác nhận. Hệ thống sẽ kiểm tra điều kiện hợp đồng ở máy chủ.
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                gap: 10,
+                justifyContent: 'flex-end',
+                marginTop: 24,
+                flexWrap: 'wrap',
+              }}
+            >
+              <button
+                type="button"
+                disabled={isCreatingContract}
+                onClick={() => setContractReq(null)}
+                style={{
+                  padding: '10px 18px',
+                  border: '1px solid #cbd5e1',
+                  background: '#fff',
+                  borderRadius: 9,
+                  fontWeight: 650,
+                  cursor: isCreatingContract ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Hủy
+              </button>
+
+              <button
+                type="submit"
+                disabled={isCreatingContract}
+                style={{
+                  padding: '10px 20px',
+                  border: 'none',
+                  background: '#4f46e5',
+                  color: '#fff',
+                  borderRadius: 9,
+                  fontWeight: 700,
+                  cursor: isCreatingContract ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(79,70,229,0.25)',
+                }}
+              >
+                {isCreatingContract
+                  ? 'Đang lập hợp đồng...'
+                  : 'Xác nhận lập hợp đồng'}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

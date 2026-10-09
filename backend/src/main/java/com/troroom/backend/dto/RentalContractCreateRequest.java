@@ -1,5 +1,6 @@
 package com.troroom.backend.dto;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
@@ -20,11 +21,14 @@ public class RentalContractCreateRequest {
     private int termMonths;
 
     @Min(1)
+    @Max(28)
     private int billingCutoffDay;
 
+    @NotNull
     @Min(0)
     private Integer initialElectricity;
 
+    @NotNull
     @Min(0)
     private Integer initialWater;
 

@@ -19,7 +19,7 @@ public interface RentalContractRepository extends JpaRepository<RentalContract, 
     List<RentalContract> findByTenantOrderByStartDateDesc(User tenant);
 
     List<RentalContract> findByRoomOrderByStartDateDesc(Room room);
-
+    List<RentalContract> findByRoom_Building_Landlord_IdOrderByStartDateDesc(Long landlordId);
     boolean existsByRoomAndEndDateGreaterThanEqualAndStartDateLessThanEqual(
             Room room,
             java.time.LocalDate startDate,
