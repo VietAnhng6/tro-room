@@ -16,10 +16,11 @@ public class JwtService {
     private final SecretKey secretKey;
     private static final long ACCESS_TOKEN_EXPIRATION = 30 * 60 * 1000; // 30 phút
 
-    // Inject secret key từ application.properties, kèm chuỗi mặc định an toàn nếu không tìm thấy key
     public JwtService(
             @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}") String secret) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        String envSecret = System.getenv("JWT_SECRET");
+        String finalSecret = (envSecret != null && !envSecret.trim().isEmpty()) ? envSecret : secret;
+        this.secretKey = Keys.hmacShaKeyFor(finalSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     public SecretKey getSecretKey() {
