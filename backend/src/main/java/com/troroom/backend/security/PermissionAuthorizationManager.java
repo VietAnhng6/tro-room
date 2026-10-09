@@ -95,6 +95,10 @@ public class PermissionAuthorizationManager
             return "METER_MANAGE";
         }
 
+        if (uri.startsWith("/api/invoices")) {
+            return "INVOICE_MANAGE";
+        }
+
         if (uri.startsWith("/api/profile")) {
             return "PROFILE_VIEW";
         }

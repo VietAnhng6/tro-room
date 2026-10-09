@@ -89,6 +89,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/manager/**")
                 .access(permissionAuthorizationManager)
 
+                // S3-06: hoá đơn tháng (Chủ nhà phát hành, Quản lý xem)
+                .requestMatchers("/api/invoices/**")
+                .access(permissionAuthorizationManager)
+
                 // Audit Log: chỉ ADMIN được xem
                 .requestMatchers("/api/audit-logs/**")
                 .hasRole("ADMIN")

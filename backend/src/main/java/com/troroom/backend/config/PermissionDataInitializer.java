@@ -54,6 +54,13 @@ public class PermissionDataInitializer {
                     "METER_MANAGE"
             );
 
+            // S3-06: phát hành và xem hoá đơn tháng
+            addIfNotExists(
+                    repository,
+                    User.Role.LANDLORD,
+                    "INVOICE_MANAGE"
+            );
+
             // MANAGER
             addIfNotExists(
                     repository,
@@ -65,6 +72,13 @@ public class PermissionDataInitializer {
                     repository,
                     User.Role.MANAGER,
                     "METER_MANAGE"
+            );
+
+            // S3-06: quản lý xem hoá đơn tháng
+            addIfNotExists(
+                    repository,
+                    User.Role.MANAGER,
+                    "INVOICE_MANAGE"
             );
 
             // TENANT
