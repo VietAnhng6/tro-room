@@ -231,7 +231,7 @@ public class InvoiceService {
             invoice.setPeriod(key);
             invoice.setRentAmount(contract.getRent());
             invoice.setTotalAmount(result.total());
-            invoice.setStatus(Invoice.Status.DRAFT);
+            invoice.setStatus(Invoice.Status.ISSUED);
             invoice.setIssueDate(issueDate);
             invoice.setDueDate(dueDate);
             invoice.setCreatedAt(LocalDateTime.now(ZONE));
