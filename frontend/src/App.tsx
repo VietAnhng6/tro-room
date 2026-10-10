@@ -19,6 +19,7 @@ import Services from './pages/Services'
 import AuditLogs from './pages/AuditLogs'
 import Admin from './pages/Admin'
 import Invoices from './pages/Invoices'
+import TenantInvoices from './pages/TenantInvoices'
 import Contracts from './pages/Contracts'
 /*
  * Trang 403 Forbidden
@@ -233,6 +234,7 @@ function hasRouteAccess(path: string, role: string | null) {
     ],
     TENANT: [
       '/dashboard',
+      '/tenant/invoices',
       '/profile',
       '/my-requests',
       '/search-rooms',
@@ -371,6 +373,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute path="/invoices">
               <Invoices />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tenant/invoices"
+          element={
+            <ProtectedRoute path="/tenant/invoices">
+              <TenantInvoices />
             </ProtectedRoute>
           }
         />
