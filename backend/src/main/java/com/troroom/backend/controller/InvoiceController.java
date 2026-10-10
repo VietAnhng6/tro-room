@@ -48,4 +48,10 @@ public class InvoiceController {
     public ResponseEntity<?> detail(Authentication auth, @PathVariable Long id) {
         return ResponseEntity.ok(service.detail(user(auth), id));
     }
+    
+    /** Danh sách hóa đơn của khách thuê đang đăng nhập. */
+    @GetMapping("/tenant")
+    public ResponseEntity<?> tenantInvoices(Authentication auth) {
+        return ResponseEntity.ok(service.listForTenant(user(auth)));
+    }
 }

@@ -70,7 +70,8 @@ export default function TenantInvoices() {
         return
       }
 
-      const res = await fetch(`${API}/api/tenant/invoices`, {
+      
+      const res = await fetch(`${API}/api/invoices/tenant`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -88,7 +89,7 @@ export default function TenantInvoices() {
 
       if (!res.ok) {
         throw new Error(
-          `Không thể tải hóa đơn (HTTP ${res.status}). Có thể backend chưa có API /api/tenant/invoices.`,
+          `Không thể tải hóa đơn (HTTP ${res.status}). Vui lòng kiểm tra API /api/invoices/tenant.`,
         )
       }
 

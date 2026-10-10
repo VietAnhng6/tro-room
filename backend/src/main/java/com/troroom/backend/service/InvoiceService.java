@@ -278,7 +278,28 @@ public class InvoiceService {
         }
         return result;
     }
+    
+    /**
+     * Danh sách hóa đơn của khách thuê đang đăng nhập.
+     */
+    @Transactional(readOnly = true)
+    public List<InvoiceResponse> listForTenant(User user) {
+        if (user == null || user.getRole() != User.Role.TENANT) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Chỉ khách thuê mới được xem danh sách hóa đơn này"
+            );
+        }
 
+        List<Invoice> invoices = invoiceRepository.findByTenant(user);
+        List<InvoiceResponse> result = new ArrayList<>();
+
+        for (Invoice invoice : invoices) {
+            result.add(toResponse(invoice, List.of()));
+        }
+
+        return result;
+    }
     @Transactional(readOnly = true)
     public InvoiceResponse detail(User user, Long invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)

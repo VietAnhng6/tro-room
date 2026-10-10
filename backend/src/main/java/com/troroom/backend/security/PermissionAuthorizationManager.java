@@ -38,7 +38,18 @@ public class PermissionAuthorizationManager
         if (!(auth.getPrincipal() instanceof User user)) {
             return new AuthorizationDecision(false);
         }
+        // Khách thuê được gọi API xem hóa đơn của chính mình.
+        // Quyền sở hữu hóa đơn vẫn được kiểm tra trong InvoiceService.
+        if (user.getRole() == User.Role.TENANT
+                && "GET".equalsIgnoreCase(context.getRequest().getMethod())) {
 
+            String uri = context.getRequest().getRequestURI();
+
+            if ("/api/invoices/tenant".equals(uri)
+                    || uri.matches("/api/invoices/\\d+")) {
+                return new AuthorizationDecision(true);
+            }
+        }
         String permission = getPermission(
                 context.getRequest().getRequestURI()
         );
