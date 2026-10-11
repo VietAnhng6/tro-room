@@ -15,12 +15,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(
         name = "invoices",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_invoice_contract_period",
-                        columnNames = {"contract_id", "period"}
-                )
-        },
+
         indexes = {
                 @Index(
                         name = "idx_invoice_room_period",
@@ -64,6 +59,9 @@ public class Invoice {
 
     @Column(name = "total_amount", nullable = false)
     private long totalAmount;
+
+    @Column(name = "cancellation_reason", length = 500)
+    private String cancellationReason;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -170,7 +168,16 @@ public class Invoice {
         this.createdAt = createdAt;
     }
 
-    public long getVersion() {
+       public long getVersion() {
         return version;
     }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
+    }
 }
+

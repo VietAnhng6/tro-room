@@ -13,14 +13,22 @@ import java.util.Optional;
 
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
-    Optional<Invoice> findByContractAndPeriod(
+         Optional<Invoice> findByContractAndPeriod(
             RentalContract contract, String period);
 
-    boolean existsByContractAndPeriod(
+         boolean existsByContractAndPeriod(
             RentalContract contract, String period);
 
-    boolean existsByInvoiceCode(String invoiceCode);
+        boolean existsByInvoiceCode(String invoiceCode);
+        boolean existsByContractAndPeriodAndStatusNot(
+        RentalContract contract,
+        String period,
+        Invoice.Status status);
 
+        Optional<Invoice> findByContractAndPeriodAndStatusNot(
+        RentalContract contract,
+        String period,
+        Invoice.Status status);
     @Query("select i from Invoice i "
             + "join fetch i.contract c "
             + "join fetch i.room r "

@@ -60,6 +60,7 @@ public final class InvoiceDtos {
             long rentAmount,
             long totalAmount,
             String status,
+            String cancellationReason,
             LocalDate issueDate,
             LocalDate dueDate,
             List<ItemResponse> items
