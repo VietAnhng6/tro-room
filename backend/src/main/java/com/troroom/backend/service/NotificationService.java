@@ -1,5 +1,7 @@
+
 package com.troroom.backend.service;
 
+import com.troroom.backend.entity.Invoice;
 import com.troroom.backend.entity.Notification;
 import com.troroom.backend.entity.RentalRequest;
 import com.troroom.backend.entity.User;
@@ -61,7 +63,8 @@ public class NotificationService {
         notification.setMessage(
                 "Chủ nhà " + safe(landlord.getName())
                         + " đã từ chối yêu cầu xem phòng"
-                        + (reason == null || reason.isBlank() ? "." : ": " + reason)
+                        + (reason == null || reason.isBlank()
+                                ? "." : ": " + reason)
         );
 
         notification.setLandlordName(landlord.getName());
@@ -73,23 +76,56 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
+    /**
+     * Tạo thông báo cho khách thuê khi hóa đơn được phát hành.
+     */
+    @Transactional
+    public void notifyInvoiceIssued(Invoice invoice) {
+        User landlord = invoice.getContract()
+                .getRoom()
+                .getBuilding()
+                .getLandlord();
+
+        Notification notification = new Notification();
+        notification.setUser(invoice.getContract().getTenant());
+        notification.setType(Notification.Type.INVOICE_ISSUED);
+        notification.setTitle("Hóa đơn tiền phòng đã được phát hành");
+        notification.setMessage(
+                "Hóa đơn kỳ " + invoice.getPeriod()
+                        + " đã được phát hành. Mã hóa đơn: "
+                        + invoice.getInvoiceCode()
+        );
+        notification.setLandlordName(landlord.getName());
+        notification.setLandlordPhone(landlord.getPhone());
+        notification.setLandlordEmail(landlord.getEmail());
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setRead(false);
+
+        notificationRepository.save(notification);
+    }
+
     @Transactional(readOnly = true)
     public List<Notification> getNotifications(User user) {
-        return notificationRepository.findByUserOrderByCreatedAtDesc(user);
+        return notificationRepository
+                .findByUserOrderByCreatedAtDesc(user);
     }
 
     @Transactional(readOnly = true)
     public long countUnread(User user) {
-        return notificationRepository.countByUserAndReadFalse(user);
+        return notificationRepository
+                .countByUserAndReadFalse(user);
     }
 
     @Transactional
     public void markAsRead(User user, Long notificationId) {
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông báo"));
+        Notification notification =
+                notificationRepository.findById(notificationId)
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "Không tìm thấy thông báo"));
 
         if (!notification.getUser().getId().equals(user.getId())) {
-            throw new IllegalArgumentException("Bạn không có quyền xem thông báo này");
+            throw new IllegalArgumentException(
+                    "Bạn không có quyền xem thông báo này");
         }
 
         notification.setRead(true);
@@ -97,6 +133,7 @@ public class NotificationService {
     }
 
     private String safe(String value) {
-        return value == null || value.isBlank() ? "chủ nhà" : value;
+        return value == null || value.isBlank()
+                ? "chủ nhà" : value;
     }
 }

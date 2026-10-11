@@ -18,7 +18,8 @@ public class InvoiceItem {
         ELECTRICITY,    // Tiền điện
         WATER,          // Tiền nước
         FIXED_SERVICE,  // Dịch vụ cố định theo phòng
-        PERSON_SERVICE  // Khoản khoán theo đầu người
+        PERSON_SERVICE, // Khoản khoán theo đầu người
+        ADJUSTMENT      // Khoản thu thêm hoặc giảm trừ
     }
 
     @Id
@@ -54,6 +55,9 @@ public class InvoiceItem {
 
     @Column(name = "current_reading")
     private Integer currentReading;
+
+    @Column(length = 500)
+    private String note;
 
     public InvoiceItem() {
     }
@@ -132,5 +136,13 @@ public class InvoiceItem {
 
     public void setCurrentReading(Integer currentReading) {
         this.currentReading = currentReading;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 }

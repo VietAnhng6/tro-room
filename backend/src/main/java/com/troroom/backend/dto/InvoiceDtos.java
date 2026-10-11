@@ -9,7 +9,6 @@ public final class InvoiceDtos {
     private InvoiceDtos() {
     }
 
-    /** Yêu cầu phát hành hoá đơn cho cả toà trong một kỳ. */
     public record GenerateRequest(
             Long buildingId,
             String period,
@@ -18,7 +17,6 @@ public final class InvoiceDtos {
     ) {
     }
 
-    /** Một phòng bị bỏ qua khi chạy, kèm lý do. */
     public record SkippedRoom(
             Long contractId,
             Long roomId,
@@ -27,7 +25,6 @@ public final class InvoiceDtos {
     ) {
     }
 
-    /** Kết quả một lần chạy phát hành hoá đơn. */
     public record GenerateResponse(
             Long buildingId,
             String period,
@@ -38,6 +35,7 @@ public final class InvoiceDtos {
     }
 
     public record ItemResponse(
+            Long id,
             String label,
             String type,
             int quantity,
@@ -45,7 +43,8 @@ public final class InvoiceDtos {
             long unitPrice,
             long amount,
             Integer previousReading,
-            Integer currentReading
+            Integer currentReading,
+            String note
     ) {
     }
 
@@ -66,4 +65,26 @@ public final class InvoiceDtos {
             List<ItemResponse> items
     ) {
     }
+
+
+    public record EditInvoiceRequest(
+            List<EditItemRequest> items,
+            String reason
+    ) {
+    }
+
+
+    public record EditItemRequest(
+            Long id,
+            String label,
+            String type,
+            int quantity,
+            String unit,
+            long unitPrice,
+            Integer previousReading,
+            Integer currentReading,
+            String note
+    ) {
+    }
+
 }

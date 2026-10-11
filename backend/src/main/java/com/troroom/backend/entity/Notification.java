@@ -14,10 +14,12 @@ import java.time.LocalDateTime;
 )
 public class Notification {
 
-    public enum Type {
-        REQUEST_ACCEPTED,
-        REQUEST_REJECTED
-    }
+        public enum Type {
+            REQUEST_ACCEPTED,
+            REQUEST_REJECTED,
+            INVOICE_ISSUED
+            }
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

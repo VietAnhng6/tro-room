@@ -100,7 +100,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/profile/**")
                 .authenticated()
 
-                .requestMatchers("/api/auth/me")
+                .requestMatchers(
+                "/api/auth/me",
+                "/api/auth/change-password"
+                )
                 .authenticated()
 
                 // Các API khác phải đăng nhập

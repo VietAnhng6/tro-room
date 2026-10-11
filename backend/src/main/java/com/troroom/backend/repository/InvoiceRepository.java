@@ -1,3 +1,4 @@
+
 package com.troroom.backend.repository;
 
 import com.troroom.backend.entity.Invoice;
@@ -12,24 +13,34 @@ import java.util.Optional;
 
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
-    Optional<Invoice> findByContractAndPeriod(RentalContract contract, String period);
+    Optional<Invoice> findByContractAndPeriod(
+            RentalContract contract, String period);
 
-    boolean existsByContractAndPeriod(RentalContract contract, String period);
+    boolean existsByContractAndPeriod(
+            RentalContract contract, String period);
 
     boolean existsByInvoiceCode(String invoiceCode);
 
-    /** Hoá đơn của một toà nhà trong một kỳ, theo thứ tự tầng rồi mã phòng. */
     @Query("select i from Invoice i "
-            + "join fetch i.contract c join fetch i.room r join fetch c.tenant "
-            + "where r.building.id = :buildingId and i.period = :period "
+            + "join fetch i.contract c "
+            + "join fetch i.room r "
+            + "join fetch c.tenant "
+            + "where r.building.id = :buildingId "
+            + "and i.period = :period "
             + "order by r.floor asc, r.code asc")
     List<Invoice> findByBuildingAndPeriod(
             @Param("buildingId") Long buildingId,
             @Param("period") String period);
 
-    /** Các hoá đơn của khách thuê (người đứng tên hợp đồng). */
+    /** Chỉ lấy hóa đơn đã phát hành của khách thuê. */
     @Query("select i from Invoice i "
-            + "join fetch i.contract c join fetch i.room r join fetch r.building "
-            + "where c.tenant = :tenant order by i.period desc")
-    List<Invoice> findByTenant(@Param("tenant") User tenant);
+            + "join fetch i.contract c "
+            + "join fetch i.room r "
+            + "join fetch r.building "
+            + "where c.tenant = :tenant "
+            + "and i.status = :status "
+            + "order by i.period desc")
+    List<Invoice> findByTenant(
+            @Param("tenant") User tenant,
+            @Param("status") Invoice.Status status);
 }
