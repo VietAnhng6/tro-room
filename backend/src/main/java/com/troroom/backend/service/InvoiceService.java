@@ -163,14 +163,15 @@ public class InvoiceService {
         for (RentalContract contract : contracts) {
             Room room = contract.getRoom();
 
-            if (invoiceRepository.existsByContractAndPeriod(contract, key)) {
+           if (invoiceRepository.existsByContractAndPeriodAndStatusNot(
+                contract, key, Invoice.Status.CANCELLED)) {
                 skipped.add(new SkippedRoom(
                         contract.getId(),
                         room.getId(),
                         room.getCode(),
-                        "Đã có hóa đơn trong kỳ"));
+                        "Đã có hóa đơn chưa bị hủy trong kỳ"));
                 continue;
-            }
+                }
 
             Optional<MeterReading> reading =
                     meterRepository.findByContractAndPeriod(contract, key);
@@ -727,6 +728,7 @@ public class InvoiceService {
         InvoiceResponse before = toResponse(invoice, items);
 
         invoice.setStatus(Invoice.Status.CANCELLED);
+        invoice.setCancellationReason(cancellationReason);
         invoiceRepository.save(invoice);
 
         InvoiceResponse after = toResponse(invoice, items);
@@ -770,6 +772,7 @@ public class InvoiceService {
                 i.getNote()))
         .toList();
 
+        
         return new InvoiceResponse(
                 invoice.getId(),
                 invoice.getInvoiceCode(),
@@ -784,9 +787,11 @@ public class InvoiceService {
                 invoice.getRentAmount(),
                 invoice.getTotalAmount(),
                 invoice.getStatus().name(),
+                invoice.getCancellationReason(),
                 invoice.getIssueDate(),
                 invoice.getDueDate(),
-                itemResponses);
+                itemResponses
+        );
     }
 
     // ---------------------------------------------------------------

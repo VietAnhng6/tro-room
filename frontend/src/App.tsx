@@ -21,6 +21,7 @@ import Admin from './pages/Admin'
 import Invoices from './pages/Invoices'
 import TenantInvoices from './pages/TenantInvoices'
 import Contracts from './pages/Contracts'
+import MeterReadings from './pages/MeterReadings'
 /*
  * Trang 403 Forbidden
  */
@@ -222,6 +223,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/landlord/requests',
       '/invoices',
       '/contracts',
+      '/meter-readings',
     ],
     MANAGER: [
       '/dashboard',
@@ -231,6 +233,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/services',
       '/landlord/requests',
       '/invoices',
+      '/meter-readings',
     ],
     TENANT: [
       '/dashboard',
@@ -429,6 +432,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute path="/audit-logs">
               <AuditLogs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/meter-readings"
+          element={
+            <ProtectedRoute path="/meter-readings">
+              <MeterReadings />
             </ProtectedRoute>
           }
         />

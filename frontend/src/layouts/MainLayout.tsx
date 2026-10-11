@@ -31,6 +31,10 @@ const PAGE_TITLES: Record<string, { title: string; category: string }> = {
   '/profile': { title: 'Hồ sơ cá nhân & CCCD', category: 'Tài khoản' },
   '/audit-logs': { title: 'Nhật ký hệ thống', category: 'Bảo mật' },
   '/admin': { title: 'Quản trị tài khoản', category: 'Hệ thống' },
+  '/meter-readings': {
+  title: 'Nhập chỉ số điện nước',
+  category: 'Quản lý',
+  },
 }
 
 export const MainLayout: React.FC = () => {
@@ -82,6 +86,7 @@ export const MainLayout: React.FC = () => {
         landlordRequests: false,
         myRequests: false,
         searchRooms: true,
+        meterReadings: false,
       }
     }
 
@@ -101,6 +106,7 @@ export const MainLayout: React.FC = () => {
         landlordRequests: false,
         myRequests: false,
         searchRooms: true,
+        meterReadings: false,
       }
     }
 
@@ -120,6 +126,7 @@ export const MainLayout: React.FC = () => {
         landlordRequests: true,
         myRequests: false,
         searchRooms: true,
+        meterReadings: true,
       }
     }
 
@@ -139,6 +146,7 @@ export const MainLayout: React.FC = () => {
         landlordRequests: true,
         myRequests: false,
         searchRooms: true,
+        meterReadings: true,
       }
     }
 
@@ -158,6 +166,7 @@ export const MainLayout: React.FC = () => {
       landlordRequests: false,
       myRequests: true,
       searchRooms: true,
+      meterReadings: false,
     }
   }, [role, hasToken])
 
@@ -168,6 +177,12 @@ export const MainLayout: React.FC = () => {
       enabled: permissions.dashboard,
       path: '/dashboard',
     },
+    {
+    key: 'meterReadings',
+    title: 'Nhập chỉ số điện nước',
+    enabled: permissions.meterReadings,
+    path: '/meter-readings',
+  },
     {
       key: 'searchRooms',
       title: 'Tìm phòng trọ',
