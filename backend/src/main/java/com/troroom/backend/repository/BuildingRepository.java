@@ -8,8 +8,8 @@ import java.util.List;
 
 public interface BuildingRepository extends JpaRepository<Building, Long> {
 
+    List<Building> findByLandlordOrderByIdAsc(User landlord);
     List<Building> findByLandlord(User landlord);
-
     List<Building> findByLandlordAndNameContainingIgnoreCase(
             User landlord,
             String name

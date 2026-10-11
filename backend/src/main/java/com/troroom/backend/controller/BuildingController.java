@@ -57,6 +57,9 @@ public class BuildingController {
 
         String name = (String) request.get("name");
         String address = (String) request.get("address");
+        String district = request.get("district") == null
+        ? null
+        : request.get("district").toString().trim();
 
         Integer floors = request.get("floors") == null
                 ? null
@@ -125,6 +128,7 @@ public class BuildingController {
         building.setManager(manager);
         building.setNote(note);
         building.setActive(true);
+        building.setDistrict(district);
 
         buildingRepository.save(building);
 
@@ -210,6 +214,9 @@ public class BuildingController {
 
         String name = (String) request.get("name");
         String address = (String) request.get("address");
+        String district = request.get("district") == null
+        ? null
+        : request.get("district").toString().trim();
 
         Integer floors = request.get("floors") == null
                 ? null
@@ -279,6 +286,7 @@ public class BuildingController {
 
         building.setName(name.trim());
         building.setAddress(address.trim());
+        building.setDistrict(district);
         building.setFloors(floors);
         building.setNote(note);
 
@@ -430,7 +438,7 @@ public ResponseEntity<?> activateBuilding(
         }
 
         List<Building> buildings;
-
+        
         /*
          * LANDLORD
          */
@@ -448,8 +456,7 @@ public ResponseEntity<?> activateBuilding(
 
             } else {
 
-                buildings =
-                        buildingRepository.findByLandlord(currentUser);
+                buildings = buildingRepository.findByLandlordOrderByIdAsc(currentUser);
             }
 
         } else {
@@ -486,6 +493,10 @@ public ResponseEntity<?> activateBuilding(
                     })
                     .toList();
         }
+        buildings = buildings.stream()
+        .sorted(java.util.Comparator.comparing(Building::getId))
+        .toList();
+        
 
         /*
          * Chuyển dữ liệu sang response
@@ -522,6 +533,10 @@ public ResponseEntity<?> activateBuilding(
                             item.put(
                                     "address",
                                     building.getAddress()
+                            );
+                            item.put(
+                                "district",
+                                building.getDistrict()
                             );
 
                             item.put(
