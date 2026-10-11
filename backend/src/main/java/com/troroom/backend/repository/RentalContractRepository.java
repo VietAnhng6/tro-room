@@ -8,28 +8,31 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-
 import java.util.List;
 import java.util.Optional;
 
-public interface RentalContractRepository extends JpaRepository<RentalContract, Long> {
+public interface RentalContractRepository
+        extends JpaRepository<RentalContract, Long> {
 
     Optional<RentalContract> findByRequestId(Long requestId);
 
     List<RentalContract> findByTenantOrderByStartDateDesc(User tenant);
 
     List<RentalContract> findByRoomOrderByStartDateDesc(Room room);
-    List<RentalContract> findByRoom_Building_Landlord_IdOrderByStartDateDesc(Long landlordId);
+
+    List<RentalContract>
+    findByRoom_Building_Landlord_IdOrderByStartDateDesc(Long landlordId);
+
     boolean existsByRoomAndEndDateGreaterThanEqualAndStartDateLessThanEqual(
             Room room,
-            java.time.LocalDate startDate,
-            java.time.LocalDate endDate
+            LocalDate startDate,
+            LocalDate endDate
     );
+
     boolean existsByContractCode(String contractCode);
 
     /**
-     * S3-05: hợp đồng của các phòng đang thuê trong một toà nhà, có hiệu lực
-     * trong khoảng [start, end] của kỳ ghi, xếp theo tầng rồi mã phòng.
+     * S3-05: Lấy hợp đồng có hiệu lực trong kỳ ghi công tơ.
      */
     @Query("select c from RentalContract c "
             + "join fetch c.room r join fetch c.tenant "
@@ -40,5 +43,28 @@ public interface RentalContractRepository extends JpaRepository<RentalContract, 
     List<RentalContract> findActiveForMeter(
             @Param("buildingId") Long buildingId,
             @Param("start") LocalDate start,
-            @Param("end") LocalDate end);
+            @Param("end") LocalDate end
+    );
+
+    /**
+     * S3-09: Kiểm tra thời gian gia hạn có trùng hợp đồng khác
+     * của cùng phòng hay không.
+     */
+    @Query("""
+            SELECT CASE
+                WHEN COUNT(c) > 0 THEN TRUE
+                ELSE FALSE
+            END
+            FROM RentalContract c
+            WHERE c.room = :room
+              AND c.id <> :contractId
+              AND c.endDate >= :startDate
+              AND c.startDate <= :endDate
+            """)
+    boolean existsOverlappingContractExcludingCurrent(
+            @Param("room") Room room,
+            @Param("contractId") Long contractId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }

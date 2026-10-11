@@ -3,6 +3,7 @@ package com.troroom.backend.service;
 import com.troroom.backend.dto.InvoiceDtos.*;
 import com.troroom.backend.entity.*;
 import com.troroom.backend.repository.*;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,6 +28,7 @@ public class InvoiceService {
 
     private final BuildingRepository buildingRepository;
     private final RentalContractRepository contractRepository;
+    private final ContractRenewalRepository renewalRepository;
     private final MeterReadingRepository meterRepository;
     private final InvoiceRepository invoiceRepository;
     private final InvoiceItemRepository itemRepository;
@@ -37,21 +39,23 @@ public class InvoiceService {
     private final AuditLogService auditLogService;
     private final NotificationService notificationService;
 
-    
     public InvoiceService(
-        BuildingRepository buildingRepository,
-        RentalContractRepository contractRepository,
-        MeterReadingRepository meterRepository,
-        InvoiceRepository invoiceRepository,
-        InvoiceItemRepository itemRepository,
-        RoomServiceRepository roomServiceRepository,
-        BuildingServiceRepository buildingServiceRepository,
-        ServiceRepository serviceRepository,
-        RoommateRepository roommateRepository,
-        AuditLogService auditLogService,
-        NotificationService notificationService) {
+            BuildingRepository buildingRepository,
+            RentalContractRepository contractRepository,
+            ContractRenewalRepository renewalRepository,
+            MeterReadingRepository meterRepository,
+            InvoiceRepository invoiceRepository,
+            InvoiceItemRepository itemRepository,
+            RoomServiceRepository roomServiceRepository,
+            BuildingServiceRepository buildingServiceRepository,
+            ServiceRepository serviceRepository,
+            RoommateRepository roommateRepository,
+            AuditLogService auditLogService,
+            NotificationService notificationService
+    ) {
         this.buildingRepository = buildingRepository;
         this.contractRepository = contractRepository;
+        this.renewalRepository = renewalRepository;
         this.meterRepository = meterRepository;
         this.invoiceRepository = invoiceRepository;
         this.itemRepository = itemRepository;
@@ -63,16 +67,23 @@ public class InvoiceService {
         this.notificationService = notificationService;
     }
 
-
     // ---------------------------------------------------------------
     // Kiểm tra quyền truy cập tòa nhà
     // ---------------------------------------------------------------
 
     private Building requireBuilding(User user, Long buildingId) {
+        if (user == null || user.getId() == null || buildingId == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Thông tin người dùng hoặc tòa nhà không hợp lệ"
+            );
+        }
+
         Building building = buildingRepository.findById(buildingId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Không tìm thấy tòa nhà"));
+                        "Không tìm thấy tòa nhà"
+                ));
 
         boolean landlord = user.getRole() == User.Role.LANDLORD
                 && building.getLandlord() != null
@@ -85,7 +96,8 @@ public class InvoiceService {
         if (!landlord && !manager) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Bạn không có quyền thao tác hóa đơn của tòa nhà này");
+                    "Bạn không có quyền thao tác hóa đơn của tòa nhà này"
+            );
         }
 
         return building;
@@ -101,8 +113,79 @@ public class InvoiceService {
         } catch (DateTimeParseException e) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Kỳ hóa đơn không hợp lệ, cần dạng yyyy-MM");
+                    "Kỳ hóa đơn không hợp lệ, cần dạng yyyy-MM"
+            );
         }
+    }
+
+    // ---------------------------------------------------------------
+    // Chọn giá thuê áp dụng cho kỳ hóa đơn
+    // ---------------------------------------------------------------
+
+    /**
+     * Chọn giá thuê theo thời gian hiệu lực của từng lần gia hạn.
+     *
+     * Quy tắc:
+     * - Nếu kỳ hóa đơn giao với giai đoạn gia hạn, dùng giá thuê của
+     *   lần gia hạn đó.
+     * - Nếu kỳ hóa đơn không thuộc giai đoạn gia hạn, dùng giá gốc.
+     * - Không sửa các hóa đơn đã được tạo trước đó.
+     *
+     * Nếu một kỳ hóa đơn giao với nhiều giai đoạn giá khác nhau,
+     * áp dụng giá của giai đoạn có ngày bắt đầu muộn nhất trong kỳ.
+     */
+    private long resolveRentForPeriod(
+            RentalContract contract,
+            YearMonth period
+    ) {
+        if (contract == null || contract.getRent() <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Giá thuê hợp đồng không hợp lệ"
+            );
+        }
+
+        LocalDate periodStart = period.atDay(1);
+        LocalDate periodEnd = period.atEndOfMonth();
+
+        List<ContractRenewal> renewals =
+                renewalRepository.findByContract_IdOrderByStartDateAsc(
+                        contract.getId()
+                );
+
+        ContractRenewal applicableRenewal = null;
+
+        for (ContractRenewal renewal : renewals) {
+            if (renewal.getStartDate() == null
+                    || renewal.getEndDate() == null) {
+                continue;
+            }
+
+            boolean overlapsPeriod =
+                    !renewal.getStartDate().isAfter(periodEnd)
+                    && !renewal.getEndDate().isBefore(periodStart);
+
+            if (overlapsPeriod) {
+                if (applicableRenewal == null
+                        || renewal.getStartDate().isAfter(
+                                applicableRenewal.getStartDate())) {
+                    applicableRenewal = renewal;
+                }
+            }
+        }
+
+        if (applicableRenewal == null) {
+            return contract.getRent();
+        }
+
+        if (applicableRenewal.getRent() <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Giá thuê trong lịch sử gia hạn không hợp lệ"
+            );
+        }
+
+        return applicableRenewal.getRent();
     }
 
     // ---------------------------------------------------------------
@@ -114,18 +197,21 @@ public class InvoiceService {
         if (req == null || req.buildingId() == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Thiếu tòa nhà cần tạo hóa đơn");
+                    "Thiếu tòa nhà cần tạo hóa đơn"
+            );
         }
 
         if (user == null || user.getRole() != User.Role.LANDLORD) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Chỉ chủ nhà được tạo hóa đơn");
+                    "Chỉ chủ nhà được tạo hóa đơn"
+            );
         }
 
         Building building = requireBuilding(user, req.buildingId());
         YearMonth period = parsePeriod(req.period());
         String key = period.toString();
+
         LocalDate periodEnd = period.atEndOfMonth();
 
         LocalDate issueDate = req.issueDate() != null
@@ -139,14 +225,16 @@ public class InvoiceService {
         if (dueDate.isBefore(issueDate)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Hạn thanh toán không được trước ngày phát hành");
+                    "Hạn thanh toán không được trước ngày phát hành"
+            );
         }
 
         List<RentalContract> contracts =
                 contractRepository.findActiveForMeter(
                         building.getId(),
                         period.atDay(1),
-                        periodEnd);
+                        periodEnd
+                );
 
         List<com.troroom.backend.entity.Service> activeServices =
                 serviceRepository.findByActive(true);
@@ -163,15 +251,29 @@ public class InvoiceService {
         for (RentalContract contract : contracts) {
             Room room = contract.getRoom();
 
-           if (invoiceRepository.existsByContractAndPeriodAndStatusNot(
-                contract, key, Invoice.Status.CANCELLED)) {
+            if (room == null) {
+                skipped.add(new SkippedRoom(
+                        contract.getId(),
+                        null,
+                        null,
+                        "Hợp đồng chưa được liên kết với phòng"
+                ));
+                continue;
+            }
+
+            if (invoiceRepository.existsByContractAndPeriodAndStatusNot(
+                    contract,
+                    key,
+                    Invoice.Status.CANCELLED
+            )) {
                 skipped.add(new SkippedRoom(
                         contract.getId(),
                         room.getId(),
                         room.getCode(),
-                        "Đã có hóa đơn chưa bị hủy trong kỳ"));
+                        "Đã có hóa đơn chưa bị hủy trong kỳ"
+                ));
                 continue;
-                }
+            }
 
             Optional<MeterReading> reading =
                     meterRepository.findByContractAndPeriod(contract, key);
@@ -181,7 +283,8 @@ public class InvoiceService {
                         contract.getId(),
                         room.getId(),
                         room.getCode(),
-                        "Chưa chốt chỉ số điện nước"));
+                        "Chưa chốt chỉ số điện nước"
+                ));
                 continue;
             }
 
@@ -190,7 +293,8 @@ public class InvoiceService {
             int occupants = 1 + (int) roommateRepository
                     .countByRoomIdAndStatus(
                             room.getId(),
-                            Roommate.Status.ACTIVE);
+                            Roommate.Status.ACTIVE
+                    );
 
             List<InvoiceCalculator.PricedService> services =
                     new ArrayList<>();
@@ -207,7 +311,11 @@ public class InvoiceService {
 
             if (electricityService != null) {
                 ServiceCfg cfg = resolveCfg(
-                        room, building, electricityService, periodEnd);
+                        room,
+                        building,
+                        electricityService,
+                        periodEnd
+                );
 
                 if (cfg.method()
                         == com.troroom.backend.entity.Service.CalculationMethod.BY_PERSON) {
@@ -215,7 +323,8 @@ public class InvoiceService {
                             "Tiền điện",
                             electricityService.getUnit(),
                             cfg.method(),
-                            cfg.price()));
+                            cfg.price()
+                    ));
                 } else {
                     elecPrev = meter.getElectricityPrev();
                     elec = meter.getElectricity();
@@ -226,7 +335,11 @@ public class InvoiceService {
 
             if (waterService != null) {
                 ServiceCfg cfg = resolveCfg(
-                        room, building, waterService, periodEnd);
+                        room,
+                        building,
+                        waterService,
+                        periodEnd
+                );
 
                 if (cfg.method()
                         == com.troroom.backend.entity.Service.CalculationMethod.BY_PERSON) {
@@ -234,7 +347,8 @@ public class InvoiceService {
                             "Tiền nước",
                             waterService.getUnit(),
                             cfg.method(),
-                            cfg.price()));
+                            cfg.price()
+                    ));
                 } else {
                     waterPrev = meter.getWaterPrev();
                     water = meter.getWater();
@@ -244,36 +358,40 @@ public class InvoiceService {
             }
 
             for (RoomService rs : roomServiceRepository.findByRoom(room)) {
-                com.troroom.backend.entity.Service s = rs.getService();
+                com.troroom.backend.entity.Service service = rs.getService();
 
-                if (s == null) {
+                if (service == null) {
                     continue;
                 }
 
                 if (electricityService != null
-                        && s.getId().equals(electricityService.getId())) {
+                        && service.getId().equals(electricityService.getId())) {
                     continue;
                 }
 
                 if (waterService != null
-                        && s.getId().equals(waterService.getId())) {
+                        && service.getId().equals(waterService.getId())) {
                     continue;
                 }
 
-                if (s.getCalculationMethod()
+                if (service.getCalculationMethod()
                         == com.troroom.backend.entity.Service.CalculationMethod.BY_METER) {
                     continue;
                 }
 
                 services.add(new InvoiceCalculator.PricedService(
-                        s.getName(),
-                        s.getUnit(),
-                        s.getCalculationMethod(),
-                        rs.getPrice()));
+                        service.getName(),
+                        service.getUnit(),
+                        service.getCalculationMethod(),
+                        rs.getPrice()
+                ));
             }
 
+            // Chọn giá thuê theo kỳ trước khi tính tổng tiền.
+            long rentForPeriod = resolveRentForPeriod(contract, period);
+
             InvoiceCalculator.Result result = InvoiceCalculator.compute(
-                    contract.getRent(),
+                    rentForPeriod,
                     elecPrev,
                     elec,
                     elecPrice,
@@ -283,19 +401,19 @@ public class InvoiceService {
                     waterPrice,
                     waterUnit,
                     occupants,
-                    services);
+                    services
+            );
 
             Invoice invoice = new Invoice();
             invoice.setInvoiceCode(generateInvoiceCode());
             invoice.setContract(contract);
             invoice.setRoom(room);
             invoice.setPeriod(key);
-            invoice.setRentAmount(contract.getRent());
+
+            // Lưu snapshot giá thuê tại thời điểm tạo hóa đơn.
+            invoice.setRentAmount(rentForPeriod);
             invoice.setTotalAmount(result.total());
-
-            // Hóa đơn mới tạo luôn là bản nháp.
             invoice.setStatus(Invoice.Status.DRAFT);
-
             invoice.setIssueDate(issueDate);
             invoice.setDueDate(dueDate);
             invoice.setCreatedAt(LocalDateTime.now(ZONE));
@@ -326,7 +444,10 @@ public class InvoiceService {
                             "invoiceCode", saved.getInvoiceCode(),
                             "roomCode", room.getCode(),
                             "period", key,
-                            "totalAmount", saved.getTotalAmount()));
+                            "rentAmount", rentForPeriod,
+                            "totalAmount", saved.getTotalAmount()
+                    )
+            );
 
             created++;
         }
@@ -336,7 +457,8 @@ public class InvoiceService {
                 key,
                 contracts.size(),
                 created,
-                List.copyOf(skipped));
+                List.copyOf(skipped)
+        );
     }
 
     // ---------------------------------------------------------------
@@ -345,14 +467,18 @@ public class InvoiceService {
 
     @Transactional(readOnly = true)
     public List<InvoiceResponse> list(
-            User user, Long buildingId, String period) {
-
+            User user,
+            Long buildingId,
+            String period
+    ) {
         Building building = requireBuilding(user, buildingId);
         String key = parsePeriod(period).toString();
 
         List<Invoice> invoices =
                 invoiceRepository.findByBuildingAndPeriod(
-                        building.getId(), key);
+                        building.getId(),
+                        key
+                );
 
         List<InvoiceResponse> result = new ArrayList<>();
 
@@ -373,11 +499,12 @@ public class InvoiceService {
         if (user == null || user.getRole() != User.Role.TENANT) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Chỉ khách thuê mới được xem danh sách hóa đơn này");
+                    "Chỉ khách thuê mới được xem danh sách hóa đơn này"
+            );
         }
 
-        List<Invoice> invoices = invoiceRepository.findByTenant(
-                user, Invoice.Status.ISSUED);
+        List<Invoice> invoices =
+                invoiceRepository.findByTenant(user, Invoice.Status.ISSUED);
 
         List<InvoiceResponse> result = new ArrayList<>();
 
@@ -394,10 +521,18 @@ public class InvoiceService {
 
     @Transactional(readOnly = true)
     public InvoiceResponse detail(User user, Long invoiceId) {
+        if (user == null || invoiceId == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Vui lòng đăng nhập"
+            );
+        }
+
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Không tìm thấy hóa đơn"));
+                        "Không tìm thấy hóa đơn"
+                ));
 
         RentalContract contract = invoice.getContract();
 
@@ -410,17 +545,28 @@ public class InvoiceService {
             if (invoice.getStatus() != Invoice.Status.ISSUED) {
                 throw new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Không tìm thấy hóa đơn");
+                        "Không tìm thấy hóa đơn"
+                );
             }
         } else {
+            if (invoice.getRoom() == null
+                    || invoice.getRoom().getBuilding() == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Hóa đơn chưa được liên kết với tòa nhà"
+                );
+            }
+
             requireBuilding(
                     user,
-                    invoice.getRoom().getBuilding().getId());
+                    invoice.getRoom().getBuilding().getId()
+            );
         }
 
         return toResponse(
                 invoice,
-                itemRepository.findByInvoiceOrderByIdAsc(invoice));
+                itemRepository.findByInvoiceOrderByIdAsc(invoice)
+        );
     }
 
     // ---------------------------------------------------------------
@@ -431,12 +577,13 @@ public class InvoiceService {
     public InvoiceResponse edit(
             User user,
             Long invoiceId,
-            EditInvoiceRequest req) {
-
+            EditInvoiceRequest req
+    ) {
         if (user == null || user.getRole() != User.Role.LANDLORD) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Chỉ chủ nhà được chỉnh sửa hóa đơn");
+                    "Chỉ chủ nhà được chỉnh sửa hóa đơn"
+            );
         }
 
         if (req == null
@@ -445,22 +592,26 @@ public class InvoiceService {
                 || req.reason().isBlank()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Cần cung cấp danh sách khoản mục và lý do chỉnh sửa");
+                    "Cần cung cấp danh sách khoản mục và lý do chỉnh sửa"
+            );
         }
 
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Không tìm thấy hóa đơn"));
+                        "Không tìm thấy hóa đơn"
+                ));
 
         requireBuilding(
                 user,
-                invoice.getRoom().getBuilding().getId());
+                invoice.getRoom().getBuilding().getId()
+        );
 
         if (invoice.getStatus() != Invoice.Status.DRAFT) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Chỉ được chỉnh sửa hóa đơn DRAFT");
+                    "Chỉ được chỉnh sửa hóa đơn DRAFT"
+            );
         }
 
         List<InvoiceItem> oldItems =
@@ -483,34 +634,37 @@ public class InvoiceService {
                     || input.quantity() < 0) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Thông tin khoản mục không hợp lệ");
+                        "Thông tin khoản mục không hợp lệ"
+                );
             }
 
             InvoiceItem.Type type;
 
             try {
                 type = InvoiceItem.Type.valueOf(
-                        input.type().trim().toUpperCase());
+                        input.type().trim().toUpperCase()
+                );
             } catch (IllegalArgumentException e) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Loại khoản mục không hợp lệ");
+                        "Loại khoản mục không hợp lệ"
+                );
             }
 
-            // Khoản điều chỉnh phải có ghi chú.
             if (type == InvoiceItem.Type.ADJUSTMENT
-                    && (input.note() == null
-                    || input.note().isBlank())) {
+                    && (input.note() == null || input.note().isBlank())) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Khoản điều chỉnh phải có ghi chú");
+                        "Khoản điều chỉnh phải có ghi chú"
+                );
             }
 
             if (type != InvoiceItem.Type.ADJUSTMENT
                     && input.unitPrice() < 0) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Đơn giá chỉ được âm với khoản điều chỉnh");
+                        "Đơn giá chỉ được âm với khoản điều chỉnh"
+                );
             }
 
             InvoiceItem item;
@@ -519,7 +673,8 @@ public class InvoiceService {
                 if (retainedIds.contains(input.id())) {
                     throw new ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
-                            "Khoản mục bị gửi trùng ID");
+                            "Khoản mục bị gửi trùng ID"
+                    );
                 }
 
                 item = oldItems.stream()
@@ -527,7 +682,8 @@ public class InvoiceService {
                         .findFirst()
                         .orElseThrow(() -> new ResponseStatusException(
                                 HttpStatus.BAD_REQUEST,
-                                "Khoản mục không thuộc hóa đơn này"));
+                                "Khoản mục không thuộc hóa đơn này"
+                        ));
 
                 retainedIds.add(item.getId());
             } else {
@@ -539,7 +695,6 @@ public class InvoiceService {
 
             if (type == InvoiceItem.Type.ELECTRICITY
                     || type == InvoiceItem.Type.WATER) {
-
                 Integer previous = input.previousReading();
                 Integer current = input.currentReading();
 
@@ -549,7 +704,8 @@ public class InvoiceService {
                         || current < previous) {
                     throw new ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
-                            "Chỉ số điện nước không hợp lệ");
+                            "Chỉ số điện nước không hợp lệ"
+                    );
                 }
 
                 quantity = current - previous;
@@ -559,13 +715,16 @@ public class InvoiceService {
 
             try {
                 amount = Math.multiplyExact(
-                        (long) quantity, input.unitPrice());
+                        (long) quantity,
+                        input.unitPrice()
+                );
 
                 total = Math.addExact(total, amount);
             } catch (ArithmeticException e) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Số tiền vượt quá giới hạn cho phép");
+                        "Số tiền vượt quá giới hạn cho phép"
+                );
             }
 
             item.setLabel(input.label().trim());
@@ -576,9 +735,11 @@ public class InvoiceService {
             item.setAmount(amount);
             item.setPreviousReading(input.previousReading());
             item.setCurrentReading(input.currentReading());
-            item.setNote(input.note() == null || input.note().isBlank()
-                    ? null
-                    : input.note().trim());
+            item.setNote(
+                    input.note() == null || input.note().isBlank()
+                            ? null
+                            : input.note().trim()
+            );
 
             itemRepository.save(item);
 
@@ -591,10 +752,10 @@ public class InvoiceService {
         if (rentCount != 1) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Hóa đơn phải có đúng một khoản tiền phòng");
+                    "Hóa đơn phải có đúng một khoản tiền phòng"
+            );
         }
 
-        // Xóa những khoản cũ không còn nằm trong danh sách gửi lên.
         for (InvoiceItem oldItem : oldItems) {
             if (!retainedIds.contains(oldItem.getId())) {
                 itemRepository.delete(oldItem);
@@ -612,7 +773,6 @@ public class InvoiceService {
 
         InvoiceResponse after = toResponse(invoice, updatedItems);
 
-        // Lưu dữ liệu trước và sau khi sửa vào audit log.
         auditLogService.log(
                 user,
                 "UPDATE",
@@ -621,7 +781,9 @@ public class InvoiceService {
                 before,
                 Map.of(
                         "reason", req.reason().trim(),
-                        "invoice", after));
+                        "invoice", after
+                )
+        );
 
         return after;
     }
@@ -635,22 +797,26 @@ public class InvoiceService {
         if (user == null || user.getRole() != User.Role.LANDLORD) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Chỉ chủ nhà được phát hành hóa đơn");
+                    "Chỉ chủ nhà được phát hành hóa đơn"
+            );
         }
 
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Không tìm thấy hóa đơn"));
+                        "Không tìm thấy hóa đơn"
+                ));
 
         requireBuilding(
                 user,
-                invoice.getRoom().getBuilding().getId());
+                invoice.getRoom().getBuilding().getId()
+        );
 
         if (invoice.getStatus() != Invoice.Status.DRAFT) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Chỉ được phát hành hóa đơn nháp");
+                    "Chỉ được phát hành hóa đơn nháp"
+            );
         }
 
         List<InvoiceItem> items =
@@ -661,7 +827,6 @@ public class InvoiceService {
         invoice.setStatus(Invoice.Status.ISSUED);
         invoiceRepository.save(invoice);
 
-        // Thông báo cho khách thuê khi hóa đơn đã được phát hành.
         notificationService.notifyInvoiceIssued(invoice);
 
         InvoiceResponse after = toResponse(invoice, items);
@@ -672,7 +837,8 @@ public class InvoiceService {
                 "Invoice",
                 invoice.getId(),
                 before,
-                after);
+                after
+        );
 
         return after;
     }
@@ -685,18 +851,20 @@ public class InvoiceService {
     public InvoiceResponse cancel(
             User user,
             Long invoiceId,
-            String reason) {
-
+            String reason
+    ) {
         if (user == null || user.getRole() != User.Role.LANDLORD) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Chỉ chủ nhà được hủy hóa đơn");
+                    "Chỉ chủ nhà được hủy hóa đơn"
+            );
         }
 
         if (reason == null || reason.isBlank()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Phải nhập lý do hủy hóa đơn");
+                    "Phải nhập lý do hủy hóa đơn"
+            );
         }
 
         String cancellationReason = reason.trim();
@@ -704,22 +872,26 @@ public class InvoiceService {
         if (cancellationReason.length() > 500) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Lý do hủy không được vượt quá 500 ký tự");
+                    "Lý do hủy không được vượt quá 500 ký tự"
+            );
         }
 
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Không tìm thấy hóa đơn"));
+                        "Không tìm thấy hóa đơn"
+                ));
 
         requireBuilding(
                 user,
-                invoice.getRoom().getBuilding().getId());
+                invoice.getRoom().getBuilding().getId()
+        );
 
         if (invoice.getStatus() != Invoice.Status.ISSUED) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Chỉ được hủy hóa đơn đã phát hành");
+                    "Chỉ được hủy hóa đơn đã phát hành"
+            );
         }
 
         List<InvoiceItem> items =
@@ -733,7 +905,6 @@ public class InvoiceService {
 
         InvoiceResponse after = toResponse(invoice, items);
 
-        // Giữ lại hóa đơn cũ và lưu lý do hủy trong audit log.
         auditLogService.log(
                 user,
                 "CANCEL",
@@ -742,7 +913,9 @@ public class InvoiceService {
                 before,
                 Map.of(
                         "reason", cancellationReason,
-                        "invoice", after));
+                        "invoice", after
+                )
+        );
 
         return after;
     }
@@ -753,26 +926,26 @@ public class InvoiceService {
 
     private InvoiceResponse toResponse(
             Invoice invoice,
-            List<InvoiceItem> items) {
-
+            List<InvoiceItem> items
+    ) {
         RentalContract contract = invoice.getContract();
         Room room = invoice.getRoom();
 
         List<ItemResponse> itemResponses = items.stream()
-        .map(i -> new ItemResponse(
-                i.getId(),
-                i.getLabel(),
-                i.getType().name(),
-                i.getQuantity(),
-                i.getUnit(),
-                i.getUnitPrice(),
-                i.getAmount(),
-                i.getPreviousReading(),
-                i.getCurrentReading(),
-                i.getNote()))
-        .toList();
+                .map(i -> new ItemResponse(
+                        i.getId(),
+                        i.getLabel(),
+                        i.getType().name(),
+                        i.getQuantity(),
+                        i.getUnit(),
+                        i.getUnitPrice(),
+                        i.getAmount(),
+                        i.getPreviousReading(),
+                        i.getCurrentReading(),
+                        i.getNote()
+                ))
+                .toList();
 
-        
         return new InvoiceResponse(
                 invoice.getId(),
                 invoice.getInvoiceCode(),
@@ -800,27 +973,32 @@ public class InvoiceService {
 
     private record ServiceCfg(
             com.troroom.backend.entity.Service.CalculationMethod method,
-            long price) {
+            long price
+    ) {
     }
 
     private ServiceCfg resolveCfg(
             Room room,
             Building building,
             com.troroom.backend.entity.Service service,
-            LocalDate date) {
-
+            LocalDate date
+    ) {
         Optional<BuildingService> buildingCfg =
                 buildingServiceRepository
                         .findByBuildingAndServiceOrderByEffectiveFromDesc(
-                                building, service)
+                                building,
+                                service
+                        )
                         .stream()
-                        .filter(b -> !b.getEffectiveFrom().isAfter(date))
+                        .filter(b -> b.getEffectiveFrom() != null
+                                && !b.getEffectiveFrom().isAfter(date))
                         .findFirst();
 
         if (buildingCfg.isPresent()) {
             return new ServiceCfg(
                     buildingCfg.get().getCalculationMethod(),
-                    buildingCfg.get().getPrice());
+                    buildingCfg.get().getPrice()
+            );
         }
 
         Optional<RoomService> roomCfg =
@@ -829,18 +1007,20 @@ public class InvoiceService {
         if (roomCfg.isPresent()) {
             return new ServiceCfg(
                     service.getCalculationMethod(),
-                    roomCfg.get().getPrice());
+                    roomCfg.get().getPrice()
+            );
         }
 
         return new ServiceCfg(
                 service.getCalculationMethod(),
-                service.getPrice());
+                service.getPrice()
+        );
     }
 
     private com.troroom.backend.entity.Service findUtility(
             List<com.troroom.backend.entity.Service> services,
-            String name) {
-
+            String name
+    ) {
         return services.stream()
                 .filter(s -> s.getName() != null
                         && s.getName().trim().equalsIgnoreCase(name))
@@ -860,7 +1040,10 @@ public class InvoiceService {
                     .nextInt(1, 100000);
 
             String code = String.format(
-                    "INV-%d-%05d", year, number);
+                    "INV-%d-%05d",
+                    year,
+                    number
+            );
 
             if (!invoiceRepository.existsByInvoiceCode(code)) {
                 return code;
@@ -868,6 +1051,7 @@ public class InvoiceService {
         }
 
         throw new IllegalStateException(
-                "Không thể tạo mã hóa đơn");
+                "Không thể tạo mã hóa đơn"
+        );
     }
 }
