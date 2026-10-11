@@ -3,11 +3,13 @@ package com.troroom.backend.service;
 import com.troroom.backend.dto.MeterReadingDtos.*;
 import com.troroom.backend.entity.Building;
 import com.troroom.backend.entity.MeterReading;
+import com.troroom.backend.entity.Invoice;
 import com.troroom.backend.entity.RentalContract;
 import com.troroom.backend.entity.Room;
 import com.troroom.backend.entity.User;
 import com.troroom.backend.repository.BuildingRepository;
 import com.troroom.backend.repository.MeterReadingRepository;
+import com.troroom.backend.repository.InvoiceRepository;
 import com.troroom.backend.repository.RentalContractRepository;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -40,16 +42,19 @@ public class MeterReadingService {
     private final BuildingRepository buildingRepository;
     private final RentalContractRepository contractRepository;
     private final MeterReadingRepository meterRepository;
+    private final InvoiceRepository invoiceRepository;
     private final AuditLogService auditLogService;
 
     public MeterReadingService(
             BuildingRepository buildingRepository,
             RentalContractRepository contractRepository,
             MeterReadingRepository meterRepository,
+            InvoiceRepository invoiceRepository,
             AuditLogService auditLogService) {
         this.buildingRepository = buildingRepository;
         this.contractRepository = contractRepository;
         this.meterRepository = meterRepository;
+        this.invoiceRepository = invoiceRepository;
         this.auditLogService = auditLogService;
     }
 
@@ -98,7 +103,8 @@ public class MeterReadingService {
     @Transactional(readOnly = true)
     public List<BuildingItem> buildings(User user) {
         return accessibleBuildings(user).stream()
-                .map(b -> new BuildingItem(b.getId(), b.getName(), b.getAddress()))
+                .map(b -> new BuildingItem(b.getId(), b.getName(), b.getAddress(),
+                        b.getManager() == null ? "Chưa phân công" : b.getManager().getName()))
                 .toList();
     }
 
@@ -153,7 +159,8 @@ public class MeterReadingService {
                 base[0], base[1],
                 reading == null ? null : reading.getElectricity(),
                 reading == null ? null : reading.getWater(),
-                reading != null);
+                reading != null,
+                invoiceRepository.existsByContractAndPeriodAndStatus(c, period, Invoice.Status.ISSUED));
     }
 
     // ---------------------------------------------------------------
@@ -182,6 +189,12 @@ public class MeterReadingService {
                 || contract.getEndDate().isBefore(start)) {
             throw new MeterReadingException(409, "CONTRACT_NOT_ACTIVE",
                     "Phòng không có hợp đồng đang hiệu lực trong kỳ " + key);
+        }
+
+        // EP-05: khi đã phát hành hóa đơn, khóa chỉ số của hợp đồng trong kỳ đó.
+        if (invoiceRepository.existsByContractAndPeriodAndStatus(contract, key, Invoice.Status.ISSUED)) {
+            throw new MeterReadingException(409, "PERIOD_LOCKED",
+                    "Kỳ " + key + " đã phát hành hóa đơn nên chỉ số đã bị khóa, không thể chỉnh sửa");
         }
 
         // Không cho sửa kỳ cũ khi đã có kỳ sau, tránh làm lệch chỉ số kỳ trước của kỳ sau.

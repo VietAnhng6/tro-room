@@ -8,7 +8,7 @@ public final class MeterReadingDtos {
     private MeterReadingDtos() {
     }
 
-    public record BuildingItem(Long id, String name, String address) {
+    public record BuildingItem(Long id, String name, String address, String managerName) {
     }
 
     /** Một dòng phòng trên màn hình nhập. electricity/water null nghĩa là chưa chốt. */
@@ -22,7 +22,8 @@ public final class MeterReadingDtos {
             int prevWater,
             Integer electricity,
             Integer water,
-            boolean recorded
+            boolean recorded,
+            boolean locked
     ) {
     }
 
