@@ -10,6 +10,8 @@ export function Dashboard() {
   const [buildingCount, setBuildingCount] = useState(0)
   const [roomCount, setRoomCount] = useState(0)
   const [pendingRequests, setPendingRequests] = useState(0)
+  const [missingReadingRooms, setMissingReadingRooms] = useState(0)
+  const [readingBuildingsMissing, setReadingBuildingsMissing] = useState(0)
 
   useEffect(() => {
     setRole(localStorage.getItem('role') || 'TENANT')
@@ -67,6 +69,31 @@ export function Dashboard() {
         if (data && typeof data.count === 'number') {
           setPendingRequests(data.count)
         }
+      })
+      .catch(() => {})
+  }, [role])
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken')
+    if (!token || role !== 'LANDLORD') return
+    const now = new Date()
+    const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    // Cảnh báo vào ngày cuối kỳ; backend vẫn là nơi kiểm soát quyền và khóa dữ liệu.
+    if (now.getDate() < lastDay) return
+    const headers = { Authorization: `Bearer ${token}` }
+    fetch('http://localhost:8080/api/manager/meter-readings/buildings', { headers })
+      .then(async (res) => res.ok ? await res.json() : [])
+      .then(async (buildings: Array<{ id: number }>) => {
+        const summaries = await Promise.all(buildings.map(async (building) => {
+          try {
+            const res = await fetch(`http://localhost:8080/api/manager/meter-readings?buildingId=${building.id}&period=${period}`, { headers })
+            return res.ok ? await res.json() : null
+          } catch { return null }
+        }))
+        const pending = summaries.filter((item) => item && item.remaining > 0)
+        setMissingReadingRooms(pending.reduce((sum, item) => sum + item.remaining, 0))
+        setReadingBuildingsMissing(pending.length)
       })
       .catch(() => {})
   }, [role])
@@ -162,6 +189,13 @@ export function Dashboard() {
           >
             Xử lý ngay
           </button>
+        </div>
+      )}
+
+      {role === 'LANDLORD' && missingReadingRooms > 0 && (
+        <div onClick={() => navigate('/meter-readings')} style={{ background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 12, padding: '16px 20px', marginBottom: 22, cursor: 'pointer' }}>
+          <div style={{ fontWeight: 800, color: '#9a3412', fontSize: 15 }}>Đến hạn chốt chỉ số điện nước nhưng vẫn còn {missingReadingRooms} phòng chưa nhập</div>
+          <div style={{ color: '#9a3412', fontSize: 13, marginTop: 4 }}>{readingBuildingsMissing} tòa nhà còn thiếu dữ liệu. Nhấn để xem danh sách và hoàn tất trước khi phát hành hóa đơn.</div>
         </div>
       )}
 

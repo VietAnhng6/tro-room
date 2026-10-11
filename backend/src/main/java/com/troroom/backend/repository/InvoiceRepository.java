@@ -19,6 +19,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
          boolean existsByContractAndPeriod(
             RentalContract contract, String period);
 
+        boolean existsByContractAndPeriodAndStatus(
+            RentalContract contract, String period, Invoice.Status status);
+
         boolean existsByInvoiceCode(String invoiceCode);
         boolean existsByContractAndPeriodAndStatusNot(
         RentalContract contract,

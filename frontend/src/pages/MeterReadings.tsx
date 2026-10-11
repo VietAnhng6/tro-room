@@ -9,6 +9,7 @@ type Building = {
   id: number
   name: string
   address: string
+  managerName: string
 }
 
 type Room = {
@@ -22,6 +23,14 @@ type Room = {
   electricity: number | null
   water: number | null
   recorded: boolean
+  locked: boolean
+}
+
+type BuildingProgress = {
+  building: Building
+  total: number
+  recorded: number
+  remaining: number
 }
 
 type ReadingResponse = {
@@ -47,6 +56,8 @@ function MeterReadings() {
   const [savingId, setSavingId] = useState<number | null>(null)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [progress, setProgress] = useState<BuildingProgress[]>([])
+  const [onlyMissing, setOnlyMissing] = useState(false)
 
   const headers = () => ({
     Authorization: `Bearer ${getToken()}`,
@@ -121,6 +132,29 @@ function MeterReadings() {
   useEffect(() => {
     void loadReadings()
   }, [buildingId, period])
+
+  useEffect(() => {
+    if (!buildings.length || !period) {
+      setProgress([])
+      return
+    }
+    let cancelled = false
+    const loadProgress = async () => {
+      const results = await Promise.all(buildings.map(async (building) => {
+        try {
+          const response = await fetch(`${API}/api/manager/meter-readings?buildingId=${building.id}&period=${period}`, { headers: headers() })
+          if (!response.ok) return { building, total: 0, recorded: 0, remaining: 0 }
+          const summary = await response.json() as ReadingResponse
+          return { building, total: summary.total, recorded: summary.recorded, remaining: summary.remaining }
+        } catch {
+          return { building, total: 0, recorded: 0, remaining: 0 }
+        }
+      }))
+      if (!cancelled) setProgress(results)
+    }
+    void loadProgress()
+    return () => { cancelled = true }
+  }, [buildings, period])
 
   const updateRoom = (
     contractId: number,
@@ -266,6 +300,32 @@ function MeterReadings() {
         {error && <div style={errorStyle}>{error}</div>}
         {message && <div style={successStyle}>{message}</div>}
 
+        <section style={tableCardStyle}>
+          <div style={{ padding: '18px 20px', borderBottom: '1px solid #e2e8f0' }}>
+            <h2 style={{ margin: 0, fontSize: 17 }}>Tiến độ chốt chỉ số theo tòa · {period}</h2>
+            <p style={{ margin: '5px 0 0', color: '#64748b', fontSize: 13 }}>Bấm vào số phòng còn thiếu để xem danh sách chi tiết.</p>
+          </div>
+          {progress.length === 0 ? <div style={emptyStyle}>Chưa có dữ liệu tòa nhà.</div> : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ ...tableStyle, minWidth: 760 }}>
+                <thead><tr><th style={thStyle}>Tòa nhà</th><th style={thStyle}>Người quản lý</th><th style={thStyle}>Đang thuê</th><th style={thStyle}>Đã chốt</th><th style={thStyle}>Còn thiếu</th><th style={thStyle}>Tiến độ</th></tr></thead>
+                <tbody>{progress.map((item) => <tr key={item.building.id}>
+                  <td style={tdStyle}><strong>{item.building.name}</strong><div style={mutedStyle}>{item.building.address}</div></td>
+                  <td style={tdStyle}>{item.building.managerName || 'Chưa phân công'}</td>
+                  <td style={tdStyle}>{item.total}</td><td style={tdStyle}>{item.recorded}</td>
+                  <td style={tdStyle}><button onClick={() => { setBuildingId(String(item.building.id)); setOnlyMissing(true) }} style={{ border: 0, background: 'transparent', color: item.remaining ? '#b45309' : '#15803d', fontWeight: 800, cursor: 'pointer', textDecoration: item.remaining ? 'underline' : 'none' }}>{item.remaining}</button></td>
+                  <td style={tdStyle}><div style={{ minWidth: 100, background: '#e2e8f0', borderRadius: 20, height: 8, overflow: 'hidden' }}><div style={{ width: `${item.total ? item.recorded / item.total * 100 : 0}%`, background: '#16a34a', height: '100%' }} /></div><div style={mutedStyle}>{item.total ? Math.round(item.recorded / item.total * 100) : 0}%</div></td>
+                </tr>)}</tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        {onlyMissing && <div style={{ ...successStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          Đang lọc các phòng chưa chốt chỉ số.
+          <button onClick={() => setOnlyMissing(false)} style={{ border: 0, background: 'transparent', color: '#166534', fontWeight: 700, cursor: 'pointer' }}>Hiện tất cả phòng</button>
+        </div>}
+
         {data && (
           <section style={statsGridStyle}>
             <Stat label="Tổng số phòng" value={data.total} />
@@ -281,9 +341,9 @@ function MeterReadings() {
             <div style={emptyStyle}>
               Chọn tòa nhà và kỳ ghi chỉ số để xem dữ liệu.
             </div>
-          ) : data.rooms.length === 0 ? (
+          ) : data.rooms.filter((room) => !onlyMissing || !room.recorded).length === 0 ? (
             <div style={emptyStyle}>
-              Không có hợp đồng đang hoạt động trong kỳ này.
+              Không có phòng nào phù hợp trong kỳ này.
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
@@ -301,7 +361,7 @@ function MeterReadings() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.rooms.map((room) => (
+                  {data.rooms.filter((room) => !onlyMissing || !room.recorded).map((room) => (
                     <tr key={room.contractId}>
                       <td style={tdStyle}>
                         <strong>{room.roomCode}</strong>
@@ -312,6 +372,7 @@ function MeterReadings() {
                       <td style={tdStyle}>
                         <input
                           type="number"
+                          disabled={room.locked}
                           min={room.prevElectricity}
                           step="1"
                           value={room.electricity ?? ''}
@@ -326,6 +387,7 @@ function MeterReadings() {
                       <td style={tdStyle}>
                         <input
                           type="number"
+                          disabled={room.locked}
                           min={room.prevWater}
                           step="1"
                           value={room.water ?? ''}
@@ -342,19 +404,19 @@ function MeterReadings() {
                             room.recorded ? recordedBadgeStyle : pendingBadgeStyle
                           }
                         >
-                          {room.recorded ? 'Đã chốt' : 'Chưa chốt'}
+                          {room.locked ? 'Đã khóa kỳ' : room.recorded ? 'Đã chốt' : 'Chưa chốt'}
                         </span>
                       </td>
                       <td style={tdStyle}>
                         <button
-                          disabled={savingId === room.contractId}
+                          disabled={savingId === room.contractId || room.locked}
                           onClick={() => void saveRoom(room)}
                           style={{
                             ...saveButtonStyle,
                             opacity: savingId === room.contractId ? 0.6 : 1,
                           }}
                         >
-                          {savingId === room.contractId
+                          {room.locked ? 'Kỳ đã khóa' : savingId === room.contractId
                             ? 'Đang lưu...'
                             : room.recorded
                               ? 'Cập nhật'
