@@ -51,17 +51,19 @@ public class RentalContractViewService {
             visible.put(contract.getId(), contract);
         }
 
-        if (currentUser.getPhone() != null && !currentUser.getPhone().isBlank()) {
-            List<Roommate> roommateLinks = roommateRepository.findByPhoneAndStatus(
-                    currentUser.getPhone().trim(),
-                    Roommate.Status.ACTIVE
-            );
+        String phone = normalizePhone(currentUser.getPhone());
+        if (phone != null) {
+            // Không cấp quyền chỉ vì cùng phòng: thời gian ở ghép phải giao với
+            // thời hạn của hợp đồng cụ thể.
+            List<Roommate> roommateLinks = roommateRepository.findByPhoneOrderByStartDateDesc(phone);
             for (Roommate roommate : roommateLinks) {
                 if (roommate.getRoom() == null) {
                     continue;
                 }
                 for (RentalContract contract : contractRepository.findByRoomOrderByStartDateDesc(roommate.getRoom())) {
-                    visible.put(contract.getId(), contract);
+                    if (isRoommateRelevantToContract(roommate, contract)) {
+                        visible.put(contract.getId(), contract);
+                    }
                 }
             }
         }
@@ -94,13 +96,11 @@ public class RentalContractViewService {
             return contract;
         }
 
-        String phone = currentUser.getPhone();
-        if (phone != null && !phone.isBlank()
-                && roommateRepository.existsByRoomIdAndPhoneAndStatus(
-                contract.getRoom().getId(),
-                phone.trim(),
-                Roommate.Status.ACTIVE
-        )) {
+        String phone = normalizePhone(currentUser.getPhone());
+        if (phone != null && contract.getRoom() != null
+                && roommateRepository.findByRoomIdAndPhoneOrderByStartDateDesc(
+                        contract.getRoom().getId(), phone
+                ).stream().anyMatch(roommate -> isRoommateRelevantToContract(roommate, contract))) {
             return contract;
         }
 
@@ -108,6 +108,45 @@ public class RentalContractViewService {
                 HttpStatus.FORBIDDEN,
                 "Bạn không có quyền xem hợp đồng này"
         );
+    }
+
+    private String normalizePhone(String phone) {
+        if (phone == null || phone.isBlank()) {
+            return null;
+        }
+        return phone.trim();
+    }
+
+    /**
+     * Phòng và số điện thoại không đủ để ràng buộc người ở ghép vào mọi hợp đồng
+     * của căn phòng. Khoảng thời gian cư trú phải giao với khoảng thời gian hợp đồng.
+     * Điều này cũng cho phép người đã chuyển đi xem hợp đồng mà họ thực sự tham gia,
+     * nhưng không thể xem hợp đồng của người thuê ở kỳ khác.
+     */
+    private boolean isRoommateRelevantToContract(Roommate roommate, RentalContract contract) {
+        if (roommate == null || contract == null
+                || roommate.getRoom() == null || contract.getRoom() == null
+                || roommate.getRoom().getId() == null || contract.getRoom().getId() == null
+                || !roommate.getRoom().getId().equals(contract.getRoom().getId())) {
+            return false;
+        }
+
+        LocalDate roommateStart = roommate.getStartDate();
+        LocalDate contractStart = contract.getStartDate();
+        LocalDate contractEnd = contract.getEndDate();
+        LocalDate roommateEnd = roommate.getEndDate();
+        if (roommateStart == null || contractStart == null || contractEnd == null) {
+            return false;
+        }
+        if (roommate.getStatus() == Roommate.Status.MOVED_OUT && roommateEnd == null) {
+            // Bản ghi chuyển đi phải có ngày kết thúc ở; dữ liệu thiếu ngày không
+            // được dùng để cấp quyền xem một hợp đồng.
+            return false;
+        }
+        if (roommateStart.isAfter(contractEnd)) {
+            return false;
+        }
+        return roommateEnd == null || !roommateEnd.isBefore(contractStart);
     }
 
     private void validateTenant(User currentUser) {
@@ -160,7 +199,7 @@ public class RentalContractViewService {
         if (room != null) {
             roommateRepository.findByRoomIdOrderByStartDateDesc(room.getId())
                     .stream()
-                    .filter(r -> r.getStatus() == Roommate.Status.ACTIVE)
+                    .filter(r -> isRoommateRelevantToContract(r, contract))
                     .forEach(r -> people.add(new RentalContractPersonResponse(
                             "NGƯỜI Ở GHÉP",
                             r.getFullName(),

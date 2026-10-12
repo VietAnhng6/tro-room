@@ -20,6 +20,7 @@ import AuditLogs from './pages/AuditLogs'
 import Admin from './pages/Admin'
 import Invoices from './pages/Invoices'
 import TenantInvoices from './pages/TenantInvoices'
+import TenantContracts from './pages/TenantContracts'
 import Contracts from './pages/Contracts'
 import MeterReadings from './pages/MeterReadings'
 /*
@@ -238,6 +239,7 @@ function hasRouteAccess(path: string, role: string | null) {
     TENANT: [
       '/dashboard',
       '/tenant/invoices',
+      '/tenant/contracts',
       '/profile',
       '/my-requests',
       '/search-rooms',
@@ -384,6 +386,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute path="/tenant/invoices">
               <TenantInvoices />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tenant/contracts"
+          element={
+            <ProtectedRoute path="/tenant/contracts">
+              <TenantContracts />
             </ProtectedRoute>
           }
         />

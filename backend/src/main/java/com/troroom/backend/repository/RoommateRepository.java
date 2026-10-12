@@ -13,6 +13,10 @@ public interface RoommateRepository extends JpaRepository<Roommate, Long> {
 
     List<Roommate> findByRoomIdOrderByStartDateDesc(Long roomId);
 
+    List<Roommate> findByRoomIdAndPhoneOrderByStartDateDesc(Long roomId, String phone);
+
+    List<Roommate> findByPhoneOrderByStartDateDesc(String phone);
+
     long countByRoomIdAndStatus(Long roomId, Roommate.Status status);
 
     List<Roommate> findByPhoneAndStatus(String phone, Roommate.Status status);
