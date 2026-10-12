@@ -99,7 +99,36 @@ const statusLabel: Record<string, string> = {
   CANCELLED: 'Đã huỷ',
 }
 
+const isMeterItem = (item: Item) =>
+  item.type === 'ELECTRICITY' || item.type === 'WATER'
+
+function itemInvalid(item: Item): boolean {
+  if (
+    !item.label.trim() ||
+    !item.unit.trim() ||
+    !Number.isFinite(item.quantity) ||
+    item.quantity < 0 ||
+    !Number.isFinite(item.unitPrice) ||
+    item.unitPrice < 0
+  ) {
+    return true
+  }
+
+  if (isMeterItem(item)) {
+    return (
+      item.previousReading == null ||
+      item.currentReading == null ||
+      item.previousReading < 0 ||
+      item.currentReading < item.previousReading
+    )
+  }
+
+  return false
+}
+
 function Invoices() {
+  const isLandlord = localStorage.getItem('role') === 'LANDLORD'
+
   const [buildings, setBuildings] = useState<Building[]>([])
   const [buildingId, setBuildingId] = useState('')
   const [period, setPeriod] = useState(currentPeriod())
@@ -111,6 +140,7 @@ function Invoices() {
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   const [detail, setDetail] = useState<Invoice | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
@@ -208,6 +238,7 @@ function Invoices() {
 
     setGenerating(true)
     setError('')
+    setSuccess('')
     setResult(null)
 
     try {
@@ -231,6 +262,12 @@ function Invoices() {
 
       setResult(data as GenerateResult)
       await refreshInvoices()
+
+      if (data.created > 0) {
+        setSuccess(
+          `Đã lưu thành công ${data.created} hóa đơn nháp cho kỳ ${period}.`,
+        )
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Có lỗi xảy ra')
     } finally {
@@ -314,15 +351,8 @@ function Invoices() {
       return
     }
 
-    if (items.some((item) =>
-      !item.label.trim() ||
-      !item.unit.trim() ||
-      !Number.isFinite(item.quantity) ||
-      item.quantity < 0 ||
-      !Number.isFinite(item.unitPrice) ||
-      item.unitPrice < 0
-    )) {
-      alert('Vui lòng kiểm tra tên khoản mục, đơn vị, số lượng và đơn giá')
+    if (items.some(itemInvalid)) {
+      alert('Vui lòng kiểm tra tên khoản mục, đơn vị, số lượng, đơn giá và chỉ số điện/nước')
       return
     }
 
@@ -516,16 +546,18 @@ function Invoices() {
               />
             </Field>
 
-            <button
-              onClick={generate}
-              disabled={generating || !buildingId || actionLoading}
-              style={{
-                ...primaryButtonStyle,
-                opacity: generating || !buildingId || actionLoading ? 0.6 : 1,
-              }}
-            >
-              {generating ? 'Đang tạo...' : 'Tạo hóa đơn nháp cả tòa'}
-            </button>
+            {isLandlord && (
+              <button
+                onClick={generate}
+                disabled={generating || !buildingId || actionLoading}
+                style={{
+                  ...primaryButtonStyle,
+                  opacity: generating || !buildingId || actionLoading ? 0.6 : 1,
+                }}
+              >
+                {generating ? 'Đang tạo...' : 'Tạo hóa đơn nháp cả tòa'}
+              </button>
+            )}
           </div>
 
           {readiness && (
@@ -556,6 +588,8 @@ function Invoices() {
         </div>
 
         {error && <div style={errorStyle}>{error}</div>}
+
+        {success && <div style={successStyle}>{success}</div>}
 
         {result && (
           <div style={resultStyle}>
@@ -699,7 +733,7 @@ function Invoices() {
                             Chi tiết
                           </button>
 
-                          {invoice.status === 'DRAFT' && (
+                          {isLandlord && invoice.status === 'DRAFT' && (
                             <>
                               <button
                                 onClick={() => startEdit(invoice.id)}
@@ -719,7 +753,7 @@ function Invoices() {
                             </>
                           )}
 
-                          {invoice.status === 'ISSUED' && (
+                          {isLandlord && invoice.status === 'ISSUED' && (
                             <button
                               onClick={() => cancelInvoice(invoice)}
                               disabled={actionLoading || savingEdit}
@@ -796,6 +830,19 @@ function EditInvoiceModal({
         if (i !== index) return item
 
         const next = { ...item, ...patch }
+
+        if (isMeterItem(next)) {
+          if (
+            next.previousReading != null &&
+            next.currentReading != null &&
+            next.currentReading >= next.previousReading
+          ) {
+            next.quantity = next.currentReading - next.previousReading
+          } else {
+            next.quantity = 0
+          }
+        }
+
         next.amount = next.quantity * next.unitPrice
 
         return next
@@ -873,23 +920,63 @@ function EditInvoiceModal({
                   marginTop: 10,
                 }}
               >
-                <Field label="Số lượng">
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    style={inputStyle}
-                    value={item.quantity}
-                    onChange={(e) =>
-                      updateItem(index, {
-                        quantity: e.target.value === ''
-                          ? 0
-                          : Number(e.target.value),
-                      })
-                    }
-                    disabled={saving}
-                  />
-                </Field>
+                {isMeterItem(item) ? (
+                  <>
+                    <Field label="Chỉ số cũ">
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        style={inputStyle}
+                        value={item.previousReading ?? ''}
+                        onChange={(e) =>
+                          updateItem(index, {
+                            previousReading: e.target.value === ''
+                              ? null
+                              : Number(e.target.value),
+                          })
+                        }
+                        disabled={saving}
+                      />
+                    </Field>
+
+                    <Field label="Chỉ số mới">
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        style={inputStyle}
+                        value={item.currentReading ?? ''}
+                        onChange={(e) =>
+                          updateItem(index, {
+                            currentReading: e.target.value === ''
+                              ? null
+                              : Number(e.target.value),
+                          })
+                        }
+                        disabled={saving}
+                      />
+                    </Field>
+                  </>
+                ) : (
+                  <Field label="Số lượng">
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      style={inputStyle}
+                      value={item.quantity}
+                      onChange={(e) =>
+                        updateItem(index, {
+                          quantity: e.target.value === ''
+                            ? 0
+                            : Number(e.target.value),
+                        })
+                      }
+                      disabled={saving}
+                    />
+                  </Field>
+                )}
 
                 <Field label="Đơn vị">
                   <input
@@ -939,8 +1026,7 @@ function EditInvoiceModal({
                 </Field>
               </div>
 
-              {(item.previousReading !== null ||
-                item.currentReading !== null) && (
+              {isMeterItem(item) && (
                 <div
                   style={{
                     marginTop: 8,
@@ -948,8 +1034,11 @@ function EditInvoiceModal({
                     color: '#64748b',
                   }}
                 >
-                  Chỉ số cũ: {item.previousReading ?? '—'} →{' '}
-                  Chỉ số mới: {item.currentReading ?? '—'}
+                  Số lượng:{' '}
+                  <strong>
+                    {item.quantity} {item.unit}
+                  </strong>{' '}
+                  (tự tính từ chỉ số)
                 </div>
               )}
 
@@ -1016,14 +1105,7 @@ function EditInvoiceModal({
               saving ||
               !reason.trim() ||
               items.length === 0 ||
-              items.some((item) =>
-                !item.label.trim() ||
-                !item.unit.trim() ||
-                !Number.isFinite(item.quantity) ||
-                item.quantity < 0 ||
-                !Number.isFinite(item.unitPrice) ||
-                item.unitPrice < 0
-              )
+              items.some(itemInvalid)
             }
             onClick={() => onSave(items)}
             style={{
@@ -1308,6 +1390,17 @@ const errorStyle: React.CSSProperties = {
   borderRadius: 12,
   marginTop: 16,
   fontSize: 14,
+}
+
+const successStyle: React.CSSProperties = {
+  background: '#f0fdf4',
+  border: '1px solid #bbf7d0',
+  color: '#166534',
+  padding: 14,
+  borderRadius: 12,
+  marginTop: 16,
+  fontSize: 14,
+  fontWeight: 650,
 }
 
 const resultStyle: React.CSSProperties = {

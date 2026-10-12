@@ -212,11 +212,16 @@ function MeterReadings() {
       const result = await response.json()
 
       if (!response.ok) {
-        // Nếu backend trả về cảnh báo bất thường, hỏi người dùng xác nhận.
+        // Chỉ hỏi xác nhận với cảnh báo tiêu thụ bất thường.
+        // Các lỗi 409 khác (kỳ đã khóa, có kỳ sau, hợp đồng hết hiệu lực)
+        // hiển thị thẳng thông báo lỗi.
         const warning =
           result.message || 'Chỉ số có dấu hiệu tiêu thụ bất thường.'
 
-        if (!confirm && response.status === 409) {
+        const isConsumptionWarning =
+          response.status === 409 && result.code === 'CONSUMPTION_WARNING'
+
+        if (!confirm && isConsumptionWarning) {
           const accepted = window.confirm(
             `${warning}\n\nBạn có muốn xác nhận và lưu chỉ số này không?`
           )
@@ -230,8 +235,8 @@ function MeterReadings() {
         throw new Error(warning)
       }
 
-      setMessage(`Đã lưu chỉ số phòng ${room.roomCode}.`)
       await loadReadings()
+      setMessage(`Đã lưu chỉ số phòng ${room.roomCode}.`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể lưu chỉ số')
     } finally {

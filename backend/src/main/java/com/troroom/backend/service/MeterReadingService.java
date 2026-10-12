@@ -160,7 +160,8 @@ public class MeterReadingService {
                 reading == null ? null : reading.getElectricity(),
                 reading == null ? null : reading.getWater(),
                 reading != null,
-                invoiceRepository.existsByContractAndPeriodAndStatus(c, period, Invoice.Status.ISSUED));
+                invoiceRepository.existsByContractAndPeriodAndStatus(
+                        c, period, Invoice.Status.ISSUED));
     }
 
     // ---------------------------------------------------------------
@@ -192,7 +193,9 @@ public class MeterReadingService {
         }
 
         // EP-05: khi đã phát hành hóa đơn, khóa chỉ số của hợp đồng trong kỳ đó.
-        if (invoiceRepository.existsByContractAndPeriodAndStatus(contract, key, Invoice.Status.ISSUED)) {
+        // Ở trạng thái nháp, chỉ số vẫn được phép chỉnh sửa.
+        if (invoiceRepository.existsByContractAndPeriodAndStatus(
+                contract, key, Invoice.Status.ISSUED)) {
             throw new MeterReadingException(409, "PERIOD_LOCKED",
                     "Kỳ " + key + " đã phát hành hóa đơn nên chỉ số đã bị khóa, không thể chỉnh sửa");
         }
