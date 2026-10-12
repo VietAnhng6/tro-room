@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useState } from 'react'
 
 type NotificationItem = {
@@ -9,6 +10,9 @@ type NotificationItem = {
   read?: boolean
   isRead?: boolean
   createdAt?: string
+  landlordName?: string
+  landlordPhone?: string
+  landlordEmail?: string
 }
 
 const API = 'http://localhost:8080/api/notifications'
@@ -60,6 +64,7 @@ export default function Notifications() {
     if (item.read === true || item.isRead === true) return
 
     const token = localStorage.getItem('accessToken')
+    if (!token) return
 
     try {
       const response = await fetch(`${API}/${item.id}/read`, {
@@ -160,33 +165,40 @@ export default function Notifications() {
             const isRead = item.read === true || item.isRead === true
 
             return (
-              <button
+              <div
                 key={item.id}
-                onClick={() => void markAsRead(item)}
                 style={{
                   display: 'flex',
-                  width: '100%',
                   gap: 14,
                   alignItems: 'flex-start',
                   padding: 20,
-                  textAlign: 'left',
-                  border: 0,
                   borderBottom: '1px solid #e2e8f0',
                   background: isRead ? '#fff' : '#eff6ff',
-                  cursor: 'pointer',
                 }}
               >
                 <span style={{ fontSize: 22 }}>🔔</span>
 
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <strong style={{ color: '#0f172a', fontSize: 14 }}>
-                    {item.title || item.type || 'Thông báo TroRoom'}
-                  </strong>
-
-                  <span
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <button
+                    onClick={() => void markAsRead(item)}
                     style={{
                       display: 'block',
-                      marginTop: 6,
+                      padding: 0,
+                      border: 0,
+                      background: 'transparent',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      color: '#0f172a',
+                      fontSize: 14,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {item.title || item.type || 'Thông báo TroRoom'}
+                  </button>
+
+                  <p
+                    style={{
+                      margin: '6px 0 0',
                       color: '#475569',
                       fontSize: 13,
                       lineHeight: 1.6,
@@ -194,7 +206,51 @@ export default function Notifications() {
                     }}
                   >
                     {item.message || item.content || 'Bạn có thông báo mới.'}
-                  </span>
+                  </p>
+
+                  {(item.landlordName ||
+                    item.landlordPhone ||
+                    item.landlordEmail) && (
+                    <div
+                      style={{
+                        marginTop: 12,
+                        padding: 12,
+                        border: '1px solid #dbeafe',
+                        borderRadius: 8,
+                        background: '#f8fafc',
+                        fontSize: 13,
+                        lineHeight: 1.9,
+                      }}
+                    >
+                      <strong style={{ color: '#0f172a' }}>
+                        Thông tin liên hệ chủ nhà
+                      </strong>
+
+                      {item.landlordName && (
+                        <div>
+                          Họ tên: {item.landlordName}
+                        </div>
+                      )}
+
+                      {item.landlordPhone && (
+                        <div>
+                          Số điện thoại:{' '}
+                          <a href={`tel:${item.landlordPhone}`}>
+                            {item.landlordPhone}
+                          </a>
+                        </div>
+                      )}
+
+                      {item.landlordEmail && (
+                        <div>
+                          Email:{' '}
+                          <a href={`mailto:${item.landlordEmail}`}>
+                            {item.landlordEmail}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {item.createdAt && (
                     <span
@@ -208,7 +264,7 @@ export default function Notifications() {
                       {new Date(item.createdAt).toLocaleString('vi-VN')}
                     </span>
                   )}
-                </span>
+                </div>
 
                 <span
                   style={{
@@ -219,7 +275,7 @@ export default function Notifications() {
                 >
                   {isRead ? 'Đã đọc' : 'Chưa đọc'}
                 </span>
-              </button>
+              </div>
             )
           })}
         </div>

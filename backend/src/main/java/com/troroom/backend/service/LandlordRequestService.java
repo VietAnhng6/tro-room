@@ -121,9 +121,17 @@ public class LandlordRequestService {
         String from = r.getStatus().name();
         r.setStatus(RentalRequest.Status.ACCEPTED);
         repository.save(r);
-        historyRepository.save(new RentalRequestHistory(r, from, RentalRequest.Status.ACCEPTED.name(), landlord,
-                "Duyệt yêu cầu thuê, phòng chuyển sang Đã đặt cọc"));
-        return toItem(r, LocalDateTime.now().minusHours(24));
+        historyRepository.save(new RentalRequestHistory(
+        r,
+        from,
+        RentalRequest.Status.ACCEPTED.name(),
+        landlord,
+        "Duyệt yêu cầu thuê, phòng chuyển sang Đã đặt cọc"
+));
+
+notificationService.notifyRequestApproved(r);
+
+return toItem(r, LocalDateTime.now().minusHours(24));
     }
 
     /**

@@ -46,6 +46,29 @@ public class NotificationService {
 
         notificationRepository.save(notification);
     }
+    @Transactional
+public void notifyRequestApproved(RentalRequest request) {
+    User landlord = request.getListing()
+            .getRoom()
+            .getBuilding()
+            .getLandlord();
+
+    Notification notification = new Notification();
+    notification.setUser(request.getTenant());
+    notification.setType(Notification.Type.REQUEST_ACCEPTED);
+    notification.setTitle("Yêu cầu thuê phòng đã được chấp nhận");
+    notification.setMessage(
+            "Chủ nhà " + safe(landlord.getName())
+                    + " đã chấp nhận yêu cầu thuê phòng của bạn."
+    );
+    notification.setLandlordName(landlord.getName());
+    notification.setLandlordPhone(landlord.getPhone());
+    notification.setLandlordEmail(landlord.getEmail());
+    notification.setCreatedAt(LocalDateTime.now());
+    notification.setRead(false);
+
+    notificationRepository.save(notification);
+}
 
     @Transactional
     public void notifyRequestRejected(RentalRequest request) {
