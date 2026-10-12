@@ -709,6 +709,10 @@ public class InvoiceService {
                 }
 
                 quantity = current - previous;
+
+                // S3-08: ghi ngược chỉ số về bảng meter_readings để
+                // hoá đơn và màn hình nhập chỉ số luôn khớp nhau.
+                syncMeterReading(invoice, type, previous, current);
             }
 
             long amount;
@@ -788,6 +792,50 @@ public class InvoiceService {
         return after;
     }
 
+    /**
+     * Ghi ngược chỉ số điện/nước vừa sửa trong hoá đơn về bản ghi chỉ số gốc,
+     * để màn hình nhập chỉ số và chỉ số cũ của kỳ sau luôn khớp với hoá đơn.
+     */
+    private void syncMeterReading(
+            Invoice invoice,
+            InvoiceItem.Type type,
+            int previous,
+            int current
+    ) {
+        RentalContract contract = invoice.getContract();
+        if (contract == null) {
+            return;
+        }
+
+        MeterReading reading = meterRepository
+                .findByContractAndPeriod(contract, invoice.getPeriod())
+                .orElse(null);
+
+        if (reading == null) {
+            return;
+        }
+
+        // Không cho sửa kỳ cũ khi đã có kỳ sau, tránh làm lệch chuỗi chỉ số.
+        if (meterRepository.existsByContractAndPeriodGreaterThan(
+                contract, invoice.getPeriod())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Đã có chỉ số của kỳ sau, không thể sửa chỉ số kỳ "
+                            + invoice.getPeriod()
+            );
+        }
+
+        if (type == InvoiceItem.Type.ELECTRICITY) {
+            reading.setElectricityPrev(previous);
+            reading.setElectricity(current);
+        } else {
+            reading.setWaterPrev(previous);
+            reading.setWater(current);
+        }
+
+        meterRepository.save(reading);
+    }
+
     // ---------------------------------------------------------------
     // Phát hành hóa đơn nháp
     // ---------------------------------------------------------------
@@ -827,7 +875,18 @@ public class InvoiceService {
         invoice.setStatus(Invoice.Status.ISSUED);
         invoiceRepository.save(invoice);
 
-        notificationService.notifyInvoiceIssued(invoice);
+        // Thông báo là thao tác phụ: nạp sẵn dữ liệu (trong transaction hiện
+        // tại) rồi gọi sang transaction riêng; nếu lỗi cũng không chặn việc
+        // phát hành hóa đơn.
+        try {
+            notificationService.notifyInvoiceIssued(
+                    invoice,
+                    invoice.getContract().getTenant(),
+                    invoice.getRoom().getBuilding().getLandlord()
+            );
+        } catch (Exception ignored) {
+            // Bỏ qua lỗi tạo thông báo.
+        }
 
         InvoiceResponse after = toResponse(invoice, items);
 

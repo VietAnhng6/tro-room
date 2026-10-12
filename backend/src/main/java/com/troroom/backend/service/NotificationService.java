@@ -7,6 +7,7 @@ import com.troroom.backend.entity.RentalRequest;
 import com.troroom.backend.entity.User;
 import com.troroom.backend.repository.NotificationRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -78,16 +79,18 @@ public class NotificationService {
 
     /**
      * Tạo thông báo cho khách thuê khi hóa đơn được phát hành.
+     *
+     * Chạy trong transaction riêng (REQUIRES_NEW) để nếu tạo thông báo lỗi
+     * thì không làm rollback việc phát hành hóa đơn.
      */
-    @Transactional
-    public void notifyInvoiceIssued(Invoice invoice) {
-        User landlord = invoice.getContract()
-                .getRoom()
-                .getBuilding()
-                .getLandlord();
-
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void notifyInvoiceIssued(
+            Invoice invoice,
+            User tenant,
+            User landlord
+    ) {
         Notification notification = new Notification();
-        notification.setUser(invoice.getContract().getTenant());
+        notification.setUser(tenant);
         notification.setType(Notification.Type.INVOICE_ISSUED);
         notification.setTitle("Hóa đơn tiền phòng đã được phát hành");
         notification.setMessage(
