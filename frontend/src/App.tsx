@@ -23,6 +23,7 @@ import TenantInvoices from './pages/TenantInvoices'
 import TenantContracts from './pages/TenantContracts'
 import Contracts from './pages/Contracts'
 import MeterReadings from './pages/MeterReadings'
+import Notifications from './pages/Notifications'
 /*
  * Trang 403 Forbidden
  */
@@ -211,12 +212,14 @@ function hasRouteAccess(path: string, role: string | null) {
   const permissions: Record<string, string[]> = {
       ADMIN: [
     '/dashboard',
+    '/notifications',
     '/profile',
     '/audit-logs',
     '/admin',
     ],
     LANDLORD: [
       '/dashboard',
+      '/notifications',
       '/profile',
       '/buildings',
       '/rooms',
@@ -228,6 +231,7 @@ function hasRouteAccess(path: string, role: string | null) {
     ],
     MANAGER: [
       '/dashboard',
+      '/notifications',
       '/profile',
       '/buildings',
       '/rooms',
@@ -238,6 +242,7 @@ function hasRouteAccess(path: string, role: string | null) {
     ],
     TENANT: [
       '/dashboard',
+      '/notifications',
       '/tenant/invoices',
       '/tenant/contracts',
       '/profile',
@@ -410,6 +415,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute path="/my-requests">
               <MyRequests />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute path="/notifications">
+              <Notifications />
             </ProtectedRoute>
           }
         />
