@@ -36,6 +36,10 @@ const PAGE_TITLES: Record<string, { title: string; category: string }> = {
   title: 'Nhập chỉ số điện nước',
   category: 'Quản lý',
   },
+  '/notifications': {
+  title: 'Thông báo',
+  category: 'Hệ thống',
+  },
 }
 
 export const MainLayout: React.FC = () => {
@@ -183,6 +187,12 @@ export const MainLayout: React.FC = () => {
       enabled: permissions.dashboard,
       path: '/dashboard',
     },
+    {
+    key: 'notifications',
+    title: 'Thông báo',
+    enabled: hasToken,
+    path: '/notifications',
+  },
     {
     key: 'meterReadings',
     title: 'Nhập chỉ số điện nước',
