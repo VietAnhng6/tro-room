@@ -123,6 +123,11 @@ public class BuildingController {
 
         building.setName(name.trim());
         building.setAddress(address.trim());
+        building.setDistrict(
+                district == null || district.isBlank()
+                        ? null
+                        : district.trim()
+        );
         building.setFloors(floors);
         building.setLandlord(landlord);
         building.setManager(manager);

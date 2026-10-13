@@ -36,9 +36,10 @@ public class ListingSpecification {
             Join<Object, Object> building =
                     room.join("building", JoinType.INNER);
 
-            return cb.equal(
-                    cb.lower(building.get("district")),
-                    district.toLowerCase()
+            String pattern = "%" + district.toLowerCase().trim() + "%";
+            return cb.or(
+                    cb.like(cb.lower(cb.coalesce(building.get("district"), "")), pattern),
+                    cb.like(cb.lower(cb.coalesce(building.get("address"), "")), pattern)
             );
         };
     }

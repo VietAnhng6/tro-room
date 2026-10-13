@@ -179,7 +179,9 @@ public class ListingSearchController {
 
                 room.getBuilding().getId(),
                 room.getBuilding().getName(),
-                room.getBuilding().getAddress(),
+                room.getBuilding().getDistrict() != null && !room.getBuilding().getDistrict().isBlank()
+                        ? room.getBuilding().getDistrict()
+                        : room.getBuilding().getAddress(),
                 room.getBuilding().getAddress(),
                 imageUrl
         );
