@@ -196,11 +196,8 @@ export default function Contracts() {
       if (!response.ok) throw new Error(await readError(response))
 
       setNotice('Gia hạn hợp đồng thành công.')
+      setSelected(null)
       await loadContracts()
-      await openRenewal({
-        ...selected,
-        rent: selected.rent,
-      })
     } catch (err) {
       setNotice(
         err instanceof Error ? err.message : 'Gia hạn hợp đồng thất bại',
@@ -216,7 +213,65 @@ export default function Contracts() {
       <p>Theo dõi, gia hạn và xem lịch sử hợp đồng thuê phòng.</p>
 
       {notice && !selected && (
-        <p role="status" style={{ color: '#15803d' }}>{notice}</p>
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            top: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 2000,
+            width: 'min(680px, calc(100vw - 32px))',
+            boxSizing: 'border-box',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            padding: '22px 26px',
+            borderRadius: 16,
+            border: `2px solid ${notice.toLowerCase().includes('thành công') ? '#16a34a' : '#dc2626'}`,
+            background: notice.toLowerCase().includes('thành công') ? '#f0fdf4' : '#fef2f2',
+            color: notice.toLowerCase().includes('thành công') ? '#166534' : '#991b1b',
+            boxShadow: '0 18px 50px rgba(15, 23, 42, 0.24)',
+            fontSize: 20,
+            fontWeight: 700,
+          }}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              flex: '0 0 44px',
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              display: 'grid',
+              placeItems: 'center',
+              background: notice.toLowerCase().includes('thành công') ? '#16a34a' : '#dc2626',
+              color: '#fff',
+              fontSize: 27,
+              lineHeight: 1,
+            }}
+          >
+            {notice.toLowerCase().includes('thành công') ? '✓' : '!' }
+          </span>
+          <span style={{ flex: 1 }}>{notice}</span>
+          <button
+            type="button"
+            aria-label="Đóng thông báo"
+            onClick={() => setNotice('')}
+            style={{
+              border: 0,
+              background: 'transparent',
+              color: 'inherit',
+              cursor: 'pointer',
+              fontSize: 26,
+              lineHeight: 1,
+              padding: 4,
+            }}
+          >
+            ×
+          </button>
+        </div>
       )}
 
       {loading && <p>Đang tải hợp đồng...</p>}

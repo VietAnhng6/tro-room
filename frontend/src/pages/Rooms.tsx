@@ -146,6 +146,15 @@ function Rooms() {
   const [listingModalRoom, setListingModalRoom] = useState<Room | null>(null)
   const [occupantsModalRoom, setOccupantsModalRoom] = useState<Room | null>(null)
 
+  // Room vacancy / early contract termination flow
+  const [statusModalRoom, setStatusModalRoom] = useState<Room | null>(null)
+  const [statusModalStep, setStatusModalStep] = useState<'warning' | 'reason' | 'confirm' | null>(null)
+  const [statusReason, setStatusReason] = useState('')
+  const [activeContractInfo, setActiveContractInfo] = useState<{ contractCode?: string; endDate?: string } | null>(null)
+  const [isEarlyTermination, setIsEarlyTermination] = useState(false)
+  const [statusModalError, setStatusModalError] = useState('')
+  const [statusModalLoading, setStatusModalLoading] = useState(false)
+
   // Images state inside Edit Modal
   const [images, setImages] = useState<RoomImageItem[]>([])
   const [loadingImages, setLoadingImages] = useState(false)
@@ -354,21 +363,98 @@ function Rooms() {
   async function changeStatus(room: Room, status: RoomStatus) {
     if (status === room.status) return
 
+    if (status === 'EMPTY' && room.status === 'RENTED') {
+      setStatusModalRoom(room)
+      setStatusModalStep(null)
+      setStatusReason('')
+      setStatusModalError('')
+      setActiveContractInfo(null)
+      setIsEarlyTermination(false)
+      setStatusModalLoading(true)
+      try {
+        const res = await fetch(`${API}/api/rooms/${room.id}/active-contract-check`, { headers })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(data.message || 'Không thể kiểm tra hợp đồng của phòng.')
+        if (data.hasActiveContract) {
+          setActiveContractInfo({ contractCode: data.contractCode, endDate: data.endDate })
+          setIsEarlyTermination(true)
+          setStatusModalStep('warning')
+        } else {
+          setStatusModalStep('reason')
+        }
+      } catch (err) {
+        setStatusModalError(err instanceof Error ? err.message : 'Không thể kiểm tra hợp đồng.')
+        setStatusModalStep('reason')
+      } finally {
+        setStatusModalLoading(false)
+      }
+      return
+    }
+
+    await submitRoomStatus(room, status)
+  }
+
+  async function submitRoomStatus(room: Room, status: RoomStatus, reason?: string, confirmEarlyTermination = false) {
     try {
       const res = await fetch(`${API}/api/rooms/${room.id}/status`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, ...(reason !== undefined ? { reason } : {}), confirmEarlyTermination }),
       })
-
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const message = await res.text()
-        throw new Error(message || 'Không thể cập nhật trạng thái.')
+        if (res.status === 409 && data.code === 'ACTIVE_CONTRACT') {
+          setActiveContractInfo({ contractCode: data.contractCode, endDate: data.endDate })
+          setIsEarlyTermination(true)
+          setStatusModalRoom(room)
+          setStatusModalStep('warning')
+          return
+        }
+        throw new Error(data.message || 'Không thể cập nhật trạng thái phòng.')
       }
 
+      setStatusModalRoom(null)
+      setStatusModalStep(null)
+      setStatusReason('')
       await loadRooms()
+      window.alert(data.message || 'Cập nhật trạng thái phòng thành công.')
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Không thể cập nhật trạng thái.')
+      setStatusModalError(err instanceof Error ? err.message : 'Không thể cập nhật trạng thái phòng.')
+      if (!statusModalRoom) window.alert(err instanceof Error ? err.message : 'Không thể cập nhật trạng thái phòng.')
+    }
+  }
+
+  function closeStatusModal() {
+    setStatusModalRoom(null)
+    setStatusModalStep(null)
+    setStatusReason('')
+    setStatusModalError('')
+    setActiveContractInfo(null)
+    setIsEarlyTermination(false)
+  }
+
+  function continueToReason() {
+    setStatusModalError('')
+    setStatusModalStep('reason')
+  }
+
+  function continueToFinalConfirmation() {
+    if (statusReason.trim().length < 5) {
+      setStatusModalError('Vui lòng nhập lý do cụ thể, ít nhất 5 ký tự.')
+      return
+    }
+    setStatusModalError('')
+    setStatusModalStep('confirm')
+  }
+
+  async function confirmRoomVacancy() {
+    if (!statusModalRoom) return
+    setStatusModalLoading(true)
+    setStatusModalError('')
+    try {
+      await submitRoomStatus(statusModalRoom, 'EMPTY', statusReason.trim(), isEarlyTermination)
+    } finally {
+      setStatusModalLoading(false)
     }
   }
 
@@ -1689,6 +1775,63 @@ function Rooms() {
                 backgroundColor: '#0f172a',
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRM ROOM VACANCY / EARLY TERMINATION MODAL */}
+      {statusModalRoom && (
+        <div
+          role="presentation"
+          onClick={(event) => { if (event.target === event.currentTarget && !statusModalLoading) closeStatusModal() }}
+          style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(15, 23, 42, 0.62)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        >
+          <div role="dialog" aria-modal="true" aria-labelledby="room-vacancy-title" style={{ width: '100%', maxWidth: 560, background: '#fff', borderRadius: 18, boxShadow: '0 24px 80px rgba(0,0,0,.28)', padding: 28, boxSizing: 'border-box' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 18 }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: statusModalStep === 'warning' ? '#fff7ed' : '#eff6ff', color: statusModalStep === 'warning' ? '#c2410c' : '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 25, flexShrink: 0 }}>
+                {statusModalStep === 'warning' ? '⚠' : statusModalStep === 'confirm' ? '✓' : '⌂'}
+              </div>
+              <div style={{ flex: 1 }}>
+                <h2 id="room-vacancy-title" style={{ margin: '2px 0 8px', color: '#0f172a', fontSize: 22, lineHeight: 1.3 }}>
+                  {statusModalStep === 'warning' ? 'Hợp đồng vẫn còn hiệu lực' : statusModalStep === 'confirm' ? 'Xác nhận kết thúc hợp đồng' : 'Chuyển phòng sang trạng thái Trống'}
+                </h2>
+                <p style={{ margin: 0, color: '#475569', lineHeight: 1.65 }}>
+                  Phòng <strong>{statusModalRoom.code}</strong>{statusModalRoom.buildingName ? ` · Tòa ${statusModalRoom.buildingName}` : ''}.
+                  {statusModalStep === 'warning'
+                    ? ` Hợp đồng ${activeContractInfo?.contractCode || ''} còn hiệu lực đến ${activeContractInfo?.endDate || 'chưa xác định'}. Bạn có muốn tiếp tục xử lý kết thúc hợp đồng trước hạn không?`
+                    : statusModalStep === 'confirm'
+                      ? ' Khi xác nhận, hợp đồng sẽ ghi nhận ngày kết thúc thực tế hôm nay và phòng sẽ được chuyển sang Trống. Thao tác này sẽ được lưu vào lịch sử.'
+                      : statusModalStep === 'reason'
+                        ? isEarlyTermination ? ' Hãy nhập lý do kết thúc hợp đồng trước hạn.' : ' Hợp đồng hiện không còn hiệu lực. Hãy nhập lý do chuyển phòng sang Trống.'
+                        : ' Đang kiểm tra hợp đồng liên quan đến phòng này...'}
+                </p>
+              </div>
+            </div>
+
+            {statusModalStep === 'reason' && (
+              <div style={{ marginBottom: 16 }}>
+                <label htmlFor="room-vacancy-reason" style={{ display: 'block', fontWeight: 700, color: '#334155', marginBottom: 8 }}>Lý do {isEarlyTermination ? 'kết thúc hợp đồng trước hạn' : 'chuyển phòng sang trống'} <span style={{ color: '#dc2626' }}>*</span></label>
+                <textarea id="room-vacancy-reason" value={statusReason} onChange={(e) => { setStatusReason(e.target.value); setStatusModalError('') }} rows={4} maxLength={1000} placeholder="Ví dụ: Khách đã chuyển đi, bàn giao phòng ngày hôm nay..." style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', border: '1px solid #cbd5e1', borderRadius: 10, padding: 12, fontSize: 14, lineHeight: 1.5, outlineColor: '#2563eb' }} />
+                <div style={{ textAlign: 'right', color: '#64748b', fontSize: 12, marginTop: 4 }}>{statusReason.length}/1000 ký tự · Tối thiểu 5 ký tự</div>
+              </div>
+            )}
+
+            {statusModalStep === 'confirm' && (
+              <div style={{ border: '1px solid #e2e8f0', background: '#f8fafc', borderRadius: 10, padding: 14, marginBottom: 16 }}>
+                <div style={{ fontWeight: 700, color: '#334155', marginBottom: 6 }}>Lý do đã nhập</div>
+                <div style={{ color: '#475569', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{statusReason.trim()}</div>
+                {isEarlyTermination && <div style={{ color: '#9a3412', marginTop: 10, fontSize: 13 }}>Ngày kết thúc thực tế được ghi nhận: {new Date().toLocaleDateString('vi-VN')}.</div>}
+              </div>
+            )}
+
+            {statusModalError && <div role="alert" style={{ color: '#b91c1c', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 12px', marginBottom: 14, fontSize: 14 }}>{statusModalError}</div>}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap', marginTop: 22 }}>
+              <button type="button" disabled={statusModalLoading} onClick={closeStatusModal} style={{ border: '1px solid #cbd5e1', background: '#fff', color: '#334155', borderRadius: 9, padding: '11px 18px', fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
+              {statusModalStep === 'warning' && <button type="button" disabled={statusModalLoading} onClick={continueToReason} style={{ border: 0, background: '#ea580c', color: '#fff', borderRadius: 9, padding: '11px 18px', fontWeight: 750, cursor: 'pointer' }}>Tiếp tục xử lý kết thúc hợp đồng</button>}
+              {statusModalStep === 'reason' && <button type="button" disabled={statusModalLoading || statusReason.trim().length < 5} onClick={continueToFinalConfirmation} style={{ border: 0, background: '#2563eb', color: '#fff', borderRadius: 9, padding: '11px 18px', fontWeight: 750, cursor: statusReason.trim().length < 5 ? 'not-allowed' : 'pointer', opacity: statusReason.trim().length < 5 ? .55 : 1 }}>Tiếp tục</button>}
+              {statusModalStep === 'confirm' && <button type="button" disabled={statusModalLoading} onClick={confirmRoomVacancy} style={{ border: 0, background: '#15803d', color: '#fff', borderRadius: 9, padding: '11px 18px', fontWeight: 750, cursor: 'pointer' }}>{statusModalLoading ? 'Đang xử lý...' : 'Xác nhận kết thúc và chuyển phòng'}</button>}
+            </div>
           </div>
         </div>
       )}

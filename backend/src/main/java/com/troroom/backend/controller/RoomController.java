@@ -4,10 +4,12 @@ import com.troroom.backend.dto.RoomResponse;
 import com.troroom.backend.entity.Building;
 import com.troroom.backend.entity.Listing;
 import com.troroom.backend.entity.Room;
+import com.troroom.backend.entity.RentalContract;
 import com.troroom.backend.entity.User;
 import com.troroom.backend.repository.BuildingRepository;
 import com.troroom.backend.repository.ListingRepository;
 import com.troroom.backend.repository.RoomRepository;
+import com.troroom.backend.repository.RentalContractRepository;
 import com.troroom.backend.service.AuditLogService;
 
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -27,17 +30,20 @@ public class RoomController {
     private final RoomRepository roomRepository;
     private final BuildingRepository buildingRepository;
     private final ListingRepository listingRepository;
+    private final RentalContractRepository rentalContractRepository;
     private final AuditLogService auditLogService;
 
     public RoomController(
             RoomRepository roomRepository,
             BuildingRepository buildingRepository,
             ListingRepository listingRepository,
+            RentalContractRepository rentalContractRepository,
             AuditLogService auditLogService
     ) {
         this.roomRepository = roomRepository;
         this.buildingRepository = buildingRepository;
         this.listingRepository = listingRepository;
+        this.rentalContractRepository = rentalContractRepository;
         this.auditLogService = auditLogService;
     }
 
@@ -547,6 +553,41 @@ public ResponseEntity<?> getRooms(
      * LANDLORD + MANAGER
      * =========================================================
      */
+    @GetMapping("/{id}/active-contract-check")
+    public ResponseEntity<?> checkActiveContract(
+            Authentication authentication,
+            @PathVariable Long id
+    ) {
+        User currentUser = (User) authentication.getPrincipal();
+        if (!isLandlord(currentUser) && !isManager(currentUser)) {
+            return ResponseEntity.status(403).body(Map.of("message", "Bạn không có quyền kiểm tra hợp đồng của phòng này"));
+        }
+
+        Room room = roomRepository.findById(id).orElse(null);
+        if (room == null) return ResponseEntity.notFound().build();
+        if (!canManageBuilding(currentUser, room.getBuilding())) {
+            return ResponseEntity.status(403).body(Map.of("message", "Bạn không có quyền quản lý phòng này"));
+        }
+
+        LocalDate today = LocalDate.now();
+        RentalContract active = rentalContractRepository.findByRoomOrderByStartDateDesc(room)
+                .stream()
+                .filter(c -> !Boolean.TRUE.equals(c.getTerminated()))
+                .filter(c -> c.getStartDate() != null && !c.getStartDate().isAfter(today))
+                .filter(c -> c.getEndDate() != null && !c.getEndDate().isBefore(today))
+                .findFirst()
+                .orElse(null);
+
+        if (active == null) {
+            return ResponseEntity.ok(Map.of("hasActiveContract", false));
+        }
+        return ResponseEntity.ok(Map.of(
+                "hasActiveContract", true,
+                "contractCode", active.getContractCode(),
+                "endDate", active.getEndDate().toString()
+        ));
+    }
+
     @PutMapping("/{id}/status")
     @Transactional
     public ResponseEntity<?> updateRoomStatus(
@@ -554,84 +595,95 @@ public ResponseEntity<?> getRooms(
             @PathVariable Long id,
             @RequestBody Map<String, Object> request
     ) {
-
-        User currentUser =
-                (User) authentication.getPrincipal();
-
+        User currentUser = (User) authentication.getPrincipal();
         if (!isLandlord(currentUser) && !isManager(currentUser)) {
-
-            return ResponseEntity.status(403)
-                    .body(Map.of(
-                            "message",
-                            "Bạn không có quyền đổi trạng thái phòng"
-                    ));
+            return ResponseEntity.status(403).body(Map.of("message", "Bạn không có quyền đổi trạng thái phòng"));
         }
 
-        Room room =
-                roomRepository
-                        .findById(id)
-                        .orElse(null);
-
-        if (room == null) {
-            return ResponseEntity.notFound().build();
+        Room room = roomRepository.findById(id).orElse(null);
+        if (room == null) return ResponseEntity.notFound().build();
+        if (!canManageBuilding(currentUser, room.getBuilding())) {
+            return ResponseEntity.status(403).body(Map.of("message", "Bạn không có quyền đổi trạng thái phòng này"));
         }
 
-        if (!canManageBuilding(
-                currentUser,
-                room.getBuilding()
-        )) {
-
-            return ResponseEntity.status(403)
-                    .body(Map.of(
-                            "message",
-                            "Bạn không có quyền đổi trạng thái phòng này"
-                    ));
-        }
-
-        String statusValue =
-                (String) request.get("status");
-
+        String statusValue = request.get("status") instanceof String ? (String) request.get("status") : null;
         if (statusValue == null || statusValue.isBlank()) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of(
-                            "message",
-                            "Trạng thái không được để trống"
-                    ));
+            return ResponseEntity.badRequest().body(Map.of("message", "Trạng thái không được để trống"));
         }
 
         Room.Status status;
-
         try {
-
-            status =
-                    Room.Status.valueOf(
-                            statusValue.toUpperCase()
-                    );
-
+            status = Room.Status.valueOf(statusValue.toUpperCase());
         } catch (IllegalArgumentException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of(
-                            "message",
-                            "Trạng thái không hợp lệ. Dùng EMPTY, DEPOSITED, RENTED hoặc STOPPED"
-                    ));
+            return ResponseEntity.badRequest().body(Map.of("message", "Trạng thái không hợp lệ. Dùng EMPTY, DEPOSITED, RENTED hoặc STOPPED"));
         }
 
-        Map<String, Object> beforeData =
-                Map.of(
-                        "id", room.getId(),
-                        "code", room.getCode(),
-                        "status", room.getStatus().name()
-                );
+        String reason = request.get("reason") instanceof String ? ((String) request.get("reason")).trim() : "";
+        boolean confirmEarlyTermination = Boolean.TRUE.equals(request.get("confirmEarlyTermination"));
+        boolean endingRentedRoom = status == Room.Status.EMPTY && room.getStatus() == Room.Status.RENTED;
+
+        if (endingRentedRoom && reason.length() < 5) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Vui lòng nhập lý do ít nhất 5 ký tự"));
+        }
+
+        LocalDate today = LocalDate.now();
+        RentalContract activeContract = null;
+        if (endingRentedRoom) {
+            activeContract = rentalContractRepository.findByRoomOrderByStartDateDesc(room)
+                    .stream()
+                    .filter(c -> !Boolean.TRUE.equals(c.getTerminated()))
+                    .filter(c -> c.getStartDate() != null && !c.getStartDate().isAfter(today))
+                    .filter(c -> c.getEndDate() != null && !c.getEndDate().isBefore(today))
+                    .findFirst()
+                    .orElse(null);
+
+            if (activeContract != null && !confirmEarlyTermination) {
+                return ResponseEntity.status(409).body(Map.of(
+                        "code", "ACTIVE_CONTRACT",
+                        "message", "Hợp đồng " + activeContract.getContractCode() + " vẫn còn hiệu lực đến " + activeContract.getEndDate() + ". Cần xác nhận kết thúc hợp đồng trước hạn.",
+                        "contractCode", activeContract.getContractCode(),
+                        "endDate", activeContract.getEndDate().toString()
+                ));
+            }
+        }
+
+        Map<String, Object> beforeRoom = Map.of(
+                "id", room.getId(),
+                "code", room.getCode(),
+                "status", room.getStatus().name()
+        );
+
+        // Khi kết thúc hợp đồng trước hạn, cập nhật hợp đồng, phòng và audit trong cùng transaction.
+        // Nếu một thao tác lưu thất bại, toàn bộ transaction sẽ rollback.
+        if (endingRentedRoom && activeContract != null) {
+            Map<String, Object> beforeContract = Map.of(
+                    "contractCode", activeContract.getContractCode(),
+                    "startDate", String.valueOf(activeContract.getStartDate()),
+                    "endDate", String.valueOf(activeContract.getEndDate()),
+                    "terminated", Boolean.TRUE.equals(activeContract.getTerminated())
+            );
+
+            activeContract.setTerminated(true);
+            activeContract.setTerminatedAt(today);
+            activeContract.setTerminationReason(reason);
+            // Ngày kết thúc hợp đồng được cập nhật thành ngày thực tế kết thúc.
+            activeContract.setEndDate(today);
+            rentalContractRepository.saveAndFlush(activeContract);
+
+            Map<String, Object> afterContract = Map.of(
+                    "contractCode", activeContract.getContractCode(),
+                    "startDate", String.valueOf(activeContract.getStartDate()),
+                    "endDate", today.toString(),
+                    "terminated", true,
+                    "terminatedAt", today.toString(),
+                    "terminationReason", reason
+            );
+            auditLogService.log(currentUser, "EARLY_TERMINATION", "RENTAL_CONTRACT", activeContract.getId(), beforeContract, afterContract);
+        }
 
         room.setStatus(status);
+        roomRepository.saveAndFlush(room);
 
-        roomRepository.save(room);
-
-        // Khi phòng chuyển sang Đang thuê, tất cả tin đăng của phòng
-        // chuyển sang Đã cho thuê trong cùng transaction. Nếu cập nhật
-        // tin đăng hoặc ghi audit thất bại, thay đổi trạng thái phòng cũng rollback.
         if (status == Room.Status.RENTED) {
             listingRepository.findAllByRoom(room).forEach(listing -> {
                 if (listing.getStatus() != Listing.Status.RENTED) {
@@ -641,27 +693,20 @@ public ResponseEntity<?> getRooms(
             });
         }
 
-        auditLogService.log(
-                currentUser,
-                "UPDATE",
-                "ROOM",
-                room.getId(),
-                beforeData,
-                Map.of(
-                        "id", room.getId(),
-                        "code", room.getCode(),
-                        "status", room.getStatus().name()
-                )
+        Map<String, Object> afterRoom = Map.of(
+                "id", room.getId(),
+                "code", room.getCode(),
+                "status", room.getStatus().name(),
+                "reason", endingRentedRoom ? reason : ""
         );
+        auditLogService.log(currentUser, "UPDATE", "ROOM", room.getId(), beforeRoom, afterRoom);
 
-        return ResponseEntity.ok(
-                Map.of(
-                        "message",
-                        "Cập nhật trạng thái phòng thành công",
-                        "status",
-                        room.getStatus().name()
-                )
-        );
+        return ResponseEntity.ok(Map.of(
+                "message", endingRentedRoom && activeContract != null
+                        ? "Đã kết thúc hợp đồng trước hạn và chuyển phòng sang Trống thành công"
+                        : "Cập nhật trạng thái phòng thành công",
+                "status", room.getStatus().name()
+        ));
     }
 
     /*

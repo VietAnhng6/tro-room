@@ -77,6 +77,18 @@ public class RentalContract {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    /** True when the landlord terminated this contract before its original end date. */
+    @Column(name = "terminated")
+    private Boolean terminated = false;
+
+    /** Actual date the contract was ended early. */
+    @Column(name = "terminated_at")
+    private LocalDate terminatedAt;
+
+    /** Reason recorded by the landlord when ending the contract early. */
+    @Column(name = "termination_reason", length = 1000)
+    private String terminationReason;
+
     public RentalContract() {
     }
 
@@ -186,5 +198,29 @@ public class RentalContract {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Boolean getTerminated() {
+        return terminated;
+    }
+
+    public void setTerminated(Boolean terminated) {
+        this.terminated = terminated;
+    }
+
+    public LocalDate getTerminatedAt() {
+        return terminatedAt;
+    }
+
+    public void setTerminatedAt(LocalDate terminatedAt) {
+        this.terminatedAt = terminatedAt;
+    }
+
+    public String getTerminationReason() {
+        return terminationReason;
+    }
+
+    public void setTerminationReason(String terminationReason) {
+        this.terminationReason = terminationReason;
     }
 }
