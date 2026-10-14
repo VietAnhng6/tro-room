@@ -105,7 +105,10 @@ public class SecurityConfig {
                 "/api/auth/change-password"
                 )
                 .authenticated()
-
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/payment-reports/proof/**"
+                ).permitAll()
                 // Các API khác phải đăng nhập
                 .anyRequest()
                 .authenticated()

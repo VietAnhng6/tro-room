@@ -7,9 +7,10 @@ import com.troroom.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.util.List;
 import java.util.Optional;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
@@ -43,15 +44,25 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
             @Param("buildingId") Long buildingId,
             @Param("period") String period);
 
-    /** Chỉ lấy hóa đơn đã phát hành của khách thuê. */
-    @Query("select i from Invoice i "
-            + "join fetch i.contract c "
-            + "join fetch i.room r "
-            + "join fetch r.building "
-            + "where c.tenant = :tenant "
-            + "and i.status = :status "
-            + "order by i.period desc")
-    List<Invoice> findByTenant(
-            @Param("tenant") User tenant,
-            @Param("status") Invoice.Status status);
+        /** Chỉ lấy hóa đơn đã phát hành của khách thuê. */
+        @Query("select i from Invoice i "
+                + "join fetch i.contract c "
+                + "join fetch i.room r "
+                + "join fetch r.building "
+                + "where c.tenant = :tenant "
+                + "and i.status = :status "
+                + "order by i.period desc")
+        List<Invoice> findByTenant(
+                @Param("tenant") User tenant,
+                @Param("status") Invoice.Status status);
+                @Lock(LockModeType.PESSIMISTIC_WRITE)
+        @Query("select i from Invoice i "
+                + "join fetch i.contract c "
+                + "join fetch c.tenant "
+                + "join fetch i.room r "
+                + "join fetch r.building "
+                + "where i.id = :invoiceId")
+        Optional<Invoice> findByIdForPaymentUpdate(
+                @Param("invoiceId") Long invoiceId
+        );
 }

@@ -24,6 +24,8 @@ import TenantContracts from './pages/TenantContracts'
 import Contracts from './pages/Contracts'
 import MeterReadings from './pages/MeterReadings'
 import Notifications from './pages/Notifications'
+import TenantPaymentReports from './pages/TenantPaymentReports'
+import LandlordPaymentReports from './pages/LandlordPaymentReports'
 /*
  * Trang 403 Forbidden
  */
@@ -228,6 +230,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/invoices',
       '/contracts',
       '/meter-readings',
+      '/payment-reports',
     ],
     MANAGER: [
       '/dashboard',
@@ -387,10 +390,26 @@ export function AppRoutes() {
           }
         />
         <Route
+          path="/payment-reports"
+          element={
+            <ProtectedRoute path="/payment-reports">
+              <LandlordPaymentReports />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/tenant/invoices"
           element={
             <ProtectedRoute path="/tenant/invoices">
               <TenantInvoices />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tenant/payment-reports"
+          element={
+            <ProtectedRoute path="/tenant/invoices">
+              <TenantPaymentReports />
             </ProtectedRoute>
           }
         />
