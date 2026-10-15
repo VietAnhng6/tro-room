@@ -93,6 +93,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/invoices/**")
                 .access(permissionAuthorizationManager)
 
+                // S4-03: xem công nợ theo phòng và theo toà (Chủ nhà, Quản lý)
+                .requestMatchers("/api/debts/**")
+                .access(permissionAuthorizationManager)
+
                 // Audit Log: chỉ ADMIN được xem
                 .requestMatchers("/api/audit-logs/**")
                 .hasRole("ADMIN")
@@ -105,10 +109,7 @@ public class SecurityConfig {
                 "/api/auth/change-password"
                 )
                 .authenticated()
-                .requestMatchers(
-                    HttpMethod.GET,
-                    "/api/payment-reports/proof/**"
-                ).permitAll()
+
                 // Các API khác phải đăng nhập
                 .anyRequest()
                 .authenticated()

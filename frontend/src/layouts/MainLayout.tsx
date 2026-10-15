@@ -24,15 +24,6 @@ const PAGE_TITLES: Record<string, { title: string; category: string }> = {
   '/services': { title: 'Dịch vụ tòa nhà', category: 'Cấu hình' },
   '/invoices': { title: 'Hoá đơn tháng', category: 'Tài chính' },
   '/tenant/invoices': { title: 'Hóa đơn của tôi', category: 'Khách thuê' },
-  '/tenant/payment-reports': {
-  title: 'Báo cáo thanh toán',
-  category: 'Khách thuê',
-  },
-  '/payment-reports': {
-  title: 'Báo cáo thanh toán',
-  category: 'Tài chính',
-  },
-  '/tenant/contracts': { title: 'Hợp đồng của tôi', category: 'Khách thuê' },
   '/landlord/requests': { title: 'Yêu cầu thuê & Xem phòng', category: 'Xử lý' },
   '/my-requests': { title: 'Yêu cầu thuê của tôi', category: 'Khách thuê' },
   '/tenants': { title: 'Danh sách người thuê', category: 'Quản lý' },
@@ -43,10 +34,6 @@ const PAGE_TITLES: Record<string, { title: string; category: string }> = {
   '/meter-readings': {
   title: 'Nhập chỉ số điện nước',
   category: 'Quản lý',
-  },
-  '/notifications': {
-  title: 'Thông báo',
-  category: 'Hệ thống',
   },
 }
 
@@ -93,7 +80,6 @@ export const MainLayout: React.FC = () => {
         service: false,
         invoice: false,
         tenantInvoice: false,
-        tenantContract: false,
         profile: false,
         audit: false,
         admin: false,
@@ -101,6 +87,7 @@ export const MainLayout: React.FC = () => {
         myRequests: false,
         searchRooms: true,
         meterReadings: false,
+        debt: false,
       }
     }
 
@@ -114,15 +101,14 @@ export const MainLayout: React.FC = () => {
         service: false,
         invoice: false,
         tenantInvoice: false,
-        tenantContract: false,
         profile: true,
         audit: true,
         admin: true,
         landlordRequests: false,
-        landlordPaymentReports: false,
         myRequests: false,
         searchRooms: true,
         meterReadings: false,
+        debt: true,
       }
     }
 
@@ -136,15 +122,14 @@ export const MainLayout: React.FC = () => {
         service: true,
         invoice: true,
         tenantInvoice: false,
-        tenantContract: false,
         profile: true,
         audit: false,
         admin: false,
         landlordRequests: true,
-        landlordPaymentReports: true,
         myRequests: false,
         searchRooms: false,
         meterReadings: true,
+        debt: true,
       }
     }
 
@@ -158,15 +143,14 @@ export const MainLayout: React.FC = () => {
         service: true,
         invoice: true,
         tenantInvoice: false,
-        tenantContract: false,
         profile: true,
         audit: false,
         admin: false,
         landlordRequests: true,
-        landlordPaymentReports: false,
         myRequests: false,
         searchRooms: false,
         meterReadings: true,
+        debt: true,
       }
     }
 
@@ -180,15 +164,14 @@ export const MainLayout: React.FC = () => {
       service: false,
       invoice: false,
       tenantInvoice: true,
-      tenantContract: true,
       profile: true,
       audit: false,
       admin: false,
       landlordRequests: false,
-      landlordPaymentReports: false,
       myRequests: true,
       searchRooms: true,
       meterReadings: false,
+      debt: false,
     }
   }, [role, hasToken])
 
@@ -199,12 +182,6 @@ export const MainLayout: React.FC = () => {
       enabled: permissions.dashboard,
       path: '/dashboard',
     },
-    {
-    key: 'notifications',
-    title: 'Thông báo',
-    enabled: hasToken,
-    path: '/notifications',
-  },
     {
     key: 'meterReadings',
     title: 'Nhập chỉ số điện nước',
@@ -255,28 +232,10 @@ export const MainLayout: React.FC = () => {
       path: '/invoices',
     },
     {
-      key: 'landlordPaymentReports',
-      title: 'Báo cáo thanh toán',
-      enabled: permissions.landlordPaymentReports,
-      path: '/payment-reports',
-    },
-    {
       key: 'tenantInvoice',
       title: 'Hóa đơn của tôi',
       enabled: permissions.tenantInvoice,
       path: '/tenant/invoices',
-    },
-    {
-  key: 'tenantPaymentReports',
-  title: 'Báo cáo thanh toán',
-  enabled: permissions.tenantInvoice,
-  path: '/tenant/payment-reports',
-  },
-    {
-      key: 'tenantContract',
-      title: 'Hợp đồng của tôi',
-      enabled: permissions.tenantContract,
-      path: '/tenant/contracts',
     },
     {
       key: 'tenant',
@@ -289,6 +248,12 @@ export const MainLayout: React.FC = () => {
       title: 'Hợp đồng',
       enabled: permissions.contract,
       path: '/contracts',
+    },
+    {
+      key: 'debt',
+      title: 'Công nợ',
+      enabled: permissions.debt,
+      path: '/debts',
     },
     {
       key: 'profile',

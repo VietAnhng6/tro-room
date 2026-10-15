@@ -55,7 +55,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
         List<Invoice> findByTenant(
                 @Param("tenant") User tenant,
                 @Param("status") Invoice.Status status);
-                @Lock(LockModeType.PESSIMISTIC_WRITE)
+        @Lock(LockModeType.PESSIMISTIC_WRITE)
         @Query("select i from Invoice i "
                 + "join fetch i.contract c "
                 + "join fetch c.tenant "
@@ -65,4 +65,18 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
         Optional<Invoice> findByIdForPaymentUpdate(
                 @Param("invoiceId") Long invoiceId
         );
+
+    /** S4-03: Lấy các hóa đơn chưa trả hết của danh sách tòa nhà để tính công nợ. */
+    @Query("select i from Invoice i "
+            + "join fetch i.room r "
+            + "join fetch r.building b "
+            + "join fetch i.contract c "
+            + "left join fetch c.tenant t "
+            + "where b.id in :buildingIds "
+            + "and i.status = :status "
+            + "and i.totalAmount > i.paidAmount "
+            + "order by i.dueDate asc, i.id asc")
+    List<Invoice> findUnpaidInvoicesByBuildingIds(
+            @Param("buildingIds") List<Long> buildingIds,
+            @Param("status") Invoice.Status status);
 }

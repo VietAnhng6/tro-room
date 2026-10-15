@@ -60,6 +60,9 @@ public class Invoice {
     @Column(name = "total_amount", nullable = false)
     private long totalAmount;
 
+    @Column(name = "paid_amount", columnDefinition = "BIGINT DEFAULT 0")
+    private long paidAmount = 0L;
+
     @Column(name = "cancellation_reason", length = 500)
     private String cancellationReason;
 
@@ -178,6 +181,22 @@ public class Invoice {
 
     public void setCancellationReason(String cancellationReason) {
         this.cancellationReason = cancellationReason;
+    }
+
+    public long getPaidAmount() {
+        return paidAmount;
+    }
+
+    public void setPaidAmount(long paidAmount) {
+        this.paidAmount = paidAmount;
+    }
+
+    public long getRemainingAmount() {
+        return Math.max(0L, totalAmount - paidAmount);
+    }
+
+    public boolean isFullyPaid() {
+        return paidAmount >= totalAmount;
     }
 }
 

@@ -50,6 +50,14 @@ public class PermissionAuthorizationManager
                 return new AuthorizationDecision(true);
             }
         }
+        // S4-03: Chủ nhà, Quản lý, Admin được phép gọi API công nợ /api/debts/**
+        if (context.getRequest().getRequestURI().startsWith("/api/debts")) {
+            boolean canAccessDebts = user.getRole() == User.Role.LANDLORD
+                    || user.getRole() == User.Role.MANAGER
+                    || user.getRole() == User.Role.ADMIN;
+            return new AuthorizationDecision(canAccessDebts);
+        }
+
         String permission = getPermission(
                 context.getRequest().getRequestURI()
         );
@@ -106,7 +114,7 @@ public class PermissionAuthorizationManager
             return "METER_MANAGE";
         }
 
-        if (uri.startsWith("/api/invoices")) {
+        if (uri.startsWith("/api/invoices") || uri.startsWith("/api/debts")) {
             return "INVOICE_MANAGE";
         }
 
