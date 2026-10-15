@@ -1,9 +1,11 @@
+
 package com.troroom.backend.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
-/** S3-06: các DTO của màn hình phát hành hoá đơn tháng. */
+/** DTO của màn hình phát hành và theo dõi hóa đơn. */
 public final class InvoiceDtos {
 
     private InvoiceDtos() {
@@ -63,17 +65,32 @@ public final class InvoiceDtos {
             String cancellationReason,
             LocalDate issueDate,
             LocalDate dueDate,
-            List<ItemResponse> items
+            List<ItemResponse> items,
+            long paidAmount,
+            long outstandingAmount,
+            List<PaymentResponse> payments
     ) {
     }
 
+    /** Một lần thanh toán và thông tin kiểm toán liên quan. */
+    public record PaymentResponse(
+            Long id,
+            long amount,
+            LocalDate receivedDate,
+            String paymentMethod,
+            String status,
+            String confirmedByName,
+            String cancelReason,
+            LocalDateTime createdAt,
+            LocalDateTime cancelledAt
+    ) {
+    }
 
     public record EditInvoiceRequest(
             List<EditItemRequest> items,
             String reason
     ) {
     }
-
 
     public record EditItemRequest(
             Long id,
@@ -87,5 +104,4 @@ public final class InvoiceDtos {
             String note
     ) {
     }
-
 }
