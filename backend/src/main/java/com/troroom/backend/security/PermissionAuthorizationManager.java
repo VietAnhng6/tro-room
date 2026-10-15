@@ -49,6 +49,13 @@ public class PermissionAuthorizationManager
                     || uri.matches("/api/invoices/\\d+")) {
                 return new AuthorizationDecision(true);
             }
+
+            // S4-04: khách thuê được xem và tải bảng tất toán của hợp đồng
+            // của mình. Quyền sở hữu kiểm tra trong CheckoutService.
+            if (uri.matches("/api/checkout/\\d+")
+                    || uri.matches("/api/checkout/\\d+/pdf")) {
+                return new AuthorizationDecision(true);
+            }
         }
         // S4-03: Chủ nhà, Quản lý, Admin được phép gọi API công nợ /api/debts/**
         if (context.getRequest().getRequestURI().startsWith("/api/debts")) {
@@ -116,6 +123,10 @@ public class PermissionAuthorizationManager
 
         if (uri.startsWith("/api/invoices") || uri.startsWith("/api/debts")) {
             return "INVOICE_MANAGE";
+        }
+
+        if (uri.startsWith("/api/checkout")) {
+            return "CONTRACT_MANAGE";
         }
 
         if (uri.startsWith("/api/profile")) {

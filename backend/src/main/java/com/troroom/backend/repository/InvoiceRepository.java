@@ -79,4 +79,13 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     List<Invoice> findUnpaidInvoicesByBuildingIds(
             @Param("buildingIds") List<Long> buildingIds,
             @Param("status") Invoice.Status status);
+
+    /** S4-04: Các hóa đơn đã phát hành nhưng chưa trả hết của một hợp đồng. */
+    @Query("select i from Invoice i "
+            + "where i.contract.id = :contractId "
+            + "and i.status = com.troroom.backend.entity.Invoice.Status.ISSUED "
+            + "and i.totalAmount > i.paidAmount "
+            + "order by i.dueDate asc, i.id asc")
+    List<Invoice> findUnpaidByContractId(
+            @Param("contractId") Long contractId);
 }

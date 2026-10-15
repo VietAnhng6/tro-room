@@ -18,6 +18,9 @@ public interface MeterReadingRepository extends JpaRepository<MeterReading, Long
     Optional<MeterReading> findFirstByContractAndPeriodLessThanOrderByPeriodDesc(
             RentalContract contract, String period);
 
+    /** S4-04: bản ghi gần nhất của hợp đồng, dùng làm chỉ số chốt gần nhất. */
+    Optional<MeterReading> findFirstByContractOrderByPeriodDesc(RentalContract contract);
+
     /** Ba kỳ gần nhất trước kỳ chỉ định, dùng tính mức tiêu thụ trung bình. */
     List<MeterReading> findTop3ByContractAndPeriodLessThanOrderByPeriodDesc(
             RentalContract contract, String period);

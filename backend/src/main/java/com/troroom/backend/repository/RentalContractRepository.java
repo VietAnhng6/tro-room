@@ -38,6 +38,7 @@ public interface RentalContractRepository
             + "join fetch c.room r join fetch c.tenant "
             + "where r.building.id = :buildingId "
             + "and r.status = com.troroom.backend.entity.Room.Status.RENTED "
+            + "and c.status = com.troroom.backend.entity.RentalContract.Status.ACTIVE "
             + "and c.startDate <= :end and c.endDate >= :start "
             + "order by r.floor asc, r.code asc")
     List<RentalContract> findActiveForMeter(

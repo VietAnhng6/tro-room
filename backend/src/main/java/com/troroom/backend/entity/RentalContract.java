@@ -31,6 +31,15 @@ import java.time.LocalDateTime;
 )
 public class RentalContract {
 
+    /**
+     * Trạng thái lưu trữ của hợp đồng.
+     * S4-04: hợp đồng chuyển sang {@link #ENDED} khi trả phòng và tất toán xong.
+     */
+    public enum Status {
+        ACTIVE,
+        ENDED
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -76,6 +85,10 @@ public class RentalContract {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'ACTIVE'")
+    private Status status = Status.ACTIVE;
 
     /** True when the landlord terminated this contract before its original end date. */
     @Column(name = "terminated")
@@ -198,6 +211,14 @@ public class RentalContract {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
     }
 
     public Boolean getTerminated() {

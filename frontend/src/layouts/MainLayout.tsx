@@ -38,6 +38,7 @@ const PAGE_TITLES: Record<string, { title: string; category: string }> = {
   '/tenants': { title: 'Danh sách người thuê', category: 'Quản lý' },
   '/contracts': { title: 'Quản lý hợp đồng', category: 'Quản lý' },
   '/debts': { title: 'Xem công nợ theo phòng và theo toà', category: 'Quản lý' },
+  '/checkout': { title: 'Trả phòng & tất toán tiền cọc', category: 'Quản lý' },
   '/profile': { title: 'Hồ sơ cá nhân & CCCD', category: 'Tài khoản' },
   '/audit-logs': { title: 'Nhật ký hệ thống', category: 'Bảo mật' },
   '/admin': { title: 'Quản trị tài khoản', category: 'Hệ thống' },
@@ -104,6 +105,7 @@ export const MainLayout: React.FC = () => {
         searchRooms: true,
         meterReadings: false,
         debt: false,
+        checkout: false,
       }
     }
 
@@ -127,6 +129,7 @@ export const MainLayout: React.FC = () => {
         searchRooms: true,
         meterReadings: false,
         debt: true,
+        checkout: false,
       }
     }
 
@@ -150,6 +153,7 @@ export const MainLayout: React.FC = () => {
         searchRooms: false,
         meterReadings: true,
         debt: true,
+        checkout: true,
       }
     }
 
@@ -173,6 +177,7 @@ export const MainLayout: React.FC = () => {
         searchRooms: false,
         meterReadings: true,
         debt: true,
+        checkout: false,
       }
     }
 
@@ -196,6 +201,7 @@ export const MainLayout: React.FC = () => {
       searchRooms: true,
       meterReadings: false,
       debt: false,
+      checkout: false,
     }
   }, [role, hasToken])
 
@@ -302,6 +308,12 @@ export const MainLayout: React.FC = () => {
       title: 'Công nợ',
       enabled: permissions.debt,
       path: '/debts',
+    },
+    {
+      key: 'checkout',
+      title: 'Trả phòng',
+      enabled: permissions.checkout,
+      path: '/checkout',
     },
     {
       key: 'profile',

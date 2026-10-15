@@ -27,6 +27,7 @@ import Notifications from './pages/Notifications'
 import TenantPaymentReports from './pages/TenantPaymentReports'
 import LandlordPaymentReports from './pages/LandlordPaymentReports'
 import Debts from './pages/Debts'
+import Checkout from './pages/Checkout'
 /*
  * Trang 403 Forbidden
  */
@@ -234,6 +235,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/meter-readings',
       '/payment-reports',
       '/debts',
+      '/checkout',
     ],
     MANAGER: [
       '/dashboard',
@@ -471,6 +473,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute path="/debts">
               <Debts />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute path="/checkout">
+              <Checkout />
             </ProtectedRoute>
           }
         />

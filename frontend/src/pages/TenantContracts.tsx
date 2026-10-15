@@ -179,6 +179,32 @@ export default function TenantContracts() {
     }
   }
 
+  const downloadSettlementPdf = async () => {
+    if (!detail || downloading) return
+    setDownloading(true)
+    setDetailError('')
+    try {
+      const response = await fetch(`http://localhost:8080/api/checkout/${detail.id}/pdf`, { headers: authHeaders() })
+      if (!response.ok) throw new Error(await responseError(response))
+      const blob = await response.blob()
+      if (blob.type && !blob.type.toLowerCase().includes('pdf')) {
+        throw new Error('Máy chủ không trả về tệp PDF hợp lệ.')
+      }
+      const objectUrl = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = objectUrl
+      anchor.download = `tat-toan-${(detail.contractCode || String(detail.id)).replace(/[^a-zA-Z0-9_-]/g, '-')}.pdf`
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
+    } catch (err) {
+      setDetailError(err instanceof Error ? err.message : 'Không tải được bảng tất toán (hợp đồng có thể chưa được tất toán).')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   return (
     <main className="tenant-contracts-page">
       <style>{`
@@ -288,9 +314,16 @@ export default function TenantContracts() {
         <section className="tc-panel" aria-labelledby="tc-detail-title" aria-live="polite">
           <div className="tc-panel-heading">
             <h2 id="tc-detail-title">Chi tiết hợp đồng</h2>
-            {detail && <button type="button" className="tc-button" onClick={() => void downloadPdf()} disabled={downloading}>
-              {downloading ? 'Đang tạo PDF...' : 'Tải bản PDF'}
-            </button>}
+            {detail && (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" className="tc-button tc-button-secondary" onClick={() => void downloadSettlementPdf()} disabled={downloading}>
+                  {downloading ? 'Đang tạo PDF...' : 'Bảng tất toán'}
+                </button>
+                <button type="button" className="tc-button" onClick={() => void downloadPdf()} disabled={downloading}>
+                  {downloading ? 'Đang tạo PDF...' : 'Tải bản PDF'}
+                </button>
+              </div>
+            )}
           </div>
 
           {detailLoading ? (

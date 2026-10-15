@@ -97,6 +97,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/debts/**")
                 .access(permissionAuthorizationManager)
 
+                // S4-04: trả phòng và tất toán tiền cọc (Chủ nhà, Quản lý; khách xem của mình)
+                .requestMatchers("/api/checkout/**")
+                .access(permissionAuthorizationManager)
+
                 // Audit Log: chỉ ADMIN được xem
                 .requestMatchers("/api/audit-logs/**")
                 .hasRole("ADMIN")

@@ -61,6 +61,13 @@ public class PermissionDataInitializer {
                     "INVOICE_MANAGE"
             );
 
+            // S4-04: trả phòng và tất toán tiền cọc
+            addIfNotExists(
+                    repository,
+                    User.Role.LANDLORD,
+                    "CONTRACT_MANAGE"
+            );
+
             // MANAGER
             addIfNotExists(
                     repository,
@@ -79,6 +86,13 @@ public class PermissionDataInitializer {
                     repository,
                     User.Role.MANAGER,
                     "INVOICE_MANAGE"
+            );
+
+            // S4-04: quản lý hỗ trợ trả phòng và tất toán
+            addIfNotExists(
+                    repository,
+                    User.Role.MANAGER,
+                    "CONTRACT_MANAGE"
             );
 
             // TENANT
