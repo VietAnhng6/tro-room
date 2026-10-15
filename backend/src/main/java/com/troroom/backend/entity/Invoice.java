@@ -1,3 +1,4 @@
+
 package com.troroom.backend.entity;
 
 import jakarta.persistence.*;
@@ -6,16 +7,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * S3-06: Hoá đơn tháng của một phòng (theo hợp đồng) trong một kỳ.
- *
- * Mỗi hợp đồng chỉ có một hoá đơn cho một kỳ (yyyy-MM). Tổng tiền và các
- * khoản được lưu lại để tra cứu sau này, không phụ thuộc vào việc sửa đơn giá
- * hoặc chỉ số về sau.
+ * S3-06: Hoa don thang cua mot phong theo hop dong.
+ * S4-02: Bo sung trang thai thanh toan mot phan va da thanh toan.
  */
 @Entity
 @Table(
         name = "invoices",
-
         indexes = {
                 @Index(
                         name = "idx_invoice_room_period",
@@ -30,9 +27,11 @@ import java.time.LocalDateTime;
 public class Invoice {
 
     public enum Status {
-        DRAFT,      // Nháp: mới phát hành hàng loạt, chưa gửi cho khách
-        ISSUED,     // Đã phát hành: khách nhìn thấy
-        CANCELLED   // Đã huỷ (kèm lý do)
+        DRAFT,
+        ISSUED,
+        PARTIALLY_PAID,
+        PAID,
+        CANCELLED
     }
 
     @Id
@@ -50,7 +49,7 @@ public class Invoice {
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
-    /** Kỳ áp dụng, dạng yyyy-MM. */
+    /** Ky ap dung, dang yyyy-MM. */
     @Column(nullable = false, length = 7)
     private String period;
 
@@ -79,7 +78,7 @@ public class Invoice {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    /** Khoá lạc quan: hai người sửa cùng lúc thì người lưu sau nhận lỗi. */
+    /** Khoa lac quan. */
     @Version
     @Column(name = "row_version", nullable = false)
     private long version;
@@ -171,7 +170,7 @@ public class Invoice {
         this.createdAt = createdAt;
     }
 
-       public long getVersion() {
+    public long getVersion() {
         return version;
     }
 
@@ -199,4 +198,3 @@ public class Invoice {
         return paidAmount >= totalAmount;
     }
 }
-

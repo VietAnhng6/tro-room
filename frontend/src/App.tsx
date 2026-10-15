@@ -20,8 +20,12 @@ import AuditLogs from './pages/AuditLogs'
 import Admin from './pages/Admin'
 import Invoices from './pages/Invoices'
 import TenantInvoices from './pages/TenantInvoices'
+import TenantContracts from './pages/TenantContracts'
 import Contracts from './pages/Contracts'
 import MeterReadings from './pages/MeterReadings'
+import Notifications from './pages/Notifications'
+import TenantPaymentReports from './pages/TenantPaymentReports'
+import LandlordPaymentReports from './pages/LandlordPaymentReports'
 import Debts from './pages/Debts'
 /*
  * Trang 403 Forbidden
@@ -209,15 +213,17 @@ function hasRouteAccess(path: string, role: string | null) {
   }
 
   const permissions: Record<string, string[]> = {
-      ADMIN: [
-    '/dashboard',
-    '/profile',
-    '/audit-logs',
-    '/admin',
-    '/debts',
+    ADMIN: [
+      '/dashboard',
+      '/notifications',
+      '/profile',
+      '/audit-logs',
+      '/admin',
+      '/debts',
     ],
     LANDLORD: [
       '/dashboard',
+      '/notifications',
       '/profile',
       '/buildings',
       '/rooms',
@@ -226,10 +232,12 @@ function hasRouteAccess(path: string, role: string | null) {
       '/invoices',
       '/contracts',
       '/meter-readings',
+      '/payment-reports',
       '/debts',
     ],
     MANAGER: [
       '/dashboard',
+      '/notifications',
       '/profile',
       '/buildings',
       '/rooms',
@@ -241,7 +249,10 @@ function hasRouteAccess(path: string, role: string | null) {
     ],
     TENANT: [
       '/dashboard',
+      '/notifications',
       '/tenant/invoices',
+      '/tenant/payment-reports',
+      '/tenant/contracts',
       '/profile',
       '/my-requests',
       '/search-rooms',
@@ -384,10 +395,42 @@ export function AppRoutes() {
           }
         />
         <Route
+          path="/payment-reports"
+          element={
+            <ProtectedRoute path="/payment-reports">
+              <LandlordPaymentReports />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/tenant/invoices"
           element={
             <ProtectedRoute path="/tenant/invoices">
               <TenantInvoices />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tenant/payment-reports"
+          element={
+            <ProtectedRoute path="/tenant/invoices">
+              <TenantPaymentReports />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tenant/contracts"
+          element={
+            <ProtectedRoute path="/tenant/contracts">
+              <TenantContracts />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute path="/notifications">
+              <Notifications />
             </ProtectedRoute>
           }
         />

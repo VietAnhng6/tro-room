@@ -26,11 +26,13 @@ public class InvoiceService {
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final int DEFAULT_DUE_DAYS = 7;
 
+    
     private final BuildingRepository buildingRepository;
     private final RentalContractRepository contractRepository;
     private final ContractRenewalRepository renewalRepository;
     private final MeterReadingRepository meterRepository;
     private final InvoiceRepository invoiceRepository;
+    private final InvoicePaymentRepository invoicePaymentRepository;
     private final InvoiceItemRepository itemRepository;
     private final RoomServiceRepository roomServiceRepository;
     private final BuildingServiceRepository buildingServiceRepository;
@@ -45,6 +47,7 @@ public class InvoiceService {
             ContractRenewalRepository renewalRepository,
             MeterReadingRepository meterRepository,
             InvoiceRepository invoiceRepository,
+            InvoicePaymentRepository invoicePaymentRepository,
             InvoiceItemRepository itemRepository,
             RoomServiceRepository roomServiceRepository,
             BuildingServiceRepository buildingServiceRepository,
@@ -58,6 +61,7 @@ public class InvoiceService {
         this.renewalRepository = renewalRepository;
         this.meterRepository = meterRepository;
         this.invoiceRepository = invoiceRepository;
+        this.invoicePaymentRepository = invoicePaymentRepository;
         this.itemRepository = itemRepository;
         this.roomServiceRepository = roomServiceRepository;
         this.buildingServiceRepository = buildingServiceRepository;
@@ -66,6 +70,7 @@ public class InvoiceService {
         this.auditLogService = auditLogService;
         this.notificationService = notificationService;
     }
+
 
     // ---------------------------------------------------------------
     // Kiểm tra quyền truy cập tòa nhà
@@ -983,48 +988,86 @@ public class InvoiceService {
     // Chuyển hóa đơn sang DTO trả về
     // ---------------------------------------------------------------
 
-    private InvoiceResponse toResponse(
-            Invoice invoice,
-            List<InvoiceItem> items
-    ) {
-        RentalContract contract = invoice.getContract();
-        Room room = invoice.getRoom();
+    
+private InvoiceResponse toResponse(
+        Invoice invoice,
+        List<InvoiceItem> items
+) {
+    RentalContract contract = invoice.getContract();
+    Room room = invoice.getRoom();
 
-        List<ItemResponse> itemResponses = items.stream()
-                .map(i -> new ItemResponse(
-                        i.getId(),
-                        i.getLabel(),
-                        i.getType().name(),
-                        i.getQuantity(),
-                        i.getUnit(),
-                        i.getUnitPrice(),
-                        i.getAmount(),
-                        i.getPreviousReading(),
-                        i.getCurrentReading(),
-                        i.getNote()
-                ))
-                .toList();
+    List<ItemResponse> itemResponses = items.stream()
+            .map(i -> new ItemResponse(
+                    i.getId(),
+                    i.getLabel(),
+                    i.getType().name(),
+                    i.getQuantity(),
+                    i.getUnit(),
+                    i.getUnitPrice(),
+                    i.getAmount(),
+                    i.getPreviousReading(),
+                    i.getCurrentReading(),
+                    i.getNote()
+            ))
+            .toList();
 
-        return new InvoiceResponse(
-                invoice.getId(),
-                invoice.getInvoiceCode(),
-                contract != null ? contract.getId() : null,
-                contract != null ? contract.getContractCode() : null,
-                room != null ? room.getId() : null,
-                room != null ? room.getCode() : null,
-                contract != null && contract.getTenant() != null
-                        ? contract.getTenant().getName()
-                        : null,
-                invoice.getPeriod(),
-                invoice.getRentAmount(),
-                invoice.getTotalAmount(),
-                invoice.getStatus().name(),
-                invoice.getCancellationReason(),
-                invoice.getIssueDate(),
-                invoice.getDueDate(),
-                itemResponses
-        );
-    }
+    List<InvoicePayment> paymentEntities =
+            invoicePaymentRepository
+                    .findByInvoiceIdOrderByReceivedDateDescIdDesc(
+                            invoice.getId()
+                    );
+
+    long paidAmount = paymentEntities.stream()
+            .filter(p -> p.getStatus() == InvoicePayment.Status.CONFIRMED)
+            .mapToLong(InvoicePayment::getAmount)
+            .sum();
+
+    long outstandingAmount = Math.max(
+            0L,
+            invoice.getTotalAmount() - paidAmount
+    );
+
+    List<PaymentResponse> paymentResponses = paymentEntities.stream()
+            .map(p -> new PaymentResponse(
+                    p.getId(),
+                    p.getAmount(),
+                    p.getReceivedDate(),
+                    p.getPaymentMethod().name(),
+                    p.getStatus().name(),
+                    p.getConfirmedBy() != null
+                            ? p.getConfirmedBy().getName()
+                            : null,
+                    p.getCancelReason(),
+                    p.getCreatedAt(),
+                    p.getCancelledAt()
+            ))
+            .toList();
+
+    return new InvoiceResponse(
+            invoice.getId(),
+            invoice.getInvoiceCode(),
+            contract != null ? contract.getId() : null,
+            contract != null ? contract.getContractCode() : null,
+            room != null ? room.getId() : null,
+            room != null ? room.getCode() : null,
+            contract != null && contract.getTenant() != null
+                    ? contract.getTenant().getName()
+                    : null,
+            invoice.getPeriod(),
+            invoice.getRentAmount(),
+            invoice.getTotalAmount(),
+            invoice.getStatus().name(),
+            invoice.getCancellationReason(),
+            invoice.getIssueDate(),
+            invoice.getDueDate(),
+            itemResponses,
+            paidAmount,
+            outstandingAmount,
+            paymentResponses
+    );
+}
+
+
 
     // ---------------------------------------------------------------
     // Tra cứu đơn giá dịch vụ
