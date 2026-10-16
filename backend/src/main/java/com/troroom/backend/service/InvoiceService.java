@@ -26,7 +26,7 @@ public class InvoiceService {
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final int DEFAULT_DUE_DAYS = 7;
 
-    
+
     private final BuildingRepository buildingRepository;
     private final RentalContractRepository contractRepository;
     private final ContractRenewalRepository renewalRepository;
@@ -40,6 +40,8 @@ public class InvoiceService {
     private final RoommateRepository roommateRepository;
     private final AuditLogService auditLogService;
     private final NotificationService notificationService;
+    private final MaintenanceReportRepository maintenanceReportRepository;
+
 
     public InvoiceService(
             BuildingRepository buildingRepository,
@@ -54,7 +56,8 @@ public class InvoiceService {
             ServiceRepository serviceRepository,
             RoommateRepository roommateRepository,
             AuditLogService auditLogService,
-            NotificationService notificationService
+            NotificationService notificationService,
+            MaintenanceReportRepository maintenanceReportRepository
     ) {
         this.buildingRepository = buildingRepository;
         this.contractRepository = contractRepository;
@@ -69,6 +72,7 @@ public class InvoiceService {
         this.roommateRepository = roommateRepository;
         this.auditLogService = auditLogService;
         this.notificationService = notificationService;
+        this.maintenanceReportRepository = maintenanceReportRepository;
     }
 
 
@@ -408,7 +412,24 @@ public class InvoiceService {
                     occupants,
                     services
             );
+            List<MaintenanceReport> repairReports =
+        maintenanceReportRepository
+                .findByContractIdAndTenantInvoicePendingTrueAndStatus(
+                        contract.getId(),
+                        MaintenanceReport.Status.COMPLETED
+                );
 
+        List<MaintenanceReport> tenantRepairReports = repairReports.stream()
+                .filter(report ->
+                        report.getCostPayer() == MaintenanceReport.CostPayer.TENANT
+                                && report.getRepairCost() != null
+                                && report.getRepairCost() > 0
+                )
+                .toList();
+
+        long repairTotal = tenantRepairReports.stream()
+                .mapToLong(MaintenanceReport::getRepairCost)
+                .sum();
             Invoice invoice = new Invoice();
             invoice.setInvoiceCode(generateInvoiceCode());
             invoice.setContract(contract);
@@ -417,7 +438,7 @@ public class InvoiceService {
 
             // Lưu snapshot giá thuê tại thời điểm tạo hóa đơn.
             invoice.setRentAmount(rentForPeriod);
-            invoice.setTotalAmount(result.total());
+            invoice.setTotalAmount(Math.addExact(result.total(), repairTotal));
             invoice.setStatus(Invoice.Status.DRAFT);
             invoice.setIssueDate(issueDate);
             invoice.setDueDate(dueDate);
@@ -438,6 +459,20 @@ public class InvoiceService {
                 item.setCurrentReading(line.currentReading());
                 itemRepository.save(item);
             }
+            // S4-07: Thêm chi phí sửa chữa do khách thuê chịu.
+                for (MaintenanceReport report : tenantRepairReports) {
+                InvoiceItem item = new InvoiceItem();
+                item.setInvoice(saved);
+                item.setMaintenanceReport(report);
+                item.setLabel("Chi phí sửa chữa: " + report.getDeviceType());
+                item.setType(InvoiceItem.Type.ADJUSTMENT);
+                item.setQuantity(1);
+                item.setUnit("lần");
+                item.setUnitPrice(report.getRepairCost());
+                item.setAmount(report.getRepairCost());
+                item.setNote("Báo hỏng " + report.getReportCode());
+                itemRepository.save(item);
+                }
 
             auditLogService.log(
                     user,
@@ -880,6 +915,16 @@ public class InvoiceService {
         invoice.setStatus(Invoice.Status.ISSUED);
         invoiceRepository.save(invoice);
 
+        // S4-07: Đánh dấu chi phí sửa chữa đã được đưa vào hóa đơn.
+        for (InvoiceItem item : items) {
+        MaintenanceReport report = item.getMaintenanceReport();
+
+        if (report != null) {
+                report.setTenantInvoicePending(false);
+                maintenanceReportRepository.save(report);
+        }
+        }
+
         // Thông báo là thao tác phụ: nạp sẵn dữ liệu (trong transaction hiện
         // tại) rồi gọi sang transaction riêng; nếu lỗi cũng không chặn việc
         // phát hành hóa đơn.
@@ -967,6 +1012,16 @@ public class InvoiceService {
         invoice.setCancellationReason(cancellationReason);
         invoiceRepository.save(invoice);
 
+        // S4-07: Nếu hóa đơn bị hủy, đưa phí sửa chữa về trạng thái chờ.
+        for (InvoiceItem item : items) {
+        MaintenanceReport report = item.getMaintenanceReport();
+
+        if (report != null) {
+                report.setTenantInvoicePending(true);
+                maintenanceReportRepository.save(report);
+        }
+        }
+
         InvoiceResponse after = toResponse(invoice, items);
 
         auditLogService.log(
@@ -988,7 +1043,7 @@ public class InvoiceService {
     // Chuyển hóa đơn sang DTO trả về
     // ---------------------------------------------------------------
 
-    
+
 private InvoiceResponse toResponse(
         Invoice invoice,
         List<InvoiceItem> items
