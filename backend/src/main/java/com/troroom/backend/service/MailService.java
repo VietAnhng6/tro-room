@@ -69,5 +69,69 @@ public class MailService {
     );
 
     mailSender.send(message);
-}
+        }
+            public void sendInvoiceMail(
+            String to,
+            String invoiceCode,
+            String billingPeriod,
+            long totalAmount,
+            long remainingBalance,
+            String dueDate,
+            String invoiceLink) {
+
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        message.setTo(to);
+        message.setSubject("TroRoom - Thông báo hóa đơn mới");
+
+        message.setText(
+                "Xin chào,\n\n"
+                + "Hóa đơn của bạn đã được phát hành.\n\n"
+                + "Mã hóa đơn: " + invoiceCode + "\n"
+                + "Kỳ hóa đơn: " + billingPeriod + "\n"
+                + "Tổng tiền: " + String.format("%,d", totalAmount) + " VNĐ\n"
+                + "Số tiền còn phải thanh toán: "
+                + String.format("%,d", remainingBalance) + " VNĐ\n"
+                + "Hạn thanh toán: " + dueDate + "\n\n"
+                + "Xem hóa đơn tại:\n"
+                + invoiceLink + "\n\n"
+                + "Trân trọng,\n"
+                + "TroRoom"
+        );
+
+        mailSender.send(message);
+    }
+    public void sendInvoiceReminderMail(
+            String to,
+            String subject,
+            String invoiceCode,
+            String billingPeriod,
+            long totalAmount,
+            long remainingBalance,
+            String dueDate,
+            String reminderText,
+            String invoiceLink) {
+
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        message.setTo(to);
+        message.setSubject(subject);
+
+        message.setText(
+                "Xin chào,\n\n"
+                + reminderText + "\n\n"
+                + "Mã hóa đơn: " + invoiceCode + "\n"
+                + "Kỳ hóa đơn: " + billingPeriod + "\n"
+                + "Tổng tiền: " + String.format("%,d", totalAmount) + " VNĐ\n"
+                + "Số tiền còn phải thanh toán: "
+                + String.format("%,d", remainingBalance) + " VNĐ\n"
+                + "Hạn thanh toán: " + dueDate + "\n\n"
+                + "Xem hóa đơn tại:\n"
+                + invoiceLink + "\n\n"
+                + "Trân trọng,\n"
+                + "TroRoom"
+        );
+
+        mailSender.send(message);
+    }
 }

@@ -129,6 +129,70 @@ public void notifyRequestApproved(RentalRequest request) {
 
         notificationRepository.save(notification);
     }
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void notifyInvoiceDueReminder(
+        Invoice invoice,
+        User tenant,
+        User landlord
+) {
+    createInvoiceReminderNotification(
+            invoice,
+            tenant,
+            landlord,
+            Notification.Type.INVOICE_DUE_REMINDER,
+            "Hóa đơn sắp đến hạn",
+            "Hóa đơn kỳ " + invoice.getPeriod()
+                    + ", mã " + invoice.getInvoiceCode()
+                    + " sẽ đến hạn ngày " + invoice.getDueDate() + "."
+    );
+}
+
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void notifyInvoiceOverdue(
+        Invoice invoice,
+        User tenant,
+        User landlord
+) {
+    createInvoiceReminderNotification(
+            invoice,
+            tenant,
+            landlord,
+            Notification.Type.INVOICE_OVERDUE_REMINDER,
+            "Hóa đơn đã quá hạn",
+            "Hóa đơn kỳ " + invoice.getPeriod()
+                    + ", mã " + invoice.getInvoiceCode()
+                    + " đã quá hạn từ ngày " + invoice.getDueDate() + "."
+    );
+}
+
+private void createInvoiceReminderNotification(
+        Invoice invoice,
+        User tenant,
+        User landlord,
+        Notification.Type type,
+        String title,
+        String message
+) {
+    String invoiceCode = invoice.getInvoiceCode();
+
+    if (notificationRepository.existsByUserAndTypeAndMessageContaining(
+            tenant, type, invoiceCode)) {
+        return;
+    }
+
+    Notification notification = new Notification();
+    notification.setUser(tenant);
+    notification.setType(type);
+    notification.setTitle(title);
+    notification.setMessage(message);
+    notification.setLandlordName(landlord.getName());
+    notification.setLandlordPhone(landlord.getPhone());
+    notification.setLandlordEmail(landlord.getEmail());
+    notification.setCreatedAt(LocalDateTime.now());
+    notification.setRead(false);
+
+    notificationRepository.save(notification);
+ }
 
     @Transactional(readOnly = true)
     public List<Notification> getNotifications(User user) {

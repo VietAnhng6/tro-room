@@ -88,4 +88,16 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
             + "order by i.dueDate asc, i.id asc")
     List<Invoice> findUnpaidByContractId(
             @Param("contractId") Long contractId);
+                /** S4-08: Lấy hóa đơn đã phát hành, còn nợ và có hạn thanh toán. */
+    @Query("select i from Invoice i "
+            + "join fetch i.contract c "
+            + "join fetch c.tenant t "
+            + "join fetch i.room r "
+            + "where i.status in ("
+                + "com.troroom.backend.entity.Invoice.Status.ISSUED, "
+                + "com.troroom.backend.entity.Invoice.Status.PARTIALLY_PAID) "
+            + "and i.totalAmount > i.paidAmount "
+            + "and i.dueDate is not null "
+            + "order by i.dueDate asc, i.id asc")
+    List<Invoice> findUnpaidInvoicesForReminders();
 }
