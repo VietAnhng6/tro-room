@@ -28,6 +28,7 @@ import TenantPaymentReports from './pages/TenantPaymentReports'
 import LandlordPaymentReports from './pages/LandlordPaymentReports'
 import Debts from './pages/Debts'
 import Checkout from './pages/Checkout'
+import TenantMaintenanceReports from './pages/TenantMaintenanceReports'
 /*
  * Trang 403 Forbidden
  */
@@ -255,6 +256,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/tenant/invoices',
       '/tenant/payment-reports',
       '/tenant/contracts',
+      '/tenant/maintenance-reports',
       '/profile',
       '/my-requests',
       '/search-rooms',
@@ -425,6 +427,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute path="/tenant/contracts">
               <TenantContracts />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tenant/maintenance-reports"
+          element={
+            <ProtectedRoute path="/tenant/maintenance-reports">
+              <TenantMaintenanceReports />
             </ProtectedRoute>
           }
         />

@@ -33,6 +33,7 @@ const PAGE_TITLES: Record<string, { title: string; category: string }> = {
     category: 'Tài chính',
   },
   '/tenant/contracts': { title: 'Hợp đồng của tôi', category: 'Khách thuê' },
+  '/tenant/maintenance-reports': { title: 'Báo hỏng & bảo trì', category: 'Khách thuê' },
   '/landlord/requests': { title: 'Yêu cầu thuê & Xem phòng', category: 'Xử lý' },
   '/my-requests': { title: 'Yêu cầu thuê của tôi', category: 'Khách thuê' },
   '/tenants': { title: 'Danh sách người thuê', category: 'Quản lý' },
@@ -290,6 +291,12 @@ export const MainLayout: React.FC = () => {
       title: 'Hợp đồng của tôi',
       enabled: permissions.tenantContract,
       path: '/tenant/contracts',
+    },
+    {
+      key: 'tenantMaintenanceReports',
+      title: 'Báo hỏng & bảo trì',
+      enabled: hasToken && role === 'TENANT',
+      path: '/tenant/maintenance-reports',
     },
     {
       key: 'tenant',
