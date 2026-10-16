@@ -21,4 +21,15 @@ public interface ListingRepository
             com.troroom.backend.entity.Room room,
             Listing.Status status
     );
+
+    boolean existsByRoomAndStatusAndExpiresAtAfter(
+            com.troroom.backend.entity.Room room,
+            Listing.Status status,
+            java.time.LocalDateTime expiresAt
+    );
+
+    Optional<Listing> findFirstByRoomAndStatusOrderByCreatedAtDesc(
+            com.troroom.backend.entity.Room room,
+            Listing.Status status
+    );
 }

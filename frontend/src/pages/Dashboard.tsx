@@ -3,6 +3,22 @@ import { useNavigate } from 'react-router-dom'
 
 type Role = 'ADMIN' | 'LANDLORD' | 'MANAGER' | 'TENANT' | string
 
+type VacantRoomListingCandidate = {
+  roomId: number
+  roomCode: string
+  buildingId: number | null
+  buildingName: string
+  floor: number
+  area: number
+  currentRent: number
+  maxPeople: number
+  imageCount: number
+  draftListingId: number | null
+  draftTitle: string | null
+  draftDescription: string | null
+  hasDraft: boolean
+}
+
 export function Dashboard() {
   const navigate = useNavigate()
   const [role, setRole] = useState<Role>('TENANT')
@@ -12,6 +28,11 @@ export function Dashboard() {
   const [pendingRequests, setPendingRequests] = useState(0)
   const [missingReadingRooms, setMissingReadingRooms] = useState(0)
   const [readingBuildingsMissing, setReadingBuildingsMissing] = useState(0)
+  const [vacantRoomCandidates, setVacantRoomCandidates] = useState<VacantRoomListingCandidate[]>([])
+  const [vacantRoomLoading, setVacantRoomLoading] = useState(false)
+  const [vacantRoomError, setVacantRoomError] = useState('')
+  const [vacantRoomMessage, setVacantRoomMessage] = useState('')
+  const [publishingListingId, setPublishingListingId] = useState<number | null>(null)
 
   useEffect(() => {
     setRole(localStorage.getItem('role') || 'TENANT')
@@ -97,6 +118,82 @@ export function Dashboard() {
       })
       .catch(() => {})
   }, [role])
+
+  // S4-05: phòng vừa trống, chưa có tin đang hiển thị; tin nháp có thể đăng lại một nút.
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken')
+    if (!token || role !== 'LANDLORD') {
+      setVacantRoomCandidates([])
+      return
+    }
+
+    let cancelled = false
+    setVacantRoomLoading(true)
+    setVacantRoomError('')
+    fetch('http://localhost:8080/api/listings/vacant-without-published', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          throw new Error(body.message || 'Không thể tải danh sách phòng trống chưa có tin đăng.')
+        }
+        return res.json()
+      })
+      .then((data: VacantRoomListingCandidate[]) => {
+        if (!cancelled) setVacantRoomCandidates(Array.isArray(data) ? data : [])
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setVacantRoomError(error instanceof Error ? error.message : 'Không thể tải danh sách phòng trống.')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setVacantRoomLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [role])
+
+  const handlePublishRepublishDraft = async (candidate: VacantRoomListingCandidate) => {
+    // Phòng chưa có bản nháp (ví dụ phòng mới) vẫn xuất hiện trong danh sách.
+    // Đưa chủ nhà sang quản lý phòng để tạo tin đầu tiên, không gọi publish với ID rỗng.
+    if (!candidate.draftListingId) {
+      navigate('/rooms')
+      return
+    }
+
+    const token = localStorage.getItem('accessToken')
+    if (!token) {
+      navigate('/')
+      return
+    }
+
+    setPublishingListingId(candidate.draftListingId)
+    setVacantRoomError('')
+    setVacantRoomMessage('')
+    try {
+      const res = await fetch(`http://localhost:8080/api/listings/${candidate.draftListingId}/publish`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(body.message || 'Không thể đăng lại tin nháp.')
+
+      setVacantRoomMessage(`Đã đăng lại tin phòng ${candidate.roomCode} với giá hiện tại ${new Intl.NumberFormat('vi-VN').format(candidate.currentRent)} ₫.`)
+      const refresh = await fetch('http://localhost:8080/api/listings/vacant-without-published', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (refresh.ok) {
+        const data = await refresh.json()
+        setVacantRoomCandidates(Array.isArray(data) ? data : [])
+      }
+    } catch (error) {
+      setVacantRoomError(error instanceof Error ? error.message : 'Không thể đăng lại tin nháp.')
+    } finally {
+      setPublishingListingId(null)
+    }
+  }
 
   const statCards = [
     {
@@ -197,6 +294,65 @@ export function Dashboard() {
           <div style={{ fontWeight: 800, color: '#9a3412', fontSize: 15 }}>Đến hạn chốt chỉ số điện nước nhưng vẫn còn {missingReadingRooms} phòng chưa nhập</div>
           <div style={{ color: '#9a3412', fontSize: 13, marginTop: 4 }}>{readingBuildingsMissing} tòa nhà còn thiếu dữ liệu. Nhấn để xem danh sách và hoàn tất trước khi phát hành hóa đơn.</div>
         </div>
+      )}
+
+      {role === 'LANDLORD' && (
+        <section
+          aria-labelledby="vacant-listings-title"
+          style={{ background: '#ffffff', border: '1px solid #fed7aa', borderRadius: 14, padding: 20, marginBottom: 24, boxSizing: 'border-box' }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
+            <div>
+              <h2 id="vacant-listings-title" style={{ margin: 0, color: '#9a3412', fontSize: 18, fontWeight: 800 }}>
+                Phòng vừa trống chưa có tin đang hiển thị
+              </h2>
+              <p style={{ margin: '5px 0 0', color: '#64748b', fontSize: 13 }}>
+                Tin sau khi trả phòng được tạo thành bản nháp, giữ mô tả và ảnh của phòng. Giá đăng lại lấy theo giá phòng hiện tại.
+              </p>
+            </div>
+            <button type="button" onClick={() => navigate('/rooms')} style={{ border: '1px solid #fed7aa', background: '#fff7ed', color: '#9a3412', borderRadius: 9, padding: '8px 12px', fontWeight: 750, cursor: 'pointer' }}>
+              Quản lý phòng
+            </button>
+          </div>
+
+          {vacantRoomMessage && <div role="status" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', borderRadius: 8, padding: '10px 12px', marginBottom: 12, fontSize: 13 }}>{vacantRoomMessage}</div>}
+          {vacantRoomError && <div role="alert" style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', borderRadius: 8, padding: '10px 12px', marginBottom: 12, fontSize: 13 }}>{vacantRoomError}</div>}
+
+          {vacantRoomLoading ? (
+            <p style={{ color: '#64748b', margin: 0 }}>Đang tải danh sách phòng trống...</p>
+          ) : vacantRoomCandidates.length === 0 ? (
+            <div style={{ border: '1px dashed #cbd5e1', background: '#f8fafc', borderRadius: 10, padding: 16, color: '#64748b', fontSize: 13 }}>
+              Hiện không có phòng trống nào thiếu tin đăng đang hiển thị.
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: 10 }}>
+              {vacantRoomCandidates.map((candidate) => (
+                <div key={candidate.roomId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 14, flexWrap: 'wrap', border: '1px solid #e2e8f0', borderRadius: 10, padding: '13px 14px' }}>
+                  <div style={{ flex: '1 1 300px', minWidth: 0 }}>
+                    <div style={{ color: '#0f172a', fontWeight: 800, fontSize: 14 }}>
+                      Phòng {candidate.roomCode} · {candidate.buildingName}
+                    </div>
+                    <div style={{ color: '#64748b', fontSize: 12.5, marginTop: 4 }}>
+                      Tầng {candidate.floor} · {candidate.area} m² · Tối đa {candidate.maxPeople} người · {candidate.imageCount} ảnh
+                    </div>
+                    <div style={{ color: '#0f766e', fontWeight: 800, fontSize: 13.5, marginTop: 5 }}>
+                      Giá hiện tại: {new Intl.NumberFormat('vi-VN').format(candidate.currentRent)} ₫/tháng
+                    </div>
+                    {candidate.hasDraft && <div style={{ color: '#64748b', fontSize: 12.5, marginTop: 3 }}>Bản nháp: {candidate.draftTitle || 'Tin đăng cũ'} · giữ nguyên mô tả và ảnh phòng</div>}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={publishingListingId !== null}
+                    onClick={() => { void handlePublishRepublishDraft(candidate) }}
+                    style={{ border: 0, background: candidate.hasDraft ? '#15803d' : '#2563eb', color: '#fff', borderRadius: 9, padding: '10px 14px', fontWeight: 800, cursor: publishingListingId !== null ? 'wait' : 'pointer', opacity: publishingListingId !== null ? .65 : 1, whiteSpace: 'nowrap' }}
+                  >
+                    {candidate.draftListingId && publishingListingId === candidate.draftListingId ? 'Đang đăng...' : candidate.hasDraft ? 'Đăng lại tin' : 'Tạo tin đăng'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       {/* STATISTICS - 4 EQUAL SIZED CLEAN BLOCKS */}

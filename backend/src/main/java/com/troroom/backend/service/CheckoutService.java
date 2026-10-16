@@ -45,6 +45,7 @@ public class CheckoutService {
     private final ContractRenewalRepository renewalRepository;
     private final AuditLogService auditLogService;
     private final SettlementPdfService settlementPdfService;
+    private final ListingService listingService;
 
     public CheckoutService(
             RentalContractRepository contractRepository,
@@ -59,7 +60,8 @@ public class CheckoutService {
             RoomServiceRepository roomServiceRepository,
             ContractRenewalRepository renewalRepository,
             AuditLogService auditLogService,
-            SettlementPdfService settlementPdfService
+            SettlementPdfService settlementPdfService,
+            ListingService listingService
     ) {
         this.contractRepository = contractRepository;
         this.roomRepository = roomRepository;
@@ -74,6 +76,7 @@ public class CheckoutService {
         this.renewalRepository = renewalRepository;
         this.auditLogService = auditLogService;
         this.settlementPdfService = settlementPdfService;
+        this.listingService = listingService;
     }
 
     // ------------------------------------------------------------------
@@ -194,6 +197,11 @@ public class CheckoutService {
         if (room != null) {
             room.setStatus(Room.Status.EMPTY);
             roomRepository.saveAndFlush(room);
+
+            // S4-05: trong cùng transaction tất toán, nhân bản tin cũ thành
+            // tin nháp. Ảnh gắn với room_id nên được giữ nguyên; giá đăng lại
+            // lấy từ room.rent hiện tại, không dùng giá cũ của hợp đồng.
+            listingService.createRepublishDraftFromEndedContract(contract);
         }
 
         auditLogService.log(
