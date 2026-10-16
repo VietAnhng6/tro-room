@@ -40,6 +40,8 @@ public class InvoiceService {
     private final RoommateRepository roommateRepository;
     private final AuditLogService auditLogService;
     private final NotificationService notificationService;
+    private final MailService mailService;
+    private final EmailDeliveryFailureRepository emailDeliveryFailureRepository;
     private final MaintenanceReportRepository maintenanceReportRepository;
 
 
@@ -57,7 +59,9 @@ public class InvoiceService {
             RoommateRepository roommateRepository,
             AuditLogService auditLogService,
             NotificationService notificationService,
-            MaintenanceReportRepository maintenanceReportRepository
+            MaintenanceReportRepository maintenanceReportRepository,
+            MailService mailService,
+            EmailDeliveryFailureRepository emailDeliveryFailureRepository
     ) {
         this.buildingRepository = buildingRepository;
         this.contractRepository = contractRepository;
@@ -73,6 +77,8 @@ public class InvoiceService {
         this.auditLogService = auditLogService;
         this.notificationService = notificationService;
         this.maintenanceReportRepository = maintenanceReportRepository;
+        this.mailService = mailService;
+        this.emailDeliveryFailureRepository = emailDeliveryFailureRepository;
     }
 
 
@@ -937,6 +943,80 @@ public class InvoiceService {
         } catch (Exception ignored) {
             // Bỏ qua lỗi tạo thông báo.
         }
+        // S4-08: Gửi email thông báo hóa đơn đã phát hành.
+        try {
+            User tenant = invoice.getContract().getTenant();
+
+            if (tenant != null
+                    && tenant.getEmail() != null
+                    && !tenant.getEmail().isBlank()) {
+
+                long paidAmount = invoicePaymentRepository
+                        .findByInvoiceIdOrderByReceivedDateDescIdDesc(
+                                invoice.getId()
+                        )
+                        .stream()
+                        .filter(p -> p.getStatus()
+                                == InvoicePayment.Status.CONFIRMED)
+                        .mapToLong(InvoicePayment::getAmount)
+                        .sum();
+                long remainingBalance = Math.max(
+                        0L,
+                        invoice.getTotalAmount() - paidAmount
+                );
+
+                String invoiceLink =
+                        "http://localhost:5173/tenant/invoices";
+
+                Exception lastException = null;
+                int maxAttempts = 3;
+
+                for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                    try {
+                        mailService.sendInvoiceMail(
+                                tenant.getEmail(),
+                                invoice.getInvoiceCode(),
+                                invoice.getPeriod(),
+                                invoice.getTotalAmount(),
+                                remainingBalance,
+                                invoice.getDueDate() != null
+                                        ? invoice.getDueDate().toString()
+                                        : "Chưa xác định",
+                                invoiceLink
+                        );
+
+                        lastException = null;
+                        break;
+                    } catch (Exception e) {
+                        lastException = e;
+                    }
+                }
+
+                if (lastException != null) {
+                    EmailDeliveryFailure failure =
+                            new EmailDeliveryFailure();
+
+                    failure.setInvoice(invoice);
+                    failure.setRecipientEmail(tenant.getEmail());
+                    failure.setAttemptCount(maxAttempts);
+                    failure.setErrorMessage(
+                            lastException.getMessage() != null
+                                    ? lastException.getMessage()
+                                    : lastException.getClass().getSimpleName()
+                    );
+
+                    emailDeliveryFailureRepository.save(failure);
+                }
+            }
+        } catch (Exception e) {
+            // Lỗi email không được làm gián đoạn phát hành hóa đơn.
+            System.err.println(
+                    "S4-08: Xử lý email hóa đơn "
+                            + invoice.getInvoiceCode()
+                            + " thất bại: " + e.getMessage()
+            );
+        }
+
 
         InvoiceResponse after = toResponse(invoice, items);
 

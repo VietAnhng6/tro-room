@@ -1,3 +1,4 @@
+
 package com.troroom.backend.repository;
 
 import com.troroom.backend.entity.Notification;
@@ -11,4 +12,10 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     List<Notification> findByUserOrderByCreatedAtDesc(User user);
 
     long countByUserAndReadFalse(User user);
+
+    boolean existsByUserAndTypeAndMessageContaining(
+            User user,
+            Notification.Type type,
+            String invoiceCode
+    );
 }

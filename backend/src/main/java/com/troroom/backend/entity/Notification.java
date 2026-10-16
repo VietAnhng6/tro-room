@@ -17,8 +17,10 @@ public class Notification {
         public enum Type {
             REQUEST_ACCEPTED,
             REQUEST_REJECTED,
-            INVOICE_ISSUED
-            }
+            INVOICE_ISSUED,
+            INVOICE_DUE_REMINDER,
+            INVOICE_OVERDUE_REMINDER
+        }
 
 
     @Id

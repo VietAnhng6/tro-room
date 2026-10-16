@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 type NotificationItem = {
   id: number
@@ -21,6 +22,7 @@ export default function Notifications() {
   const [items, setItems] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const navigate = useNavigate()
 
   const loadNotifications = useCallback(async () => {
     const token = localStorage.getItem('accessToken')
@@ -83,6 +85,18 @@ export default function Notifications() {
       )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Có lỗi xảy ra.')
+    }
+  }
+
+  const handleNotificationClick = async (item: NotificationItem) => {
+    const text = `${item.title ?? ''} ${item.message ?? item.content ?? ''} ${item.type ?? ''}`
+    const isInvoiceNotification =
+      /invoice|hóa đơn|hoa don|INVOICE/i.test(text)
+
+    await markAsRead(item)
+
+    if (isInvoiceNotification) {
+      navigate('/tenant/invoices')
     }
   }
 
@@ -180,7 +194,7 @@ export default function Notifications() {
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <button
-                    onClick={() => void markAsRead(item)}
+                    onClick={() => void handleNotificationClick(item)}
                     style={{
                       display: 'block',
                       padding: 0,
@@ -227,9 +241,7 @@ export default function Notifications() {
                       </strong>
 
                       {item.landlordName && (
-                        <div>
-                          Họ tên: {item.landlordName}
-                        </div>
+                        <div>Họ tên: {item.landlordName}</div>
                       )}
 
                       {item.landlordPhone && (

@@ -30,6 +30,7 @@ import Debts from './pages/Debts'
 import Checkout from './pages/Checkout'
 import TenantMaintenanceReports from './pages/TenantMaintenanceReports'
 import ManagerMaintenanceReports from './pages/ManagerMaintenanceReports'
+import EmailDeliveryFailures from './pages/EmailDeliveryFailures'
 /*
  * Trang 403 Forbidden
  */
@@ -222,6 +223,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/profile',
       '/audit-logs',
       '/admin',
+      '/admin/email-delivery-failures',
       '/debts',
     ],
     LANDLORD: [
@@ -535,6 +537,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute path="/admin">
               <Admin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/email-delivery-failures"
+          element={
+            <ProtectedRoute path="/admin/email-delivery-failures">
+              <EmailDeliveryFailures />
             </ProtectedRoute>
           }
         />

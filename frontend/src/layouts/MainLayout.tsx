@@ -44,6 +44,10 @@ const PAGE_TITLES: Record<string, { title: string; category: string }> = {
   '/profile': { title: 'Hồ sơ cá nhân & CCCD', category: 'Tài khoản' },
   '/audit-logs': { title: 'Nhật ký hệ thống', category: 'Bảo mật' },
   '/admin': { title: 'Quản trị tài khoản', category: 'Hệ thống' },
+  '/admin/email-delivery-failures': {
+  title: 'Lịch sử email gửi thất bại',
+  category: 'Bảo mật',
+  },
   '/meter-readings': {
     title: 'Nhập chỉ số điện nước',
     category: 'Quản lý',
@@ -351,6 +355,12 @@ export const MainLayout: React.FC = () => {
       enabled: permissions.admin,
       path: '/admin',
     },
+    {
+      key: 'emailDeliveryFailures',
+      title: 'Lịch sử email lỗi',
+      enabled: permissions.admin,
+      path: '/admin/email-delivery-failures',
+    },
   ]
 
   const handleLogout = () => {
@@ -477,13 +487,20 @@ export const MainLayout: React.FC = () => {
           </div>
 
           {menuItems
-            .filter((item) => item.enabled)
-            .map((item) => {
-              const active =
-                (item.path === '/search-rooms' && (currentPath === '/' || currentPath === '/search-rooms' || currentPath.startsWith('/listing/'))) ||
-                (item.path === '/dashboard' && currentPath === '/dashboard') ||
-                (item.path !== '/dashboard' && item.path !== '/search-rooms' && currentPath.startsWith(item.path))
-
+  .filter((item) => item.enabled)
+  .map((item) => {
+    const active =
+      (item.path === '/search-rooms' &&
+        (currentPath === '/' ||
+          currentPath === '/search-rooms' ||
+          currentPath.startsWith('/listing/'))) ||
+      (item.path === '/dashboard' && currentPath === '/dashboard') ||
+      (item.path === '/admin'
+        ? currentPath === '/admin'
+        : item.path !== '/dashboard' &&
+          item.path !== '/search-rooms' &&
+          (currentPath === item.path ||
+            currentPath.startsWith(`${item.path}/`)))
               return (
                 <button
                   key={item.key}
