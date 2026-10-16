@@ -29,6 +29,9 @@ public class InvoiceItem {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "invoice_id", nullable = false)
     private Invoice invoice;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "maintenance_report_id")
+    private MaintenanceReport maintenanceReport;
 
     @Column(nullable = false, length = 150)
     private String label;
@@ -144,5 +147,12 @@ public class InvoiceItem {
 
     public void setNote(String note) {
         this.note = note;
+    }
+    public MaintenanceReport getMaintenanceReport() {
+    return maintenanceReport;
+    }
+
+    public void setMaintenanceReport(MaintenanceReport maintenanceReport) {
+        this.maintenanceReport = maintenanceReport;
     }
 }

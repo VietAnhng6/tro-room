@@ -29,6 +29,7 @@ import LandlordPaymentReports from './pages/LandlordPaymentReports'
 import Debts from './pages/Debts'
 import Checkout from './pages/Checkout'
 import TenantMaintenanceReports from './pages/TenantMaintenanceReports'
+import ManagerMaintenanceReports from './pages/ManagerMaintenanceReports'
 /*
  * Trang 403 Forbidden
  */
@@ -245,6 +246,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/buildings',
       '/rooms',
       '/services',
+      '/manager/maintenance-reports',
       '/landlord/requests',
       '/invoices',
       '/meter-readings',
@@ -438,6 +440,16 @@ export function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/manager/maintenance-reports"
+          element={
+            <ProtectedRoute path="/manager/maintenance-reports">
+              <ManagerMaintenanceReports />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/notifications"
           element={

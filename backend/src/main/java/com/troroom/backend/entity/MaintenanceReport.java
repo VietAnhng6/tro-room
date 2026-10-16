@@ -16,7 +16,9 @@ import java.util.List;
 public class MaintenanceReport {
     public enum Urgency { NORMAL, URGENT }
     public enum Status { NEW, IN_PROGRESS, COMPLETED, REJECTED }
-
+        public enum CostPayer {
+        LANDLORD, TENANT
+    }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -53,6 +55,18 @@ public class MaintenanceReport {
     /** Nội dung phản hồi gần nhất của quản lý; được dùng bởi luồng S4-07. */
     @Column(name = "manager_response", length = 3000)
     private String managerResponse;
+        @Column(name = "repair_cost")
+    private Long repairCost;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cost_payer", length = 20)
+    private CostPayer costPayer;
+
+    @Column(name = "tenant_invoice_pending", nullable = false)
+    private boolean tenantInvoicePending = false;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -92,4 +106,35 @@ public class MaintenanceReport {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public List<MaintenanceReportPhoto> getPhotos() { return photos; }
     public void addPhoto(MaintenanceReportPhoto photo) { photos.add(photo); photo.setReport(this); }
+        public Long getRepairCost() {
+        return repairCost;
+    }
+
+    public void setRepairCost(Long repairCost) {
+        this.repairCost = repairCost;
+    }
+
+    public CostPayer getCostPayer() {
+        return costPayer;
+    }
+
+    public void setCostPayer(CostPayer costPayer) {
+        this.costPayer = costPayer;
+    }
+
+    public boolean isTenantInvoicePending() {
+        return tenantInvoicePending;
+    }
+
+    public void setTenantInvoicePending(boolean tenantInvoicePending) {
+        this.tenantInvoicePending = tenantInvoicePending;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }
