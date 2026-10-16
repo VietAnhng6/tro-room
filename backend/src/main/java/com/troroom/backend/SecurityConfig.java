@@ -114,9 +114,14 @@ public class SecurityConfig {
                 )
                 .authenticated()
 
+                // S4-01: Ảnh chứng từ dùng token tạm thời để xác thực
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/payment-reports/proof/**"
+                ).permitAll()
+
                 // Các API khác phải đăng nhập
-                .anyRequest()
-                .authenticated()
+                .anyRequest().authenticated()
             )
 
             .addFilterBefore(
