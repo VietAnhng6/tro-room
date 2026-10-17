@@ -130,6 +130,53 @@ void uploadProof_shouldRejectEmptyImage() throws Exception {
         verify(report, never()).setStatus(
                 PaymentReport.Status.CONFIRMED);
     }
+
+    @Test
+    void confirm_shouldUpdateInvoicePaidAmount() {
+        InvoiceRepository invoiceRepository = mock(InvoiceRepository.class);
+        PaymentReportRepository paymentReportRepository =
+                mock(PaymentReportRepository.class);
+        PaymentReportService service = new PaymentReportService(
+                invoiceRepository, paymentReportRepository, mock(JwtService.class));
+
+        User landlord = mock(User.class);
+        when(landlord.getRole()).thenReturn(User.Role.LANDLORD);
+        when(landlord.getId()).thenReturn(10L);
+        User invoiceLandlord = mock(User.class);
+        when(invoiceLandlord.getId()).thenReturn(10L);
+
+        var building = mock(com.troroom.backend.entity.Building.class);
+        when(building.getLandlord()).thenReturn(invoiceLandlord);
+        var room = mock(com.troroom.backend.entity.Room.class);
+        when(room.getBuilding()).thenReturn(building);
+        Invoice invoice = mock(Invoice.class);
+        when(invoice.getId()).thenReturn(9L);
+        when(invoice.getTotalAmount()).thenReturn(1_000L);
+        when(invoice.getPaidAmount()).thenReturn(200L);
+        when(invoice.getStatus()).thenReturn(Invoice.Status.ISSUED);
+        when(invoice.getRoom()).thenReturn(room);
+
+        PaymentReport report = mock(PaymentReport.class);
+        when(report.getId()).thenReturn(3L);
+        when(report.getInvoice()).thenReturn(invoice);
+        when(report.getAmount()).thenReturn(300L);
+        when(report.getStatus()).thenReturn(PaymentReport.Status.PENDING);
+        when(paymentReportRepository.findDetailById(3L))
+                .thenReturn(Optional.of(report));
+        when(invoiceRepository.findByIdForPaymentUpdate(9L))
+                .thenReturn(Optional.of(invoice));
+        when(paymentReportRepository.sumAmountByInvoiceAndStatus(
+                9L, PaymentReport.Status.CONFIRMED)).thenReturn(100L);
+        when(paymentReportRepository.sumAmountByInvoiceAndStatus(
+                9L, PaymentReport.Status.PENDING)).thenReturn(300L);
+        when(paymentReportRepository.save(report)).thenReturn(report);
+
+        service.confirm(landlord, 3L);
+
+        verify(invoice).setPaidAmount(500L);
+        verify(invoiceRepository).save(invoice);
+        verify(report).setStatus(PaymentReport.Status.CONFIRMED);
+    }
     
 @Test
 void getProofPathByToken_shouldRejectExpiredToken() {

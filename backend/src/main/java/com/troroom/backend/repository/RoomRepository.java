@@ -5,11 +5,24 @@ import com.troroom.backend.entity.Room;
 import com.troroom.backend.entity.User;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
 
 public interface RoomRepository extends JpaRepository<Room, Long> {
+
+    @Query("""
+            select r.building.id, count(r.id)
+            from Room r
+            where r.building.id in :buildingIds
+            group by r.building.id
+            """)
+    List<Object[]> countByBuildingIds(
+            @Param("buildingIds") Collection<Long> buildingIds
+    );
 
     // Phòng của một tòa nhà
     List<Room> findByBuilding(Building building);

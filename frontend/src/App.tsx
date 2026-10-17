@@ -31,6 +31,7 @@ import Checkout from './pages/Checkout'
 import TenantMaintenanceReports from './pages/TenantMaintenanceReports'
 import ManagerMaintenanceReports from './pages/ManagerMaintenanceReports'
 import EmailDeliveryFailures from './pages/EmailDeliveryFailures'
+import MonthlyReport from './pages/MonthlyReport'
 /*
  * Trang 403 Forbidden
  */
@@ -240,6 +241,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/payment-reports',
       '/debts',
       '/checkout',
+      '/monthly-report',
     ],
     MANAGER: [
       '/dashboard',
@@ -253,6 +255,7 @@ function hasRouteAccess(path: string, role: string | null) {
       '/invoices',
       '/meter-readings',
       '/debts',
+      '/monthly-report',
     ],
     TENANT: [
       '/dashboard',
@@ -399,6 +402,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute path="/invoices">
               <Invoices />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/monthly-report"
+          element={
+            <ProtectedRoute path="/monthly-report">
+              <MonthlyReport />
             </ProtectedRoute>
           }
         />

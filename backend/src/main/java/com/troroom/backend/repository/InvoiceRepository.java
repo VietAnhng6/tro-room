@@ -9,10 +9,31 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
 
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
+
+    @Query("""
+            select i.period,
+                   sum(i.totalAmount),
+                   sum(i.paidAmount),
+                   sum(case when i.totalAmount > i.paidAmount
+                            then i.totalAmount - i.paidAmount else 0 end)
+            from Invoice i
+            where i.room.building.id in :buildingIds
+              and i.period between :fromPeriod and :toPeriod
+              and i.status in :statuses
+            group by i.period
+            order by i.period
+            """)
+    List<Object[]> aggregateForMonthlyReport(
+            @Param("buildingIds") Collection<Long> buildingIds,
+            @Param("fromPeriod") String fromPeriod,
+            @Param("toPeriod") String toPeriod,
+            @Param("statuses") Collection<Invoice.Status> statuses
+    );
 
          Optional<Invoice> findByContractAndPeriod(
             RentalContract contract, String period);
