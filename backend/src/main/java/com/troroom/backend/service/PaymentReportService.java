@@ -93,7 +93,7 @@ public class PaymentReportService {
                     "Bạn không có quyền báo thanh toán hóa đơn này");
         }
 
-        long confirmed = paymentReportRepository
+        long confirmedReports = paymentReportRepository
                 .sumAmountByInvoiceAndStatus(
                         invoiceId,
                         PaymentReport.Status.CONFIRMED);
@@ -103,7 +103,8 @@ public class PaymentReportService {
                         invoiceId,
                         PaymentReport.Status.PENDING);
 
-        long outstanding = invoice.getTotalAmount() - confirmed - pending;
+        long collected = Math.max(invoice.getPaidAmount(), confirmedReports);
+        long outstanding = invoice.getTotalAmount() - collected - pending;
 
         if (outstanding <= 0) {
             throw new ResponseStatusException(
@@ -534,7 +535,7 @@ public PaymentReportDtos.Response confirm(
                 "Chỉ được xác nhận thanh toán hóa đơn đã phát hành");
     }
 
-    long confirmed = paymentReportRepository
+    long confirmedReports = paymentReportRepository
             .sumAmountByInvoiceAndStatus(
                     invoice.getId(),
                     PaymentReport.Status.CONFIRMED);
@@ -546,7 +547,8 @@ public PaymentReportDtos.Response confirm(
 
     // Trừ báo cáo hiện tại khỏi tổng PENDING để không tính trùng.
     long otherPending = pending - report.getAmount();
-    long outstanding = invoice.getTotalAmount() - confirmed - otherPending;
+    long collected = Math.max(invoice.getPaidAmount(), confirmedReports);
+    long outstanding = invoice.getTotalAmount() - collected - otherPending;
 
     if (report.getAmount() > outstanding) {
         throw new ResponseStatusException(
@@ -556,6 +558,8 @@ public PaymentReportDtos.Response confirm(
     }
 
     report.setStatus(PaymentReport.Status.CONFIRMED);
+    invoice.setPaidAmount(collected + report.getAmount());
+    invoiceRepository.save(invoice);
 
     return toResponse(paymentReportRepository.save(report));
 }

@@ -47,6 +47,20 @@ public interface RentalContractRepository
             @Param("end") LocalDate end
     );
 
+    @Query("""
+            select c from RentalContract c
+            join fetch c.room r
+            join fetch r.building b
+            where b.id in :buildingIds
+              and c.startDate <= :rangeEnd
+              and c.endDate >= :rangeStart
+            """)
+    List<RentalContract> findForMonthlyOccupancy(
+            @Param("buildingIds") List<Long> buildingIds,
+            @Param("rangeStart") LocalDate rangeStart,
+            @Param("rangeEnd") LocalDate rangeEnd
+    );
+
     /**
      * S3-09: Kiểm tra thời gian gia hạn có trùng hợp đồng khác
      * của cùng phòng hay không.
