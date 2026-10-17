@@ -84,9 +84,11 @@ public class DebtService {
                 .map(Building::getId)
                 .toList();
 
-        // Lấy tất cả hoá đơn đã phát hành (ISSUED) mà chưa trả hết (totalAmount > paidAmount)
+        // Lấy hóa đơn đã phát hành hoặc trả một phần mà vẫn còn nợ.
         List<Invoice> unpaidInvoices = invoiceRepository
-                .findUnpaidInvoicesByBuildingIds(buildingIds, Invoice.Status.ISSUED);
+                .findUnpaidInvoicesByBuildingIds(
+                        buildingIds,
+                        List.of(Invoice.Status.ISSUED, Invoice.Status.PARTIALLY_PAID));
 
         // Gom nhóm theo Phòng
         Map<Long, List<Invoice>> invoicesByRoom = new LinkedHashMap<>();
@@ -274,7 +276,12 @@ public class DebtService {
      */
     @Transactional
     public Invoice recordPayment(User currentUser, Long invoiceId, long amount) {
-        validateAccessRole(currentUser);
+        if (currentUser == null || currentUser.getRole() != User.Role.LANDLORD) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Chỉ chủ nhà được ghi nhận thanh toán"
+            );
+        }
 
         if (amount <= 0) {
             throw new ResponseStatusException(
@@ -299,9 +306,8 @@ public class DebtService {
         }
 
         Building building = room.getBuilding();
-        boolean hasAccess = currentUser.getRole() == User.Role.ADMIN
-                || (currentUser.getRole() == User.Role.LANDLORD && building.getLandlord() != null && building.getLandlord().getId().equals(currentUser.getId()))
-                || (currentUser.getRole() == User.Role.MANAGER && building.getManager() != null && building.getManager().getId().equals(currentUser.getId()));
+        boolean hasAccess = building.getLandlord() != null
+                && building.getLandlord().getId().equals(currentUser.getId());
 
         if (!hasAccess) {
             throw new ResponseStatusException(
@@ -310,8 +316,25 @@ public class DebtService {
             );
         }
 
+        if (invoice.getStatus() != Invoice.Status.ISSUED
+                && invoice.getStatus() != Invoice.Status.PARTIALLY_PAID) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Hóa đơn không ở trạng thái có thể thanh toán"
+            );
+        }
+        if (amount > invoice.getRemainingAmount()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Số tiền thanh toán vượt quá số còn nợ"
+            );
+        }
+
         long newPaidAmount = invoice.getPaidAmount() + amount;
         invoice.setPaidAmount(newPaidAmount);
+        invoice.setStatus(newPaidAmount == invoice.getTotalAmount()
+                ? Invoice.Status.PAID
+                : Invoice.Status.PARTIALLY_PAID);
         return invoiceRepository.save(invoice);
     }
 
@@ -323,20 +346,13 @@ public class DebtService {
      */
     @Transactional
     public SeedTestDataResponse seedTestData(User currentUser) {
-        validateAccessRole(currentUser);
-
-        User landlord = currentUser.getRole() == User.Role.LANDLORD
-                ? currentUser
-                : (currentUser.getRole() == User.Role.ADMIN
-                ? currentUser
-                : null);
-
-        if (landlord == null) {
+        if (currentUser == null || currentUser.getRole() != User.Role.LANDLORD) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Chức năng nạp dữ liệu mẫu chỉ dành cho Chủ nhà (LANDLORD) hoặc Admin"
+                    HttpStatus.FORBIDDEN,
+                    "Chức năng nạp dữ liệu mẫu chỉ dành cho Chủ nhà"
             );
         }
+        User landlord = currentUser;
 
         // Tạo hoặc lấy toà nhà kiểm thử
         String buildingName = "Tòa Nhà Demo Công Nợ (S4-03)";

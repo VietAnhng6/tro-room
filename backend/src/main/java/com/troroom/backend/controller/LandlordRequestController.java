@@ -37,13 +37,20 @@ public class LandlordRequestController {
         return u.getRole() == User.Role.LANDLORD ? u : null;
     }
 
+    private User reader(Authentication auth) {
+        if (auth == null || !(auth.getPrincipal() instanceof User u)) return null;
+        return u.getRole() == User.Role.LANDLORD
+                || u.getRole() == User.Role.MANAGER
+                || u.getRole() == User.Role.ADMIN ? u : null;
+    }
+
     @GetMapping
     public ResponseEntity<?> list(Authentication auth,
                                   @RequestParam(required = false) String status,
                                   @RequestParam(required = false) Long buildingId,
                                   @RequestParam(defaultValue = "newest") String sort) {
-        User u = landlord(auth);
-        if (u == null) return ResponseEntity.status(403).body(Map.of("message", "Chỉ Chủ nhà được xem danh sách yêu cầu"));
+        User u = reader(auth);
+        if (u == null) return ResponseEntity.status(403).body(Map.of("message", "Bạn không có quyền xem danh sách yêu cầu"));
         RentalRequest.Status st = null;
         if (status != null && !status.isBlank()) {
             try {
@@ -58,8 +65,8 @@ public class LandlordRequestController {
     /** Số yêu cầu chưa xử lý, dùng cho số đếm trên menu. */
     @GetMapping("/pending-count")
     public ResponseEntity<?> pendingCount(Authentication auth) {
-        User u = landlord(auth);
-        if (u == null) return ResponseEntity.status(403).body(Map.of("message", "Chỉ Chủ nhà được xem danh sách yêu cầu"));
+        User u = reader(auth);
+        if (u == null) return ResponseEntity.status(403).body(Map.of("message", "Bạn không có quyền xem danh sách yêu cầu"));
         return ResponseEntity.ok(Map.of("count", service.pendingCount(u)));
     }
 

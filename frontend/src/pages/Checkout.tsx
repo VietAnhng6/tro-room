@@ -52,8 +52,8 @@ type Settlement = {
   createdAt: string | null
 }
 
-const CONTRACTS_API = 'http://localhost:8080/api/landlord/requests/contracts'
-const CHECKOUT_API = 'http://localhost:8080/api/checkout'
+const CONTRACTS_API = '/api/landlord/requests/contracts'
+const CHECKOUT_API = '/api/checkout'
 
 const money = (value?: number | null) =>
   value == null ? '—' : `${Number(value).toLocaleString('vi-VN')} đ`

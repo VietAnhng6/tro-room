@@ -11,6 +11,7 @@ import com.troroom.backend.repository.RentalContractRepository;
 import com.troroom.backend.repository.RentalRequestRepository;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -49,6 +50,22 @@ public class RentalContractService {
 
         return contractRepository
                 .findByRoom_Building_Landlord_IdOrderByStartDateDesc(landlordId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RentalContract> listContractsForViewer(User viewer) {
+        if (viewer == null || viewer.getId() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập");
+        }
+        return switch (viewer.getRole()) {
+            case LANDLORD -> listContractsByLandlord(viewer.getId());
+            case MANAGER -> contractRepository
+                    .findByRoom_Building_Manager_IdOrderByStartDateDesc(viewer.getId());
+            case ADMIN -> contractRepository.findAll(
+                    Sort.by(Sort.Direction.DESC, "startDate"));
+            default -> throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "Bạn không có quyền xem danh sách hợp đồng");
+        };
     }
 
     @Transactional

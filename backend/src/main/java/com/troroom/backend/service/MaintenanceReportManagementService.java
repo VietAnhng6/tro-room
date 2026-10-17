@@ -7,6 +7,7 @@ import com.troroom.backend.repository.MaintenanceReportRepository;
 import com.troroom.backend.repository.MaintenanceReportStatusHistoryRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import com.troroom.backend.entity.InvoiceItem;
@@ -39,10 +40,17 @@ public class MaintenanceReportManagementService {
         String statusText,
         String urgencyText) {
 
-    requireManager(manager);
+    requireReader(manager);
 
-    List<MaintenanceReport> reports = reportRepository
-            .findByRoomBuildingManagerIdOrderByCreatedAtDesc(manager.getId());
+    List<MaintenanceReport> reports = switch (manager.getRole()) {
+        case MANAGER -> reportRepository
+                .findByRoomBuildingManagerIdOrderByCreatedAtDesc(manager.getId());
+        case LANDLORD -> reportRepository
+                .findByRoomBuildingLandlordIdOrderByCreatedAtDesc(manager.getId());
+        case ADMIN -> reportRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+        default -> throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                "Bạn không có quyền xem báo hỏng");
+    };
 
     MaintenanceReport.Status status = null;
     MaintenanceReport.Urgency urgency = null;
@@ -84,11 +92,18 @@ public class MaintenanceReportManagementService {
 
     @Transactional
     public MaintenanceReport get(User manager, Long reportId) {
-        requireManager(manager);
+        requireReader(manager);
 
-        return reportRepository
-                .findByIdAndRoomBuildingManagerId(reportId, manager.getId())
-                .orElseThrow(() -> new ResponseStatusException(
+        var found = switch (manager.getRole()) {
+            case MANAGER -> reportRepository
+                    .findByIdAndRoomBuildingManagerId(reportId, manager.getId());
+            case LANDLORD -> reportRepository
+                    .findByIdAndRoomBuildingLandlordId(reportId, manager.getId());
+            case ADMIN -> reportRepository.findById(reportId);
+            default -> throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Bạn không có quyền xem báo hỏng");
+        };
+        return found.orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Không tìm thấy báo hỏng trong tòa nhà bạn phụ trách."));
     }
@@ -100,6 +115,7 @@ public class MaintenanceReportManagementService {
             String newStatusText,
             String note) {
 
+        requireWriter(manager);
         MaintenanceReport report = get(manager, reportId);
 
         if (note == null || note.trim().isEmpty()) {
@@ -167,6 +183,7 @@ public class MaintenanceReportManagementService {
             Long repairCost,
             String costPayer) {
 
+        requireWriter(manager);
         MaintenanceReport report = get(manager, reportId);
 
         if (repairCost == null || repairCost < 0) {
@@ -224,11 +241,21 @@ public com.troroom.backend.dto.MaintenanceReportManagementResponse toResponse(
     return com.troroom.backend.dto.MaintenanceReportManagementResponse
             .from(report, invoiceCode, invoiceStatus);
     }
-    private void requireManager(User manager) {
-        if (manager == null || manager.getRole() != User.Role.MANAGER) {
+    private void requireReader(User manager) {
+        if (manager == null || (manager.getRole() != User.Role.MANAGER
+                && manager.getRole() != User.Role.LANDLORD
+                && manager.getRole() != User.Role.ADMIN)) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Chức năng này chỉ dành cho quản lý.");
+                    "Bạn không có quyền xem báo hỏng.");
+        }
+    }
+
+    private void requireWriter(User manager) {
+        if (manager == null || (manager.getRole() != User.Role.MANAGER
+                && manager.getRole() != User.Role.LANDLORD)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Bạn không có quyền xử lý báo hỏng.");
         }
     }
 }

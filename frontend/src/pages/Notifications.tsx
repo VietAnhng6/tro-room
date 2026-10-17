@@ -16,7 +16,7 @@ type NotificationItem = {
   landlordEmail?: string
 }
 
-const API = 'http://localhost:8080/api/notifications'
+const API = '/api/notifications'
 
 export default function Notifications() {
   const [items, setItems] = useState<NotificationItem[]>([])

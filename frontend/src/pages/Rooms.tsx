@@ -32,7 +32,7 @@ export interface RoomImageItem {
   sortOrder: number
 }
 
-const API = 'http://localhost:8080'
+const API = ''
 
 const statusLabel: Record<RoomStatus, string> = {
   EMPTY: 'Trống',
@@ -124,6 +124,7 @@ const compressImageFile = async (file: File): Promise<File> => {
 
 function Rooms() {
   const navigate = useNavigate()
+  const canManageRooms = localStorage.getItem('role') === 'LANDLORD'
   const [rooms, setRooms] = useState<Room[]>([])
   const [buildings, setBuildings] = useState<Building[]>([])
 
@@ -626,7 +627,7 @@ function Rooms() {
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <button
+          {canManageRooms && <button
             onClick={openCreate}
             style={{
               border: 0,
@@ -640,7 +641,7 @@ function Rooms() {
             }}
           >
             Thêm phòng mới
-          </button>
+          </button>}
         </div>
       </div>
 
@@ -841,7 +842,9 @@ function Rooms() {
               Chưa có phòng nào
             </div>
             <div style={{ color: '#64748b', fontSize: 14 }}>
-              Hãy bấm nút "Thêm phòng mới" ở trên để bắt đầu tạo phòng.
+              {canManageRooms
+                ? 'Hãy bấm nút "Thêm phòng mới" ở trên để bắt đầu tạo phòng.'
+                : 'Hiện chưa có phòng trong tòa nhà được giao.'}
             </div>
           </div>
         ) : (
@@ -940,6 +943,7 @@ function Rooms() {
                         <select
                           value={room.status}
                           disabled={
+                            !canManageRooms ||
                             buildings.find((b) => b.id === room.buildingId)?.active === false
                           }
                           onChange={(e) => changeStatus(room, e.target.value as RoomStatus)}
@@ -966,6 +970,7 @@ function Rooms() {
                       {/* Thao tác */}
                       <td style={tdStyleCenter}>
                         <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
+                          {canManageRooms ? <>
                           <button
                             onClick={() => setOccupantsModalRoom(room)}
                             title="Quản lý người đứng tên hợp đồng và người ở ghép (S3-02)"
@@ -1034,6 +1039,7 @@ function Rooms() {
                           >
                             Sửa
                           </button>
+                          </> : <span style={{ color: '#64748b', fontSize: 12 }}>Chỉ xem</span>}
                         </div>
                       </td>
                     </tr>
@@ -1050,7 +1056,7 @@ function Rooms() {
                   >
                     <td colSpan={9} style={{ padding: '16px 20px', textAlign: 'center', color: '#64748b' }}>
                       <span style={{ fontWeight: 700, color: '#0f172a' }}>{building.name}</span> — Chưa có phòng nào.{' '}
-                      <button
+                      {canManageRooms && <button
                         onClick={() => {
                           setForm({
                             code: '',
@@ -1074,7 +1080,7 @@ function Rooms() {
                         }}
                       >
                         Thêm phòng ngay
-                      </button>
+                      </button>}
                     </td>
                   </tr>
                 ))}

@@ -108,7 +108,9 @@ public class InvoiceService {
                 && building.getManager() != null
                 && building.getManager().getId().equals(user.getId());
 
-        if (!landlord && !manager) {
+        boolean admin = user.getRole() == User.Role.ADMIN;
+
+        if (!landlord && !manager && !admin) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "Bạn không có quyền thao tác hóa đơn của tòa nhà này"
@@ -550,7 +552,12 @@ public class InvoiceService {
         }
 
         List<Invoice> invoices =
-                invoiceRepository.findByTenant(user, Invoice.Status.ISSUED);
+                invoiceRepository.findByTenant(
+                        user,
+                        List.of(
+                                Invoice.Status.ISSUED,
+                                Invoice.Status.PARTIALLY_PAID,
+                                Invoice.Status.PAID));
 
         List<InvoiceResponse> result = new ArrayList<>();
 
@@ -582,13 +589,18 @@ public class InvoiceService {
 
         RentalContract contract = invoice.getContract();
 
-        boolean isTenant = user.getRole() == User.Role.TENANT
-                && contract != null
-                && contract.getTenant() != null
-                && contract.getTenant().getId().equals(user.getId());
-
-        if (isTenant) {
-            if (invoice.getStatus() != Invoice.Status.ISSUED) {
+        if (user.getRole() == User.Role.TENANT) {
+            if (contract == null
+                    || contract.getTenant() == null
+                    || !contract.getTenant().getId().equals(user.getId())) {
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "Bạn không có quyền xem hóa đơn này"
+                );
+            }
+            if (invoice.getStatus() != Invoice.Status.ISSUED
+                    && invoice.getStatus() != Invoice.Status.PARTIALLY_PAID
+                    && invoice.getStatus() != Invoice.Status.PAID) {
                 throw new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Không tìm thấy hóa đơn"

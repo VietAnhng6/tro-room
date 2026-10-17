@@ -17,6 +17,16 @@ public interface LandlordRequestRepository extends JpaRepository<RentalRequest, 
             + "where b.landlord = :landlord order by r.createdAt desc")
     List<RentalRequest> findAllForLandlord(@Param("landlord") User landlord);
 
+    @Query("select r from RentalRequest r "
+            + "join fetch r.listing l join fetch l.room rm join fetch rm.building b join fetch r.tenant t "
+            + "where b.manager = :manager order by r.createdAt desc")
+    List<RentalRequest> findAllForManager(@Param("manager") User manager);
+
+    @Query("select r from RentalRequest r "
+            + "join fetch r.listing l join fetch l.room rm join fetch rm.building b join fetch r.tenant t "
+            + "order by r.createdAt desc")
+    List<RentalRequest> findAllForAdmin();
+
     long countByListing_Room_Building_LandlordAndStatus(User landlord, RentalRequest.Status status);
 
     /** S2-08: tìm 1 yêu cầu theo id, chỉ khi nó thuộc toà nhà của Chủ nhà này. */

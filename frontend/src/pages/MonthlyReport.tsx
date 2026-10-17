@@ -64,7 +64,7 @@ export default function MonthlyReport() {
     const params = new URLSearchParams({ from, to })
     if (buildingId) params.set('buildingId', buildingId)
 
-    fetch(`http://localhost:8080/api/reports/monthly?${params}`, {
+    fetch(`/api/reports/monthly?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
       signal: controller.signal,
     })

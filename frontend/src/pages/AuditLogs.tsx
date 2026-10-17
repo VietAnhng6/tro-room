@@ -12,7 +12,7 @@ type AuditLog = {
   afterData: string | null
 }
 
-const API = 'http://localhost:8080'
+const API = ''
 
 function formatDateTime(value: string) {
   if (!value) return '-'

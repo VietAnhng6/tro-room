@@ -13,7 +13,7 @@ function ForgotPassword() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/auth/forgot-password?email=${encodeURIComponent(email)}`,
+        `/api/auth/forgot-password?email=${encodeURIComponent(email)}`,
         {
           method: 'POST',
         }

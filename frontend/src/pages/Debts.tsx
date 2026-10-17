@@ -42,7 +42,7 @@ type DebtSummaryResponse = {
   totalUnpaidInvoices: number
 }
 
-const API = 'http://localhost:8080'
+const API = ''
 const getToken = () => localStorage.getItem('accessToken')
 
 function formatMoney(value: number): string {

@@ -22,6 +22,12 @@ public class PermissionDataInitializer {
                     User.Role.ADMIN,
                     "ADMIN_ACCESS"
             );
+            addIfNotExists(repository, User.Role.ADMIN, "BUILDING_VIEW");
+            addIfNotExists(repository, User.Role.ADMIN, "ROOM_VIEW");
+            addIfNotExists(repository, User.Role.ADMIN, "INVOICE_VIEW");
+            addIfNotExists(repository, User.Role.ADMIN, "CONTRACT_VIEW");
+            addIfNotExists(repository, User.Role.ADMIN, "SERVICE_VIEW");
+            addIfNotExists(repository, User.Role.ADMIN, "METER_VIEW");
 
             // LANDLORD
             addIfNotExists(
@@ -33,7 +39,19 @@ public class PermissionDataInitializer {
             addIfNotExists(
                     repository,
                     User.Role.LANDLORD,
+                    "BUILDING_VIEW"
+            );
+
+            addIfNotExists(
+                    repository,
+                    User.Role.LANDLORD,
                     "ROOM_MANAGE"
+            );
+
+            addIfNotExists(
+                    repository,
+                    User.Role.LANDLORD,
+                    "ROOM_VIEW"
             );
 
             addIfNotExists(
@@ -41,6 +59,7 @@ public class PermissionDataInitializer {
                     User.Role.LANDLORD,
                     "SERVICE_MANAGE"
             );
+            addIfNotExists(repository, User.Role.LANDLORD, "SERVICE_VIEW");
                         addIfNotExists(
                     repository,
                     User.Role.LANDLORD,
@@ -53,6 +72,7 @@ public class PermissionDataInitializer {
                     User.Role.LANDLORD,
                     "METER_MANAGE"
             );
+            addIfNotExists(repository, User.Role.LANDLORD, "METER_VIEW");
 
             // S3-06: phát hành và xem hoá đơn tháng
             addIfNotExists(
@@ -60,6 +80,7 @@ public class PermissionDataInitializer {
                     User.Role.LANDLORD,
                     "INVOICE_MANAGE"
             );
+            addIfNotExists(repository, User.Role.LANDLORD, "INVOICE_VIEW");
 
             // S4-04: trả phòng và tất toán tiền cọc
             addIfNotExists(
@@ -67,12 +88,24 @@ public class PermissionDataInitializer {
                     User.Role.LANDLORD,
                     "CONTRACT_MANAGE"
             );
+            addIfNotExists(repository, User.Role.LANDLORD, "CONTRACT_VIEW");
 
             // MANAGER
             addIfNotExists(
                     repository,
                     User.Role.MANAGER,
-                    "ROOM_MANAGE"
+                    "BUILDING_VIEW"
+            );
+
+            // Manager chỉ được xem phòng; loại bỏ quyền ghi đã seed ở bản cũ.
+            repository.findByRole(User.Role.MANAGER).stream()
+                    .filter(p -> "ROOM_MANAGE".equals(p.getPermission()))
+                    .forEach(repository::delete);
+
+            addIfNotExists(
+                    repository,
+                    User.Role.MANAGER,
+                    "ROOM_VIEW"
             );
 
             addIfNotExists(
@@ -80,20 +113,20 @@ public class PermissionDataInitializer {
                     User.Role.MANAGER,
                     "METER_MANAGE"
             );
+            addIfNotExists(repository, User.Role.MANAGER, "METER_VIEW");
+            addIfNotExists(repository, User.Role.MANAGER, "SERVICE_VIEW");
 
-            // S3-06: quản lý xem hoá đơn tháng
-            addIfNotExists(
-                    repository,
-                    User.Role.MANAGER,
-                    "INVOICE_MANAGE"
-            );
+            // Manager chỉ xem hóa đơn; xóa quyền ghi từ dữ liệu đã seed trước đây.
+            repository.findByRole(User.Role.MANAGER).stream()
+                    .filter(p -> "INVOICE_MANAGE".equals(p.getPermission()))
+                    .forEach(repository::delete);
+            addIfNotExists(repository, User.Role.MANAGER, "INVOICE_VIEW");
 
-            // S4-04: quản lý hỗ trợ trả phòng và tất toán
-            addIfNotExists(
-                    repository,
-                    User.Role.MANAGER,
-                    "CONTRACT_MANAGE"
-            );
+            // Manager chỉ xem hợp đồng và bản xem trước tất toán.
+            repository.findByRole(User.Role.MANAGER).stream()
+                    .filter(p -> "CONTRACT_MANAGE".equals(p.getPermission()))
+                    .forEach(repository::delete);
+            addIfNotExists(repository, User.Role.MANAGER, "CONTRACT_VIEW");
 
             // TENANT
             addIfNotExists(

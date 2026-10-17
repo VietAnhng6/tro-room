@@ -18,7 +18,7 @@ interface CreateListingModalProps {
   onSuccess?: () => void
 }
 
-const API = 'http://localhost:8080'
+const API = ''
 
 const formatMoney = (val: number) =>
   new Intl.NumberFormat('vi-VN').format(val) + ' đ'

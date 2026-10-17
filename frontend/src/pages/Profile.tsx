@@ -49,7 +49,7 @@ export function Profile() {
       }
 
       try {
-        const response = await fetch('http://localhost:8080/api/profile', {
+        const response = await fetch('/api/profile', {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -101,7 +101,7 @@ export function Profile() {
     if (!accessToken) return
 
     if (idFrontUrl && !idFront) {
-      fetch('http://localhost:8080/api/profile/id-image/front', {
+      fetch('/api/profile/id-image/front', {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
         .then((res) => (res.ok ? res.blob() : null))
@@ -112,7 +112,7 @@ export function Profile() {
     }
 
     if (idBackUrl && !idBack) {
-      fetch('http://localhost:8080/api/profile/id-image/back', {
+      fetch('/api/profile/id-image/back', {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
         .then((res) => (res.ok ? res.blob() : null))
@@ -233,7 +233,7 @@ export function Profile() {
 
     try {
       setLoading(true)
-      const response = await fetch('http://localhost:8080/api/profile', {
+      const response = await fetch('/api/profile', {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
         body: formData,

@@ -22,7 +22,7 @@ type MaintenanceReport = {
   urgentOverdue: boolean
 }
 
-const API = 'http://localhost:8080/api/manager/maintenance-reports'
+const API = '/api/manager/maintenance-reports'
 
 const statusLabels: Record<string, string> = {
   NEW: 'Mới',

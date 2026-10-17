@@ -100,6 +100,13 @@ public class CheckoutService {
         RentalContract contract = requireContract(contractId);
         requireManagerAccess(user, contract);
 
+        if (user.getRole() != User.Role.LANDLORD) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Chỉ chủ nhà được tất toán hợp đồng"
+            );
+        }
+
         if (contract.getStatus() != RentalContract.Status.ACTIVE) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -757,6 +764,10 @@ public class CheckoutService {
         // Khách thuê đứng tên được xem bảng tất toán của hợp đồng của mình.
         if (contract.getTenant() != null
                 && contract.getTenant().getId().equals(user.getId())) {
+            return;
+        }
+
+        if (user.getRole() == User.Role.ADMIN) {
             return;
         }
 

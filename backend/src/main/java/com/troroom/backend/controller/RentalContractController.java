@@ -77,10 +77,10 @@ public class RentalContractController {
     public ResponseEntity<List<RentalContract>> listContracts(
             Authentication authentication
     ) {
-        User landlord = getAuthenticatedLandlord(authentication);
+        User viewer = getAuthenticatedReader(authentication);
 
         List<RentalContract> contracts =
-                contractService.listContractsByLandlord(landlord.getId());
+                contractService.listContractsForViewer(viewer);
 
         return ResponseEntity.ok(contracts);
     }
@@ -172,5 +172,20 @@ public class RentalContractController {
         }
 
         return landlord;
+    }
+
+    private User getAuthenticatedReader(Authentication authentication) {
+        if (authentication == null
+                || !(authentication.getPrincipal() instanceof User viewer)
+                || viewer.getId() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập lại");
+        }
+        if (viewer.getRole() != User.Role.LANDLORD
+                && viewer.getRole() != User.Role.MANAGER
+                && viewer.getRole() != User.Role.ADMIN) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "Bạn không có quyền xem danh sách hợp đồng");
+        }
+        return viewer;
     }
 }
