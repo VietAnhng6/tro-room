@@ -3,6 +3,7 @@ package com.troroom.backend.service;
 import com.troroom.backend.dto.MonthlyReportDtos;
 import com.troroom.backend.entity.Building;
 import com.troroom.backend.entity.RentalContract;
+import com.troroom.backend.entity.Room;
 import com.troroom.backend.entity.User;
 import com.troroom.backend.repository.BuildingRepository;
 import com.troroom.backend.repository.InvoiceRepository;
@@ -18,6 +19,7 @@ import java.math.RoundingMode;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -88,13 +90,101 @@ public class MonthlyReportService {
                                 building.getName()))
                         .toList();
 
+        YearMonth currentMonth = YearMonth.now(
+                ZoneId.of("Asia/Ho_Chi_Minh"));
+        YearMonth recentFrom = currentMonth.minusMonths(5);
+        List<MonthlyReportDtos.RevenueMonth> recentMonths =
+                emptyRevenueMonths(recentFrom, currentMonth);
+
         if (buildingIds.isEmpty()) {
             return new MonthlyReportDtos.Response(
                     buildingOptions,
-                    emptyMonths(from, to));
+                    emptyMonths(from, to),
+                    false,
+                    recentMonths,
+                    false);
         }
 
         Map<String, MonthlyReportDtos.InvoiceAggregate> invoiceByPeriod =
+                aggregateInvoices(buildingIds, from, to);
+        Map<String, MonthlyReportDtos.InvoiceAggregate> recentInvoiceByPeriod;
+        if (!recentFrom.isBefore(from) && !currentMonth.isAfter(to)) {
+            recentInvoiceByPeriod = invoiceByPeriod;
+        } else {
+            recentInvoiceByPeriod =
+                    aggregateInvoices(buildingIds, recentFrom, currentMonth);
+        }
+        recentMonths = recentRevenueMonths(
+                recentFrom, currentMonth, recentInvoiceByPeriod);
+
+        LocalDate rangeStart = from.atDay(1);
+        LocalDate rangeEnd = to.atEndOfMonth();
+        List<RentalContract> contracts =
+                contractRepository.findForMonthlyOccupancy(
+                        buildingIds, rangeStart, rangeEnd);
+        List<Room.Status> rentableStatuses = List.of(
+                Room.Status.EMPTY,
+                Room.Status.DEPOSITED,
+                Room.Status.RENTED);
+        Set<Room.Status> rentableStatusSet = Set.copyOf(rentableStatuses);
+        Map<Long, Long> roomsByBuilding =
+                roomRepository.countRentableByBuildingIds(
+                                buildingIds, rentableStatuses)
+                        .stream()
+                        .collect(java.util.stream.Collectors.toMap(
+                                row -> ((Number) row[0]).longValue(),
+                                row -> ((Number) row[1]).longValue()));
+        long totalRooms = roomsByBuilding.values().stream()
+                .mapToLong(Long::longValue).sum();
+
+        List<MonthlyReportDtos.MonthSummary> summaries =
+                new ArrayList<>();
+        for (YearMonth month = from; !month.isAfter(to); month = month.plusMonths(1)) {
+            LocalDate monthEnd = month.atEndOfMonth();
+            Set<Long> occupiedRoomIds = new HashSet<>();
+            for (RentalContract contract : contracts) {
+                LocalDate actualEnd = contract.getTerminatedAt() != null
+                        && contract.getTerminatedAt().isBefore(contract.getEndDate())
+                        ? contract.getTerminatedAt()
+                        : contract.getEndDate();
+                if (rentableStatusSet.contains(contract.getRoom().getStatus())
+                        && !contract.getStartDate().isAfter(monthEnd)
+                        && !actualEnd.isBefore(monthEnd)) {
+                    occupiedRoomIds.add(contract.getRoom().getId());
+                }
+            }
+
+            MonthlyReportDtos.InvoiceAggregate invoice =
+                    invoiceByPeriod.get(month.toString());
+            long issued = invoice == null ? 0 : invoice.issuedAmount();
+            long collected = invoice == null ? 0 : invoice.collectedAmount();
+            long outstanding = invoice == null ? 0 : invoice.outstandingAmount();
+
+            summaries.add(new MonthlyReportDtos.MonthSummary(
+                    month.toString(),
+                    issued,
+                    collected,
+                    outstanding,
+                    percentage(collected, issued),
+                    occupiedRoomIds.size(),
+                    totalRooms,
+                    percentage(occupiedRoomIds.size(), totalRooms)));
+        }
+
+        return new MonthlyReportDtos.Response(
+                buildingOptions,
+                summaries,
+                !invoiceByPeriod.isEmpty(),
+                recentMonths,
+                !recentInvoiceByPeriod.isEmpty());
+    }
+
+    private Map<String, MonthlyReportDtos.InvoiceAggregate> aggregateInvoices(
+            List<Long> buildingIds,
+            YearMonth from,
+            YearMonth to
+    ) {
+        Map<String, MonthlyReportDtos.InvoiceAggregate> aggregates =
                 new HashMap<>();
         invoiceRepository.aggregateForMonthlyReport(
                         buildingIds,
@@ -111,56 +201,33 @@ public class MonthlyReportService {
                                     ((Number) row[1]).longValue(),
                                     ((Number) row[2]).longValue(),
                                     ((Number) row[3]).longValue());
-                    invoiceByPeriod.put(aggregate.period(), aggregate);
+                    aggregates.put(aggregate.period(), aggregate);
                 });
+        return aggregates;
+    }
 
-        LocalDate rangeStart = from.atDay(1);
-        LocalDate rangeEnd = to.atEndOfMonth();
-        List<RentalContract> contracts =
-                contractRepository.findForMonthlyOccupancy(
-                        buildingIds, rangeStart, rangeEnd);
-        Map<Long, Long> roomsByBuilding =
-                roomRepository.countByBuildingIds(buildingIds).stream()
-                        .collect(java.util.stream.Collectors.toMap(
-                                row -> ((Number) row[0]).longValue(),
-                                row -> ((Number) row[1]).longValue()));
-
-        List<MonthlyReportDtos.MonthSummary> summaries =
-                new ArrayList<>();
+    private List<MonthlyReportDtos.RevenueMonth> recentRevenueMonths(
+            YearMonth from,
+            YearMonth to,
+            Map<String, MonthlyReportDtos.InvoiceAggregate> invoiceByPeriod
+    ) {
+        List<MonthlyReportDtos.RevenueMonth> recentMonths = new ArrayList<>();
         for (YearMonth month = from; !month.isAfter(to); month = month.plusMonths(1)) {
-            LocalDate monthEnd = month.atEndOfMonth();
-            Set<Long> occupiedRoomIds = new HashSet<>();
-            for (RentalContract contract : contracts) {
-                LocalDate actualEnd = contract.getTerminatedAt() != null
-                        && contract.getTerminatedAt().isBefore(contract.getEndDate())
-                        ? contract.getTerminatedAt()
-                        : contract.getEndDate();
-                if (!contract.getStartDate().isAfter(monthEnd)
-                        && !actualEnd.isBefore(monthEnd)) {
-                    occupiedRoomIds.add(contract.getRoom().getId());
-                }
-            }
-
             MonthlyReportDtos.InvoiceAggregate invoice =
                     invoiceByPeriod.get(month.toString());
-            long issued = invoice == null ? 0 : invoice.issuedAmount();
-            long collected = invoice == null ? 0 : invoice.collectedAmount();
-            long outstanding = invoice == null ? 0 : invoice.outstandingAmount();
-            long totalRooms = roomsByBuilding.values().stream()
-                    .mapToLong(Long::longValue).sum();
-
-            summaries.add(new MonthlyReportDtos.MonthSummary(
+            recentMonths.add(new MonthlyReportDtos.RevenueMonth(
                     month.toString(),
-                    issued,
-                    collected,
-                    outstanding,
-                    percentage(collected, issued),
-                    occupiedRoomIds.size(),
-                    totalRooms,
-                    percentage(occupiedRoomIds.size(), totalRooms)));
+                    invoice == null ? 0 : invoice.issuedAmount(),
+                    invoice == null ? 0 : invoice.collectedAmount()));
         }
+        return recentMonths;
+    }
 
-        return new MonthlyReportDtos.Response(buildingOptions, summaries);
+    private List<MonthlyReportDtos.RevenueMonth> emptyRevenueMonths(
+            YearMonth from,
+            YearMonth to
+    ) {
+        return recentRevenueMonths(from, to, Map.of());
     }
 
     private List<Building> accessibleBuildings(User currentUser) {

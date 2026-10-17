@@ -22,9 +22,19 @@ public final class MonthlyReportDtos {
     ) {
     }
 
+    public record RevenueMonth(
+            String period,
+            long issuedAmount,
+            long collectedAmount
+    ) {
+    }
+
     public record Response(
             List<BuildingOption> buildings,
-            List<MonthSummary> months
+            List<MonthSummary> months,
+            boolean hasInvoiceData,
+            List<RevenueMonth> recentMonths,
+            boolean hasRecentInvoiceData
     ) {
     }
 
