@@ -1,7 +1,7 @@
 import axios from "axios";
 
 
-const API = "http://localhost:8080/api/invoices";
+const API = "/api/invoices";
 
 
 function authHeader() {

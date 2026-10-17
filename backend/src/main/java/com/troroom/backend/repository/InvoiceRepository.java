@@ -65,17 +65,17 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
             @Param("buildingId") Long buildingId,
             @Param("period") String period);
 
-        /** Chỉ lấy hóa đơn đã phát hành của khách thuê. */
+        /** Chỉ lấy hóa đơn đã phát hành của khách thuê đang đăng nhập. */
         @Query("select i from Invoice i "
                 + "join fetch i.contract c "
                 + "join fetch i.room r "
                 + "join fetch r.building "
                 + "where c.tenant = :tenant "
-                + "and i.status = :status "
+                + "and i.status in :statuses "
                 + "order by i.period desc")
         List<Invoice> findByTenant(
                 @Param("tenant") User tenant,
-                @Param("status") Invoice.Status status);
+                @Param("statuses") Collection<Invoice.Status> statuses);
         @Lock(LockModeType.PESSIMISTIC_WRITE)
         @Query("select i from Invoice i "
                 + "join fetch i.contract c "
@@ -94,17 +94,19 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
             + "join fetch i.contract c "
             + "left join fetch c.tenant t "
             + "where b.id in :buildingIds "
-            + "and i.status = :status "
+            + "and i.status in :statuses "
             + "and i.totalAmount > i.paidAmount "
             + "order by i.dueDate asc, i.id asc")
     List<Invoice> findUnpaidInvoicesByBuildingIds(
             @Param("buildingIds") List<Long> buildingIds,
-            @Param("status") Invoice.Status status);
+            @Param("statuses") Collection<Invoice.Status> statuses);
 
     /** S4-04: Các hóa đơn đã phát hành nhưng chưa trả hết của một hợp đồng. */
     @Query("select i from Invoice i "
             + "where i.contract.id = :contractId "
-            + "and i.status = com.troroom.backend.entity.Invoice.Status.ISSUED "
+            + "and i.status in ("
+            + "com.troroom.backend.entity.Invoice.Status.ISSUED, "
+            + "com.troroom.backend.entity.Invoice.Status.PARTIALLY_PAID) "
             + "and i.totalAmount > i.paidAmount "
             + "order by i.dueDate asc, i.id asc")
     List<Invoice> findUnpaidByContractId(

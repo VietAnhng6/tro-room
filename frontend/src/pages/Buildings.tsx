@@ -61,8 +61,8 @@ function Buildings() {
 
       const url =
         search.trim()
-          ? `http://localhost:8080/api/buildings?search=${encodeURIComponent(search.trim())}`
-          : 'http://localhost:8080/api/buildings'
+          ? `/api/buildings?search=${encodeURIComponent(search.trim())}`
+          : '/api/buildings'
 
       const response = await fetch(url, {
         headers: {
@@ -215,8 +215,8 @@ function Buildings() {
       setSaving(true)
 
       const url = editingId
-        ? `http://localhost:8080/api/buildings/${editingId}`
-        : 'http://localhost:8080/api/buildings'
+        ? `/api/buildings/${editingId}`
+        : '/api/buildings'
 
       const response = await fetch(url, {
         method: editingId ? 'PUT' : 'POST',
@@ -294,7 +294,7 @@ function Buildings() {
       setError('')
 
       const response = await fetch(
-        `http://localhost:8080/api/buildings/${building.id}/deactivate`,
+        `/api/buildings/${building.id}/deactivate`,
         {
           method: 'PUT',
           headers: {
@@ -362,7 +362,7 @@ function Buildings() {
     setError('')
 
     const response = await fetch(
-      `http://localhost:8080/api/buildings/${building.id}/activate`,
+      `/api/buildings/${building.id}/activate`,
       {
         method: 'PUT',
         headers: {

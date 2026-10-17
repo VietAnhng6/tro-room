@@ -297,8 +297,9 @@ public ResponseEntity<?> getRooms(
         @RequestParam(required = false) Integer floor
 ) {
     User currentUser = (User) authentication.getPrincipal();
+    boolean isAdmin = currentUser.getRole() == User.Role.ADMIN;
 
-    if (!isLandlord(currentUser) && !isManager(currentUser)) {
+    if (!isLandlord(currentUser) && !isManager(currentUser) && !isAdmin) {
         return ResponseEntity.status(403)
                 .body(Map.of(
                         "message",
@@ -311,7 +312,11 @@ public ResponseEntity<?> getRooms(
     // Không chọn tòa nhà
     if (buildingId == null) {
 
-        if (isLandlord(currentUser)) {
+        if (isAdmin) {
+            rooms = roomRepository.findAll().stream()
+                    .filter(room -> floor == null || room.getFloor() == floor)
+                    .toList();
+        } else if (isLandlord(currentUser)) {
             rooms = floor == null
                     ? roomRepository.findByBuilding_Landlord(currentUser)
                     : roomRepository.findByBuilding_LandlordAndFloor(
@@ -336,7 +341,7 @@ public ResponseEntity<?> getRooms(
             return ResponseEntity.notFound().build();
         }
 
-        if (!canManageBuilding(currentUser, building)) {
+        if (!isAdmin && !canManageBuilding(currentUser, building)) {
             return ResponseEntity.status(403)
                     .body(Map.of(
                             "message",

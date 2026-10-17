@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react'
 
-const API = 'http://localhost:8080'
+const API = ''
 
 const getToken = () => localStorage.getItem('accessToken')
 

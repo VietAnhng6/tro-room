@@ -49,12 +49,12 @@ export function Dashboard() {
 
       try {
         const [buildingsRes, roomsRes] = await Promise.all([
-          fetch('http://localhost:8080/api/buildings', {
+          fetch('/api/buildings', {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }),
-          fetch('http://localhost:8080/api/rooms', {
+          fetch('/api/rooms', {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -82,7 +82,7 @@ export function Dashboard() {
     const token = localStorage.getItem('accessToken')
     if (!token || role !== 'LANDLORD') return
 
-    fetch('http://localhost:8080/api/landlord/requests/pending-count', {
+    fetch('/api/landlord/requests/pending-count', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : null))
@@ -103,12 +103,12 @@ export function Dashboard() {
     // Cảnh báo vào ngày cuối kỳ; backend vẫn là nơi kiểm soát quyền và khóa dữ liệu.
     if (now.getDate() < lastDay) return
     const headers = { Authorization: `Bearer ${token}` }
-    fetch('http://localhost:8080/api/manager/meter-readings/buildings', { headers })
+    fetch('/api/manager/meter-readings/buildings', { headers })
       .then(async (res) => res.ok ? await res.json() : [])
       .then(async (buildings: Array<{ id: number }>) => {
         const summaries = await Promise.all(buildings.map(async (building) => {
           try {
-            const res = await fetch(`http://localhost:8080/api/manager/meter-readings?buildingId=${building.id}&period=${period}`, { headers })
+            const res = await fetch(`/api/manager/meter-readings?buildingId=${building.id}&period=${period}`, { headers })
             return res.ok ? await res.json() : null
           } catch { return null }
         }))
@@ -130,7 +130,7 @@ export function Dashboard() {
     let cancelled = false
     setVacantRoomLoading(true)
     setVacantRoomError('')
-    fetch('http://localhost:8080/api/listings/vacant-without-published', {
+    fetch('/api/listings/vacant-without-published', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (res) => {
@@ -173,7 +173,7 @@ export function Dashboard() {
     setVacantRoomError('')
     setVacantRoomMessage('')
     try {
-      const res = await fetch(`http://localhost:8080/api/listings/${candidate.draftListingId}/publish`, {
+      const res = await fetch(`/api/listings/${candidate.draftListingId}/publish`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -181,7 +181,7 @@ export function Dashboard() {
       if (!res.ok) throw new Error(body.message || 'Không thể đăng lại tin nháp.')
 
       setVacantRoomMessage(`Đã đăng lại tin phòng ${candidate.roomCode} với giá hiện tại ${new Intl.NumberFormat('vi-VN').format(candidate.currentRent)} ₫.`)
-      const refresh = await fetch('http://localhost:8080/api/listings/vacant-without-published', {
+      const refresh = await fetch('/api/listings/vacant-without-published', {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (refresh.ok) {

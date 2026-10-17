@@ -37,7 +37,8 @@ public class ServiceController {
         User currentUser = (User) authentication.getPrincipal();
 
         if (!"LANDLORD".equals(currentUser.getRole().name())
-        && !"MANAGER".equals(currentUser.getRole().name())) {
+        && !"MANAGER".equals(currentUser.getRole().name())
+        && !"ADMIN".equals(currentUser.getRole().name())) {
 
     return ResponseEntity.status(403)
             .body(Map.of(

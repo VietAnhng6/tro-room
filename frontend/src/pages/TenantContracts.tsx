@@ -48,7 +48,7 @@ type ContractDetail = ContractListItem & {
   services: ContractService[]
 }
 
-const API = 'http://localhost:8080/api/tenant/contracts'
+const API = '/api/tenant/contracts'
 
 const money = (amount?: number | null) =>
   amount == null ? '—' : `${Number(amount).toLocaleString('vi-VN')} đ`
@@ -184,7 +184,7 @@ export default function TenantContracts() {
     setDownloading(true)
     setDetailError('')
     try {
-      const response = await fetch(`http://localhost:8080/api/checkout/${detail.id}/pdf`, { headers: authHeaders() })
+      const response = await fetch(`/api/checkout/${detail.id}/pdf`, { headers: authHeaders() })
       if (!response.ok) throw new Error(await responseError(response))
       const blob = await response.blob()
       if (blob.type && !blob.type.toLowerCase().includes('pdf')) {

@@ -156,7 +156,8 @@ class DebtServiceTest {
                 "2026-09", 4_000_000L, 0L, LocalDate.of(2026, 10, 5)));
 
         // Mock trả về danh sách hoá đơn chưa trả hết
-        when(invoiceRepository.findUnpaidInvoicesByBuildingIds(any(), eq(Invoice.Status.ISSUED)))
+        when(invoiceRepository.findUnpaidInvoicesByBuildingIds(
+                any(), eq(List.of(Invoice.Status.ISSUED, Invoice.Status.PARTIALLY_PAID))))
                 .thenReturn(testInvoices);
     }
 

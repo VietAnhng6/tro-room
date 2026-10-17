@@ -34,10 +34,17 @@ public class LandlordRequestService {
 
     /** Danh sách yêu cầu của các toà nhà thuộc Chủ nhà; mặc định mới nhất lên đầu. */
     @Transactional(readOnly = true)
-    public List<LandlordRequestItem> list(User landlord, RentalRequest.Status status,
+    public List<LandlordRequestItem> list(User viewer, RentalRequest.Status status,
                                           Long buildingId, boolean oldestFirst) {
         LocalDateTime limit = LocalDateTime.now().minusHours(24);
-        List<LandlordRequestItem> result = new ArrayList<>(repository.findAllForLandlord(landlord).stream()
+        List<RentalRequest> visibleRequests = switch (viewer.getRole()) {
+            case LANDLORD -> repository.findAllForLandlord(viewer);
+            case MANAGER -> repository.findAllForManager(viewer);
+            case ADMIN -> repository.findAllForAdmin();
+            default -> throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "Bạn không có quyền xem yêu cầu thuê");
+        };
+        List<LandlordRequestItem> result = new ArrayList<>(visibleRequests.stream()
                 .filter(r -> status == null || r.getStatus() == status)
                 .filter(r -> buildingId == null
                         || r.getListing().getRoom().getBuilding().getId().equals(buildingId))
@@ -49,8 +56,17 @@ public class LandlordRequestService {
 
     /** Số yêu cầu chưa xử lý (trạng thái Mới) để hiện trên menu. */
     @Transactional(readOnly = true)
-    public long pendingCount(User landlord) {
-        return repository.countByListing_Room_Building_LandlordAndStatus(landlord, RentalRequest.Status.OPEN);
+    public long pendingCount(User viewer) {
+        return switch (viewer.getRole()) {
+            case LANDLORD -> repository.countByListing_Room_Building_LandlordAndStatus(
+                    viewer, RentalRequest.Status.OPEN);
+            case MANAGER -> repository.findAllForManager(viewer).stream()
+                    .filter(r -> r.getStatus() == RentalRequest.Status.OPEN).count();
+            case ADMIN -> repository.findAllForAdmin().stream()
+                    .filter(r -> r.getStatus() == RentalRequest.Status.OPEN).count();
+            default -> throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "Bạn không có quyền xem yêu cầu thuê");
+        };
     }
 
     /**

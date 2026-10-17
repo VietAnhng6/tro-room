@@ -15,7 +15,7 @@ interface RoomImagesModalProps {
   onUpdated?: () => void
 }
 
-const API = 'http://localhost:8080'
+const API = ''
 
 // Helper function để lấy link ảnh chính xác
 const getImageSrc = (img: RoomImageItem) => {

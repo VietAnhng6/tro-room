@@ -68,6 +68,8 @@ public class MeterReadingService {
             buildings = buildingRepository.findByManager(user);
         } else if (user.getRole() == User.Role.LANDLORD) {
             buildings = buildingRepository.findByLandlord(user);
+        } else if (user.getRole() == User.Role.ADMIN) {
+            buildings = buildingRepository.findAll();
         } else {
             throw new MeterReadingException(403, "FORBIDDEN",
                     "Chỉ Quản lý toà nhà hoặc Chủ nhà được nhập chỉ số điện nước");
@@ -170,6 +172,11 @@ public class MeterReadingService {
 
     @Transactional
     public SaveResponse save(User user, SaveRequest req) {
+        if (user == null || (user.getRole() != User.Role.LANDLORD
+                && user.getRole() != User.Role.MANAGER)) {
+            throw new MeterReadingException(403, "FORBIDDEN",
+                    "Bạn không có quyền ghi chỉ số điện nước");
+        }
         if (req == null || req.contractId() == null) {
             throw new MeterReadingException(400, "VALIDATION", "Thiếu hợp đồng cần ghi chỉ số");
         }

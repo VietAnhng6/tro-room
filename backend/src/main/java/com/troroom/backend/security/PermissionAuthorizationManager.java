@@ -59,14 +59,24 @@ public class PermissionAuthorizationManager
         }
         // S4-03: Chủ nhà, Quản lý, Admin được phép gọi API công nợ /api/debts/**
         if (context.getRequest().getRequestURI().startsWith("/api/debts")) {
+            boolean readOnly = "GET".equalsIgnoreCase(context.getRequest().getMethod());
             boolean canAccessDebts = user.getRole() == User.Role.LANDLORD
-                    || user.getRole() == User.Role.MANAGER
-                    || user.getRole() == User.Role.ADMIN;
+                    || (readOnly && (user.getRole() == User.Role.MANAGER
+                    || user.getRole() == User.Role.ADMIN));
             return new AuthorizationDecision(canAccessDebts);
         }
 
+        String uri = context.getRequest().getRequestURI();
+        String method = context.getRequest().getMethod();
+        if (uri.startsWith("/api/rooms")
+                && !"GET".equalsIgnoreCase(method)
+                && user.getRole() != User.Role.LANDLORD) {
+            return new AuthorizationDecision(false);
+        }
+
         String permission = getPermission(
-                context.getRequest().getRequestURI()
+                uri,
+                method
         );
 
         if (permission == null) {
@@ -95,22 +105,28 @@ public class PermissionAuthorizationManager
     return new AuthorizationDecision(allowed);
     }
 
-    private String getPermission(String uri) {
+    private String getPermission(String uri, String method) {
 
         if (uri.startsWith("/api/admin/")) {
             return "ADMIN_ACCESS";
         }
 
         if (uri.startsWith("/api/buildings")) {
-            return "BUILDING_MANAGE";
+            return "GET".equalsIgnoreCase(method)
+                    ? "BUILDING_VIEW"
+                    : "BUILDING_MANAGE";
         }
 
         if (uri.startsWith("/api/rooms")) {
-            return "ROOM_MANAGE";
+            return "GET".equalsIgnoreCase(method)
+                    ? "ROOM_VIEW"
+                    : "ROOM_MANAGE";
         }
 
         if (uri.startsWith("/api/services")) {
-            return "SERVICE_MANAGE";
+            return "GET".equalsIgnoreCase(method)
+                    ? "SERVICE_VIEW"
+                    : "SERVICE_MANAGE";
         }
         
                 if (uri.startsWith("/api/listings")) {
@@ -118,15 +134,22 @@ public class PermissionAuthorizationManager
         }
 
         if (uri.startsWith("/api/manager/")) {
-            return "METER_MANAGE";
+            return "GET".equalsIgnoreCase(method)
+                    ? "METER_VIEW"
+                    : "METER_MANAGE";
         }
 
-        if (uri.startsWith("/api/invoices") || uri.startsWith("/api/debts")) {
-            return "INVOICE_MANAGE";
+        if (uri.startsWith("/api/invoices")) {
+            return "GET".equalsIgnoreCase(method)
+                    ? "INVOICE_VIEW"
+                    : "INVOICE_MANAGE";
         }
 
         if (uri.startsWith("/api/checkout")) {
-            return "CONTRACT_MANAGE";
+            boolean readOnly = "GET".equalsIgnoreCase(method)
+                    || ("POST".equalsIgnoreCase(method)
+                    && uri.matches("/api/checkout/\\d+/preview"));
+            return readOnly ? "CONTRACT_VIEW" : "CONTRACT_MANAGE";
         }
 
         if (uri.startsWith("/api/profile")) {

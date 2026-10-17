@@ -18,9 +18,11 @@ public interface MaintenanceReportRepository extends JpaRepository<MaintenanceRe
 
     // S4-07: Danh sách báo hỏng thuộc các tòa nhà do quản lý phụ trách
     List<MaintenanceReport> findByRoomBuildingManagerIdOrderByCreatedAtDesc(Long managerId);
+    List<MaintenanceReport> findByRoomBuildingLandlordIdOrderByCreatedAtDesc(Long landlordId);
 
     // S4-07: Tìm báo hỏng theo ID, đồng thời xác minh quyền quản lý tòa nhà
     Optional<MaintenanceReport> findByIdAndRoomBuildingManagerId(Long id, Long managerId);
+    Optional<MaintenanceReport> findByIdAndRoomBuildingLandlordId(Long id, Long landlordId);
     List<MaintenanceReport> findByContractIdAndTenantInvoicePendingTrueAndStatus(
         Long contractId,
         MaintenanceReport.Status status

@@ -16,7 +16,7 @@ type PriceHistory = {
   effectiveFrom: string
 }
 
-const API = 'http://localhost:8080'
+const API = ''
 
 const getToken = () => localStorage.getItem('accessToken')
 

@@ -15,7 +15,7 @@ type MaintenanceReport = {
   photoIds: number[]
 }
 
-const API = 'http://localhost:8080/api/maintenance-reports'
+const API = '/api/maintenance-reports'
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024
 
 const statusLabels: Record<string, string> = {

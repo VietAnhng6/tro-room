@@ -14,7 +14,7 @@ interface EmailDeliveryFailure {
   } | null
 }
 
-const API_BASE = 'http://localhost:8080'
+const API_BASE = ''
 
 export default function EmailDeliveryFailures() {
   const [items, setItems] = useState<EmailDeliveryFailure[]>([])

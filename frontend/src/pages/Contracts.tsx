@@ -24,7 +24,7 @@ type Renewal = {
   createdAt?: string
 }
 
-const API = 'http://localhost:8080/api/landlord/requests'
+const API = '/api/landlord/requests'
 
 const buttonStyle = {
   padding: '9px 14px',

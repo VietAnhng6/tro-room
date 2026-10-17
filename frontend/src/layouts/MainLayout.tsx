@@ -78,7 +78,7 @@ export const MainLayout: React.FC = () => {
 
     // Load pending requests count for landlord
     if (token && r === 'LANDLORD') {
-      fetch('http://localhost:8080/api/landlord/requests/pending-count', {
+      fetch('/api/landlord/requests/pending-count', {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => (res.ok ? res.json() : null))
@@ -380,7 +380,7 @@ export const MainLayout: React.FC = () => {
     const refreshToken = localStorage.getItem('refreshToken')
 
     if (token && refreshToken) {
-      fetch('http://localhost:8080/api/auth/logout', {
+      fetch('/api/auth/logout', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

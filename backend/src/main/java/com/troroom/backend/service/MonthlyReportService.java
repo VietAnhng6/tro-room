@@ -239,6 +239,7 @@ public class MonthlyReportService {
         return switch (currentUser.getRole()) {
             case LANDLORD -> buildingRepository.findByLandlordOrderByIdAsc(currentUser);
             case MANAGER -> buildingRepository.findByManager(currentUser);
+            case ADMIN -> buildingRepository.findAll();
             default -> throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "Chỉ chủ nhà hoặc quản lý mới được xem báo cáo");

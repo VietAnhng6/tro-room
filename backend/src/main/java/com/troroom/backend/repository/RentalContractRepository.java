@@ -23,6 +23,9 @@ public interface RentalContractRepository
     List<RentalContract>
     findByRoom_Building_Landlord_IdOrderByStartDateDesc(Long landlordId);
 
+    List<RentalContract>
+    findByRoom_Building_Manager_IdOrderByStartDateDesc(Long managerId);
+
     boolean existsByRoomAndEndDateGreaterThanEqualAndStartDateLessThanEqual(
             Room room,
             LocalDate startDate,

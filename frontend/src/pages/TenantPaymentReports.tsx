@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 
-const API = 'http://localhost:8080/api'
+const API = '/api'
 
 type PaymentMethod = 'CASH' | 'TRANSFER'
 type ReportStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'REJECTED'

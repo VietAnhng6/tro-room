@@ -56,7 +56,7 @@ function Admin() {
       }
 
       const res = await fetch(
-        `http://localhost:8080/api/admin/users?${params.toString()}`,
+        `/api/admin/users?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -95,7 +95,7 @@ function Admin() {
 
     try {
       const res = await fetch(
-        'http://localhost:8080/api/admin/users',
+        '/api/admin/users',
         {
           method: 'POST',
           headers: {
@@ -142,7 +142,7 @@ function Admin() {
 
     try {
       const res = await fetch(
-        `http://localhost:8080${endpoint}`,
+        `${endpoint}`,
         {
           method: 'PUT',
           headers: {

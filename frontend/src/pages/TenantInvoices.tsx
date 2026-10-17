@@ -11,22 +11,28 @@ type Invoice = {
   period: string
   rentAmount: number
   totalAmount: number
+  paidAmount: number
+  outstandingAmount: number
   status: string
   issueDate: string | null
   dueDate: string | null
 }
 
-const API = 'http://localhost:8080'
+const API = ''
 
 const statusLabel: Record<string, string> = {
   DRAFT: 'Bản nháp',
   ISSUED: 'Đã phát hành',
+  PARTIALLY_PAID: 'Đã trả một phần',
+  PAID: 'Đã thanh toán',
   CANCELLED: 'Đã huỷ',
 }
 
 const statusStyle: Record<string, { bg: string; color: string }> = {
   DRAFT: { bg: '#f1f5f9', color: '#475569' },
   ISSUED: { bg: '#dcfce7', color: '#166534' },
+  PARTIALLY_PAID: { bg: '#fef3c7', color: '#92400e' },
+  PAID: { bg: '#dbeafe', color: '#1d4ed8' },
   CANCELLED: { bg: '#fee2e2', color: '#991b1b' },
 }
 
@@ -127,9 +133,10 @@ export default function TenantInvoices() {
     )
   })
 
-  const totalIssued = invoices
-    .filter((invoice) => invoice.status === 'ISSUED')
+  const totalAmount = invoices
     .reduce((sum, invoice) => sum + Number(invoice.totalAmount ?? 0), 0)
+  const totalOutstanding = invoices
+    .reduce((sum, invoice) => sum + Number(invoice.outstandingAmount ?? 0), 0)
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24, color: '#0f172a' }}>
@@ -182,8 +189,13 @@ export default function TenantInvoices() {
         </div>
 
         <div style={{ padding: 20, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 14 }}>
-          <div style={{ color: '#166534', fontSize: 14 }}>Tổng tiền hóa đơn đã phát hành</div>
-          <div style={{ fontSize: 24, fontWeight: 800, marginTop: 8 }}>{formatMoney(totalIssued)}</div>
+          <div style={{ color: '#166534', fontSize: 14 }}>Tổng tiền hóa đơn</div>
+          <div style={{ fontSize: 24, fontWeight: 800, marginTop: 8 }}>{formatMoney(totalAmount)}</div>
+        </div>
+
+        <div style={{ padding: 20, background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 14 }}>
+          <div style={{ color: '#9a3412', fontSize: 14 }}>Còn phải trả</div>
+          <div style={{ fontSize: 24, fontWeight: 800, marginTop: 8 }}>{formatMoney(totalOutstanding)}</div>
         </div>
       </div>
 
@@ -234,10 +246,10 @@ export default function TenantInvoices() {
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 700 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 900 }}>
               <thead>
                 <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
-                  {['Mã hóa đơn', 'Kỳ hóa đơn', 'Phòng', 'Ngày phát hành', 'Hạn thanh toán', 'Tổng tiền', 'Trạng thái'].map((heading) => (
+                  {['Mã hóa đơn', 'Kỳ hóa đơn', 'Phòng', 'Ngày phát hành', 'Hạn thanh toán', 'Tổng tiền', 'Đã trả', 'Còn nợ', 'Trạng thái'].map((heading) => (
                     <th key={heading} style={{ padding: 12, borderBottom: '1px solid #e2e8f0', whiteSpace: 'nowrap' }}>
                       {heading}
                     </th>
@@ -267,6 +279,12 @@ export default function TenantInvoices() {
                       </td>
                       <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9', fontWeight: 700, whiteSpace: 'nowrap' }}>
                         {formatMoney(invoice.totalAmount)}
+                      </td>
+                      <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9', whiteSpace: 'nowrap' }}>
+                        {formatMoney(invoice.paidAmount)}
+                      </td>
+                      <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                        {formatMoney(invoice.outstandingAmount)}
                       </td>
                       <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>
                         <span

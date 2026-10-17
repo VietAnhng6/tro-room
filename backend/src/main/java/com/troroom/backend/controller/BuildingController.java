@@ -434,7 +434,10 @@ public ResponseEntity<?> activateBuilding(
         boolean isManager =
                 "MANAGER".equals(currentUser.getRole().name());
 
-        if (!isLandlord && !isManager) {
+        boolean isAdmin =
+                "ADMIN".equals(currentUser.getRole().name());
+
+        if (!isLandlord && !isManager && !isAdmin) {
             return ResponseEntity.status(403)
                     .body(Map.of(
                             "message",
@@ -447,7 +450,13 @@ public ResponseEntity<?> activateBuilding(
         /*
          * LANDLORD
          */
-        if (isLandlord) {
+        if (isAdmin) {
+            buildings = buildingRepository.findAll().stream()
+                    .filter(building -> search == null || search.isBlank()
+                            || building.getName().toLowerCase().contains(search.trim().toLowerCase())
+                            || building.getAddress().toLowerCase().contains(search.trim().toLowerCase()))
+                    .toList();
+        } else if (isLandlord) {
 
             if (search != null && !search.isBlank()) {
 

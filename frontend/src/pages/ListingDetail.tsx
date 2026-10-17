@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 
-const API = 'http://localhost:8080'
+const API = ''
 
 type ServiceItem = {
   id: number

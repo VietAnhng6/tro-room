@@ -40,7 +40,7 @@ export type HistoryItem = {
   reason: string | null
 }
 
-const API = 'http://localhost:8080'
+const API = ''
 
 const statusLabel: Record<string, string> = {
   OPEN: 'Mới gửi',
