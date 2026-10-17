@@ -19,6 +19,13 @@ type MonthSummary = {
 type ReportResponse = {
   buildings: BuildingOption[]
   months: MonthSummary[]
+  hasInvoiceData: boolean
+  recentMonths: {
+    period: string
+    issuedAmount: number
+    collectedAmount: number
+  }[]
+  hasRecentInvoiceData: boolean
 }
 
 const money = new Intl.NumberFormat('vi-VN', {
@@ -92,7 +99,7 @@ export default function MonthlyReport() {
   const collectionRate = totals.issued
     ? (totals.collected / totals.issued) * 100
     : 0
-  const chartMonths = months.slice(-6)
+  const chartMonths = report?.recentMonths ?? []
   const chartMax = Math.max(
     1,
     ...chartMonths.flatMap((month) => [month.issuedAmount, month.collectedAmount]),
@@ -108,6 +115,10 @@ export default function MonthlyReport() {
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Báo cáo doanh thu &amp; lấp đầy</h1>
         <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: 14 }}>
           Theo dõi hóa đơn đã phát hành, tiền đã thu và tình trạng phòng theo tháng.
+        </p>
+        <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: 12 }}>
+          Tỷ lệ lấp đầy chỉ tính các phòng hiện ở trạng thái trống, đã cọc hoặc đang thuê;
+          hệ thống chưa lưu lịch sử trạng thái phòng theo tháng.
         </p>
       </header>
 
@@ -180,6 +191,12 @@ export default function MonthlyReport() {
         <p role="status" style={{ color: '#64748b' }}>Đang tải báo cáo…</p>
       ) : report && (
         <>
+          {!report.hasInvoiceData && (
+            <p role="status" style={{ marginBottom: 18, color: '#64748b' }}>
+              Không có dữ liệu hóa đơn trong khoảng tháng đã chọn.
+            </p>
+          )}
+
           <section
             aria-label="Tổng hợp trong khoảng thời gian"
             style={{
@@ -203,14 +220,19 @@ export default function MonthlyReport() {
           </section>
 
           <section style={{ marginBottom: 20, padding: 20, border: '1px solid #e2e8f0', borderRadius: 14, background: '#fff' }}>
-            <h2 style={{ margin: '0 0 6px', fontSize: 17 }}>Doanh thu 6 tháng gần nhất trong bộ lọc</h2>
+            <h2 style={{ margin: '0 0 6px', fontSize: 17 }}>Doanh thu 6 tháng gần nhất</h2>
             <p style={{ margin: '0 0 12px', color: '#64748b', fontSize: 13 }}>
-              So sánh giá trị hóa đơn đã phát hành với số tiền đã thu.
+              Tính từ tháng hiện tại, theo bộ lọc tòa nhà.
             </p>
             <div style={{ display: 'flex', gap: 18, marginBottom: 8, color: '#475569', fontSize: 12 }}>
               <span><i style={{ display: 'inline-block', width: 10, height: 10, marginRight: 6, background: '#93c5fd' }} />Đã phát hành</span>
               <span><i style={{ display: 'inline-block', width: 10, height: 10, marginRight: 6, background: '#10b981' }} />Đã thu</span>
             </div>
+            {!report.hasRecentInvoiceData && (
+              <p role="status" style={{ color: '#64748b' }}>
+                Không có dữ liệu hóa đơn trong 6 tháng gần nhất.
+              </p>
+            )}
             {chartMonths.length ? (
               <svg
                 role="img"
@@ -235,7 +257,9 @@ export default function MonthlyReport() {
                         height={issuedHeight}
                         rx="3"
                         fill="#93c5fd"
-                      />
+                      >
+                        <title>{`${monthLabel(month.period)} · Đã phát hành: ${amount(month.issuedAmount)}`}</title>
+                      </rect>
                       <rect
                         x={center + 2}
                         y={chartBaseY - collectedHeight}
@@ -243,7 +267,9 @@ export default function MonthlyReport() {
                         height={collectedHeight}
                         rx="3"
                         fill="#10b981"
-                      />
+                      >
+                        <title>{`${monthLabel(month.period)} · Đã thu: ${amount(month.collectedAmount)}`}</title>
+                      </rect>
                       <text x={center} y="235" textAnchor="middle" fill="#64748b" fontSize="12">
                         {monthLabel(month.period)}
                       </text>
@@ -273,8 +299,16 @@ export default function MonthlyReport() {
                     <td style={{ padding: '13px 14px', whiteSpace: 'nowrap' }}>{amount(month.collectedAmount)}</td>
                     <td style={{ padding: '13px 14px', whiteSpace: 'nowrap' }}>{amount(month.outstandingAmount)}</td>
                     <td style={{ padding: '13px 14px' }}>{month.collectionRatePercent.toFixed(2)}%</td>
-                    <td style={{ padding: '13px 14px' }}>{month.occupiedRooms} / {month.totalRooms}</td>
-                    <td style={{ padding: '13px 14px' }}>{month.occupancyRatePercent.toFixed(2)}%</td>
+                    <td style={{ padding: '13px 14px' }}>
+                      {month.totalRooms === 0
+                        ? 'Không có phòng đang cho thuê'
+                        : `${month.occupiedRooms} / ${month.totalRooms}`}
+                    </td>
+                    <td style={{ padding: '13px 14px' }}>
+                      {month.totalRooms === 0
+                        ? '—'
+                        : `${month.occupancyRatePercent.toFixed(2)}%`}
+                    </td>
                   </tr>
                 ))}
               </tbody>

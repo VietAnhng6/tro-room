@@ -18,10 +18,12 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
             select r.building.id, count(r.id)
             from Room r
             where r.building.id in :buildingIds
+              and r.status in :statuses
             group by r.building.id
             """)
-    List<Object[]> countByBuildingIds(
-            @Param("buildingIds") Collection<Long> buildingIds
+    List<Object[]> countRentableByBuildingIds(
+            @Param("buildingIds") Collection<Long> buildingIds,
+            @Param("statuses") Collection<Room.Status> statuses
     );
 
     // Phòng của một tòa nhà
