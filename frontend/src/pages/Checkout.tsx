@@ -98,6 +98,9 @@ export default function Checkout() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  const [tab, setTab] = useState<'ACTIVE' | 'SETTLED'>('ACTIVE')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(5)
   const [selected, setSelected] = useState<Contract | null>(null)
   const [checkoutDate, setCheckoutDate] = useState('')
   const [finalElectricity, setFinalElectricity] = useState('')
@@ -133,6 +136,13 @@ export default function Checkout() {
   const activeContracts = contracts.filter(
     (c) => c.status !== 'ENDED' && !c.terminated,
   )
+  const settledContracts = contracts.filter(
+    (c) => c.status === 'ENDED' || Boolean(c.terminated),
+  )
+
+  const currentList = tab === 'ACTIVE' ? activeContracts : settledContracts
+  const totalPages = Math.max(1, Math.ceil(currentList.length / pageSize))
+  const paginatedContracts = currentList.slice((page - 1) * pageSize, page * pageSize)
 
   const openCheckout = (contract: Contract) => {
     setSelected(contract)
@@ -145,6 +155,44 @@ export default function Checkout() {
     setDepositPenalty('0')
     setPreview(null)
     setNotice('')
+  }
+
+  const openSavedSettlement = async (contract: Contract) => {
+    setSelected(contract)
+    setPreview(null)
+    setNotice('')
+    setBusy(true)
+    try {
+      const response = await fetch(`${CHECKOUT_API}/${contract.id}`, {
+        headers: authHeaders(),
+      })
+      if (!response.ok) throw new Error(await readError(response))
+      setPreview((await response.json()) as Settlement)
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : 'Không tải được bảng tất toán')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const downloadPdfForContract = async (contract: Contract) => {
+    try {
+      const response = await fetch(`${CHECKOUT_API}/${contract.id}/pdf`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+      })
+      if (!response.ok) throw new Error(await readError(response))
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `tat-toan-${contract.contractCode || contract.id}.pdf`
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Không tải được PDF')
+    }
   }
 
   const closeCheckout = () => {
@@ -252,57 +300,252 @@ export default function Checkout() {
       {loading && <p>Đang tải hợp đồng...</p>}
 
       {!loading && !error && (
-        <div style={{ overflowX: 'auto', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
-            <thead>
-              <tr>
-                {['Mã hợp đồng', 'Người thuê', 'Phòng', 'Tiền cọc', 'Ngày kết thúc', 'Thao tác'].map((h) => (
-                  <th key={h} style={{ textAlign: 'left', padding: 12, borderBottom: '1px solid #e2e8f0', fontSize: 13, color: '#475569' }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {activeContracts.map((contract) => (
-                <tr key={contract.id}>
-                  <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9', fontWeight: 700 }}>{contract.contractCode || `#${contract.id}`}</td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>{contract.tenant?.name || '—'}</td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>
-                    {contract.room?.building?.name ? `${contract.room.building.name} · ` : ''}
-                    {contract.room?.code || '—'}
-                  </td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>{money(contract.deposit)}</td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>{contract.endDate || '—'}</td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>
-                    <button
-                      type="button"
-                      onClick={() => openCheckout(contract)}
-                      style={{
-                        padding: '8px 14px',
-                        border: '1px solid #2563eb',
-                        background: '#2563eb',
-                        color: '#fff',
-                        borderRadius: 8,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Trả phòng
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {activeContracts.length === 0 && (
+        <>
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+            <button
+              type="button"
+              onClick={() => setTab('ACTIVE')}
+              style={{
+                padding: '9px 18px',
+                borderRadius: 8,
+                border: 'none',
+                background: tab === 'ACTIVE' ? '#2563eb' : '#f1f5f9',
+                color: tab === 'ACTIVE' ? '#fff' : '#475569',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontSize: 14,
+              }}
+            >
+              Chờ trả phòng ({activeContracts.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => { setTab('ACTIVE'); setPage(1); }}
+              style={{
+                padding: '9px 18px',
+                borderRadius: 8,
+                border: 'none',
+                background: tab === 'ACTIVE' ? '#2563eb' : '#f1f5f9',
+                color: tab === 'ACTIVE' ? '#fff' : '#475569',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontSize: 14,
+              }}
+            >
+              Chờ trả phòng ({activeContracts.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => { setTab('SETTLED'); setPage(1); }}
+              style={{
+                padding: '9px 18px',
+                borderRadius: 8,
+                border: 'none',
+                background: tab === 'SETTLED' ? '#2563eb' : '#f1f5f9',
+                color: tab === 'SETTLED' ? '#fff' : '#475569',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontSize: 14,
+              }}
+            >
+              Đã trả phòng ({settledContracts.length})
+            </button>
+          </div>
+
+          <div style={{ overflowX: 'auto', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
+              <thead>
                 <tr>
-                  <td colSpan={6} style={{ padding: 24, textAlign: 'center', color: '#64748b' }}>
-                    Không có hợp đồng đang hiệu lực để trả phòng.
-                  </td>
+                  {['Mã hợp đồng', 'Người thuê', 'Phòng', 'Tiền cọc', 'Ngày kết thúc', tab === 'ACTIVE' ? 'Thao tác' : 'Trạng thái & Thao tác'].map((h) => (
+                    <th key={h} style={{ textAlign: 'left', padding: 12, borderBottom: '1px solid #e2e8f0', fontSize: 13, color: '#475569' }}>
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {paginatedContracts.map((contract) => (
+                  <tr key={contract.id}>
+                    <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9', fontWeight: 700 }}>{contract.contractCode || `#${contract.id}`}</td>
+                    <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>{contract.tenant?.name || '—'}</td>
+                    <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>
+                      {contract.room?.building?.name ? `${contract.room.building.name} · ` : ''}
+                      {contract.room?.code || '—'}
+                    </td>
+                    <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>{money(contract.deposit)}</td>
+                    <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>{contract.endDate || '—'}</td>
+                    <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>
+                      {tab === 'ACTIVE' ? (
+                        <button
+                          type="button"
+                          onClick={() => openCheckout(contract)}
+                          style={{
+                            padding: '8px 14px',
+                            border: '1px solid #2563eb',
+                            background: '#2563eb',
+                            color: '#fff',
+                            borderRadius: 8,
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Trả phòng
+                        </button>
+                      ) : (
+                        <>
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              padding: '5px 10px',
+                              background: '#dcfce7',
+                              color: '#166534',
+                              borderRadius: 6,
+                              fontWeight: 700,
+                              fontSize: 13,
+                              marginRight: 8,
+                            }}
+                          >
+                            Đã trả phòng
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => openSavedSettlement(contract)}
+                            style={{
+                              padding: '6px 12px',
+                              border: '1px solid #cbd5e1',
+                              background: '#fff',
+                              color: '#0f172a',
+                              borderRadius: 6,
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              marginRight: 6,
+                              fontSize: 13,
+                            }}
+                          >
+                            Xem tất toán
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => downloadPdfForContract(contract)}
+                            style={{
+                              padding: '6px 12px',
+                              border: '1px solid #cbd5e1',
+                              background: '#fff',
+                              color: '#2563eb',
+                              borderRadius: 6,
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              fontSize: 13,
+                            }}
+                          >
+                            Tải PDF
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {currentList.length === 0 && (
+                  <tr>
+                    <td colSpan={6} style={{ padding: 24, textAlign: 'center', color: '#64748b' }}>
+                      {tab === 'ACTIVE'
+                        ? 'Không có hợp đồng đang hiệu lực để trả phòng.'
+                        : 'Chưa có hợp đồng nào đã trả phòng.'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {currentList.length > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: 16,
+                padding: '12px 16px',
+                background: '#fff',
+                border: '1px solid #e2e8f0',
+                borderRadius: 12,
+                flexWrap: 'wrap',
+                gap: 12,
+                fontSize: 14,
+              }}
+            >
+              <div style={{ color: '#475569' }}>
+                Hiển thị <strong>{Math.min(currentList.length, (page - 1) * pageSize + 1)}</strong> -{' '}
+                <strong>{Math.min(currentList.length, page * pageSize)}</strong> trên tổng số{' '}
+                <strong>{currentList.length}</strong> hợp đồng
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  style={{
+                    padding: '6px 14px',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: 7,
+                    background: page <= 1 ? '#f8fafc' : '#fff',
+                    color: page <= 1 ? '#94a3b8' : '#1e293b',
+                    cursor: page <= 1 ? 'not-allowed' : 'pointer',
+                    fontWeight: 600,
+                    fontSize: 13,
+                  }}
+                >
+                  ← Trang trước
+                </button>
+
+                <span style={{ color: '#334155', fontWeight: 650, fontSize: 13, padding: '0 6px' }}>
+                  Trang {page} / {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  style={{
+                    padding: '6px 14px',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: 7,
+                    background: page >= totalPages ? '#f8fafc' : '#fff',
+                    color: page >= totalPages ? '#94a3b8' : '#1e293b',
+                    cursor: page >= totalPages ? 'not-allowed' : 'pointer',
+                    fontWeight: 600,
+                    fontSize: 13,
+                  }}
+                >
+                  Trang sau →
+                </button>
+
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value))
+                    setPage(1)
+                  }}
+                  style={{
+                    padding: '6px 10px',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: 7,
+                    background: '#fff',
+                    fontSize: 13,
+                    color: '#334155',
+                    cursor: 'pointer',
+                    marginLeft: 8,
+                  }}
+                >
+                  <option value={5}>5 / trang</option>
+                  <option value={10}>10 / trang</option>
+                  <option value={20}>20 / trang</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {selected && (
@@ -336,9 +579,17 @@ export default function Checkout() {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <h2 style={{ margin: 0, fontSize: 20 }}>
-                Trả phòng {selected.contractCode || `#${selected.id}`}
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <h2 style={{ margin: 0, fontSize: 20 }}>
+                  {selected.status === 'ENDED' || selected.terminated ? 'Bảng tất toán ' : 'Trả phòng '}
+                  {selected.contractCode || `#${selected.id}`}
+                </h2>
+                {(selected.status === 'ENDED' || selected.terminated) && (
+                  <span style={{ padding: '3px 9px', background: '#dcfce7', color: '#166534', borderRadius: 6, fontWeight: 700, fontSize: 12 }}>
+                    Đã trả phòng
+                  </span>
+                )}
+              </div>
               <button type="button" onClick={closeCheckout} disabled={busy} style={{ border: '1px solid #cbd5e1', background: '#fff', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
                 Đóng
               </button>
@@ -349,97 +600,105 @@ export default function Checkout() {
               Phòng {selected.room?.code || '—'} · Người thuê {selected.tenant?.name || '—'} · Tiền cọc {money(selected.deposit)}
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <div>
-                <label style={labelStyle}>Ngày trả thực tế</label>
-                <input type="date" value={checkoutDate} onChange={(e) => setCheckoutDate(e.target.value)} style={inputStyle} />
-              </div>
-              <div />
-              <div>
-                <label style={labelStyle}>Chỉ số điện cuối cùng</label>
-                <input type="number" min="0" value={finalElectricity} onChange={(e) => setFinalElectricity(e.target.value)} style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Chỉ số nước cuối cùng</label>
-                <input type="number" min="0" value={finalWater} onChange={(e) => setFinalWater(e.target.value)} style={inputStyle} />
-              </div>
-            </div>
-
-            <div style={{ marginTop: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input
-                  type="checkbox"
-                  id="early-termination"
-                  checked={earlyTermination || Boolean(isEarly)}
-                  onChange={(e) => setEarlyTermination(e.target.checked)}
-                />
-                <label htmlFor="early-termination" style={{ ...labelStyle, marginTop: 0, fontSize: 14 }}>
-                  Chấm dứt trước hạn (phải nhập lý do)
-                </label>
-              </div>
-              {(earlyTermination || isEarly) && (
-                <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            {selected.status !== 'ENDED' && !selected.terminated && (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                   <div>
-                    <label style={labelStyle}>Lý do chấm dứt</label>
-                    <textarea
-                      value={terminationReason}
-                      onChange={(e) => setTerminationReason(e.target.value)}
-                      rows={2}
-                      style={{ ...inputStyle, resize: 'vertical' as const }}
-                    />
+                    <label style={labelStyle}>Ngày trả thực tế</label>
+                    <input type="date" value={checkoutDate} onChange={(e) => setCheckoutDate(e.target.value)} style={inputStyle} />
+                  </div>
+                  <div />
+                  <div>
+                    <label style={labelStyle}>Chỉ số điện cuối cùng</label>
+                    <input type="number" min="0" value={finalElectricity} onChange={(e) => setFinalElectricity(e.target.value)} style={inputStyle} />
                   </div>
                   <div>
-                    <label style={labelStyle}>Mức phạt cọc (VNĐ, 0 nếu không phạt)</label>
-                    <input type="number" min="0" value={depositPenalty} onChange={(e) => setDepositPenalty(e.target.value)} style={inputStyle} />
+                    <label style={labelStyle}>Chỉ số nước cuối cùng</label>
+                    <input type="number" min="0" value={finalWater} onChange={(e) => setFinalWater(e.target.value)} style={inputStyle} />
                   </div>
                 </div>
-              )}
-            </div>
 
-            <div style={{ marginTop: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <label style={labelStyle}>Khoản khấu trừ hư hỏng</label>
-                <button type="button" onClick={addDeduction} style={{ border: '1px solid #cbd5e1', background: '#fff', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
-                  + Thêm khoản khấu trừ
-                </button>
-              </div>
-              {deductions.map((d, index) => (
-                <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 180px 40px', gap: 8, marginBottom: 8 }}>
-                  <input
-                    placeholder="Tên khoản (VD: Sửa cửa, thay bóng đèn...)"
-                    value={d.name}
-                    onChange={(e) => updateDeduction(index, 'name', e.target.value)}
-                    style={inputStyle}
-                  />
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="Số tiền"
-                    value={d.amount}
-                    onChange={(e) => updateDeduction(index, 'amount', e.target.value)}
-                    style={inputStyle}
-                  />
-                  <button type="button" onClick={() => removeDeduction(index)} style={{ border: '1px solid #fecaca', background: '#fff', borderRadius: 8, color: '#dc2626', cursor: 'pointer' }}>
-                    ×
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      id="early-termination"
+                      checked={earlyTermination || Boolean(isEarly)}
+                      onChange={(e) => setEarlyTermination(e.target.checked)}
+                    />
+                    <label htmlFor="early-termination" style={{ ...labelStyle, marginTop: 0, fontSize: 14 }}>
+                      Chấm dứt trước hạn (phải nhập lý do)
+                    </label>
+                  </div>
+                  {(earlyTermination || isEarly) && (
+                    <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                      <div>
+                        <label style={labelStyle}>Lý do chấm dứt</label>
+                        <textarea
+                          value={terminationReason}
+                          onChange={(e) => setTerminationReason(e.target.value)}
+                          rows={2}
+                          style={{ ...inputStyle, resize: 'vertical' as const }}
+                        />
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Mức phạt cọc (VNĐ, 0 nếu không phạt)</label>
+                        <input type="number" min="0" value={depositPenalty} onChange={(e) => setDepositPenalty(e.target.value)} style={inputStyle} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <label style={labelStyle}>Khoản khấu trừ hư hỏng</label>
+                    <button type="button" onClick={addDeduction} style={{ border: '1px solid #cbd5e1', background: '#fff', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
+                      + Thêm khoản khấu trừ
+                    </button>
+                  </div>
+                  {deductions.map((d, index) => (
+                    <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 180px 40px', gap: 8, marginBottom: 8 }}>
+                      <input
+                        placeholder="Tên khoản (VD: Sửa cửa, thay bóng đèn...)"
+                        value={d.name}
+                        onChange={(e) => updateDeduction(index, 'name', e.target.value)}
+                        style={inputStyle}
+                      />
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="Số tiền"
+                        value={d.amount}
+                        onChange={(e) => updateDeduction(index, 'amount', e.target.value)}
+                        style={inputStyle}
+                      />
+                      <button type="button" onClick={() => removeDeduction(index)} style={{ border: '1px solid #fecaca', background: '#fff', borderRadius: 8, color: '#dc2626', cursor: 'pointer' }}>
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {notice && (
+                  <p role="status" style={{ color: notice.includes('thành công') ? '#15803d' : '#dc2626', margin: '14px 0 0', fontWeight: 650 }}>
+                    {notice}
+                  </p>
+                )}
+
+                <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+                  <button type="button" onClick={runPreview} disabled={busy} style={{ padding: '10px 16px', border: '1px solid #2563eb', background: '#fff', color: '#2563eb', borderRadius: 9, fontWeight: 700, cursor: 'pointer' }}>
+                    {busy ? 'Đang xử lý...' : 'Xem trước bảng tất toán'}
+                  </button>
+                  <button type="button" onClick={runSettle} disabled={busy} style={{ padding: '10px 16px', border: '1px solid #2563eb', background: '#2563eb', color: '#fff', borderRadius: 9, fontWeight: 700, cursor: 'pointer' }}>
+                    Xác nhận tất toán
                   </button>
                 </div>
-              ))}
-            </div>
-
-            {notice && (
-              <p role="status" style={{ color: notice.includes('thành công') ? '#15803d' : '#dc2626', margin: '14px 0 0', fontWeight: 650 }}>
-                {notice}
-              </p>
+              </>
             )}
 
-            <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
-              <button type="button" onClick={runPreview} disabled={busy} style={{ padding: '10px 16px', border: '1px solid #2563eb', background: '#fff', color: '#2563eb', borderRadius: 9, fontWeight: 700, cursor: 'pointer' }}>
-                {busy ? 'Đang xử lý...' : 'Xem trước bảng tất toán'}
-              </button>
-              <button type="button" onClick={runSettle} disabled={busy} style={{ padding: '10px 16px', border: '1px solid #2563eb', background: '#2563eb', color: '#fff', borderRadius: 9, fontWeight: 700, cursor: 'pointer' }}>
-                Xác nhận tất toán
-              </button>
-            </div>
+            {busy && !preview && (
+              <p style={{ margin: '16px 0', color: '#64748b' }}>Đang tải bảng tất toán...</p>
+            )}
 
             {preview && (
               <div style={{ marginTop: 22, border: '1px solid #e2e8f0', borderRadius: 12, padding: 18, background: '#f8fafc' }}>

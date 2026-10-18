@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import Pagination from '../components/Pagination'
 
 export type RequestItem = {
   id: number
@@ -113,9 +114,20 @@ function LandlordRequests() {
   const [status, setStatus] = useState('')
   const [buildingId, setBuildingId] = useState('')
   const [sort, setSort] = useState('newest')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(5)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [status, buildingId, sort])
+
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize
+    return items.slice(startIndex, startIndex + pageSize)
+  }, [items, currentPage, pageSize])
 
   // Modal hẹn lịch
   const [schedulingReq, setSchedulingReq] = useState<RequestItem | null>(null)
@@ -849,7 +861,7 @@ function LandlordRequests() {
                   </tr>
                 )}
 
-                {items.map((r) => {
+                {paginatedItems.map((r) => {
                   const color = STATUS_COLOR[r.status] || STATUS_COLOR.CANCELLED
                   const isNew = r.status === 'OPEN'
                   const isScheduled = r.status === 'SCHEDULED'
@@ -1192,6 +1204,15 @@ function LandlordRequests() {
             </table>
           </div>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalItems={items.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          itemLabel="yêu cầu"
+        />
       </div>
 
       {/* MODAL HẸN LỊCH / ĐỔI LỊCH (S2-08) */}

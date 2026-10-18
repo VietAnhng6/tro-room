@@ -133,6 +133,8 @@ function Rooms() {
   )
   const [floor, setFloor] = useState('')
   const [search, setSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(5)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -569,6 +571,16 @@ function Rooms() {
     return rooms.filter((room) => room.code.toLowerCase().includes(keyword))
   }, [rooms, search])
 
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, buildingId, floor])
+
+  const totalPages = Math.max(1, Math.ceil(filteredRooms.length / pageSize))
+  const paginatedRooms = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize
+    return filteredRooms.slice(startIndex, startIndex + pageSize)
+  }, [filteredRooms, currentPage, pageSize])
+
   const emptyBuildings = useMemo(() => {
     return buildings.filter((building) => {
       if ((building.roomCount || 0) > 0) return false
@@ -876,8 +888,9 @@ function Rooms() {
               </thead>
 
               <tbody>
-                {filteredRooms.map((room, idx) => {
+                {paginatedRooms.map((room, idx) => {
                   const status = statusColor[room.status]
+                  const realIndex = (currentPage - 1) * pageSize + idx + 1
 
                   return (
                     <tr
@@ -892,7 +905,7 @@ function Rooms() {
                       {/* STT */}
                       <td style={tdStyleCenter}>
                         <span style={{ color: '#94a3b8', fontSize: 13, fontWeight: 600 }}>
-                          #{idx + 1}
+                          #{realIndex}
                         </span>
                       </td>
 
@@ -1089,6 +1102,123 @@ function Rooms() {
           </div>
         )}
       </div>
+
+      {/* PAGINATION CONTROLS */}
+      {filteredRooms.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: 18,
+            padding: '14px 20px',
+            background: '#fff',
+            border: '1px solid #e2e8f0',
+            borderRadius: 14,
+            flexWrap: 'wrap',
+            gap: 12,
+            boxShadow: '0 2px 8px rgba(15,23,42,.03)',
+          }}
+        >
+          <div style={{ color: '#475569', fontSize: 14 }}>
+            Hiển thị <strong>{Math.min(filteredRooms.length, (currentPage - 1) * pageSize + 1)}</strong> -{' '}
+            <strong>{Math.min(filteredRooms.length, currentPage * pageSize)}</strong> trên tổng số{' '}
+            <strong>{filteredRooms.length}</strong> phòng
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button
+              type="button"
+              disabled={currentPage <= 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              style={{
+                padding: '7px 14px',
+                border: '1px solid #cbd5e1',
+                borderRadius: 8,
+                background: currentPage <= 1 ? '#f8fafc' : '#fff',
+                color: currentPage <= 1 ? '#94a3b8' : '#1e293b',
+                cursor: currentPage <= 1 ? 'not-allowed' : 'pointer',
+                fontWeight: 650,
+                fontSize: 13,
+              }}
+            >
+              ← Trang trước
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+              .map((p, i, arr) => {
+                const prev = arr[i - 1]
+                return (
+                  <React.Fragment key={p}>
+                    {prev && p - prev > 1 && (
+                      <span style={{ padding: '0 4px', color: '#94a3b8' }}>…</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(p)}
+                      style={{
+                        minWidth: 36,
+                        height: 36,
+                        padding: '0 8px',
+                        border: p === currentPage ? '1px solid #2563eb' : '1px solid #cbd5e1',
+                        borderRadius: 8,
+                        background: p === currentPage ? '#2563eb' : '#fff',
+                        color: p === currentPage ? '#fff' : '#334155',
+                        fontWeight: 700,
+                        fontSize: 13,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {p}
+                    </button>
+                  </React.Fragment>
+                )
+              })}
+
+            <button
+              type="button"
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              style={{
+                padding: '7px 14px',
+                border: '1px solid #cbd5e1',
+                borderRadius: 8,
+                background: currentPage >= totalPages ? '#f8fafc' : '#fff',
+                color: currentPage >= totalPages ? '#94a3b8' : '#1e293b',
+                cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer',
+                fontWeight: 650,
+                fontSize: 13,
+              }}
+            >
+              Trang sau →
+            </button>
+
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value))
+                setCurrentPage(1)
+              }}
+              style={{
+                padding: '7px 12px',
+                border: '1px solid #cbd5e1',
+                borderRadius: 8,
+                background: '#fff',
+                fontSize: 13,
+                color: '#1e293b',
+                cursor: 'pointer',
+                marginLeft: 8,
+                outline: 'none',
+              }}
+            >
+              <option value={5}>5 / trang</option>
+              <option value={10}>10 / trang</option>
+              <option value={20}>20 / trang</option>
+            </select>
+          </div>
+        </div>
+      )}
 
       {/* ================= MODAL SỬA PHÒNG / TẠO PHÒNG ================= */}
       {showForm && (
