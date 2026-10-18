@@ -14,6 +14,11 @@ type MaintenanceReport = {
   roomCode: string
   photoIds: number[]
 }
+type RentedRoom = {
+  id: number
+  code: string
+  buildingName: string
+}
 
 const API = '/api/maintenance-reports'
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024
@@ -72,6 +77,9 @@ function PhotoPreview({ reportId, photoId }: { reportId: number; photoId: number
 
 export default function TenantMaintenanceReports() {
   const [reports, setReports] = useState<MaintenanceReport[]>([])
+  const [rooms, setRooms] = useState<RentedRoom[]>([])
+  const [roomId, setRoomId] = useState('')
+  const [roomsLoading, setRoomsLoading] = useState(true)
   const [deviceType, setDeviceType] = useState('')
   const [description, setDescription] = useState('')
   const [urgency, setUrgency] = useState<'NORMAL' | 'URGENT'>('NORMAL')
@@ -97,7 +105,42 @@ export default function TenantMaintenanceReports() {
     }
   }
 
-  useEffect(() => { void loadReports() }, [])
+  useEffect(() => {
+  void loadReports()
+
+  async function loadRentedRooms() {
+    setRoomsLoading(true)
+
+    try {
+      const response = await fetch('/api/rooms/my-rented', {
+        headers: authHeaders(),
+      })
+
+      if (!response.ok) {
+        throw new Error(await responseMessage(response))
+      }
+
+      const data: RentedRoom[] = await response.json()
+
+      if (!Array.isArray(data)) {
+        throw new Error('Danh sách phòng trả về không đúng định dạng.')
+      }
+
+      setRooms(data)
+      setRoomId(data.length > 0 ? String(data[0].id) : '')
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Không thể tải danh sách phòng đang thuê.',
+      )
+    } finally {
+      setRoomsLoading(false)
+    }
+  }
+
+  void loadRentedRooms()
+}, [])
 
   function onPhotosChange(event: ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(event.target.files || [])
@@ -129,15 +172,22 @@ export default function TenantMaintenanceReports() {
     event.preventDefault()
     setError('')
     setSuccess('')
-    if (!deviceType.trim() || !description.trim()) {
-      setError('Vui lòng nhập loại thiết bị và mô tả sự cố.')
-      return
-    }
+    if (!roomId) {
+  setError('Vui lòng chọn phòng cần báo hỏng.')
+  return
+  }
+
+  if (!deviceType.trim() || !description.trim()) {
+    setError('Vui lòng nhập loại thiết bị và mô tả sự cố.')
+    return
+  }
     const form = new FormData()
+    form.append('roomId', roomId)
     form.append('deviceType', deviceType.trim())
     form.append('description', description.trim())
     form.append('urgency', urgency)
     photos.forEach((photo) => form.append('photos', photo))
+    
 
     setSubmitting(true)
     try {
@@ -185,6 +235,37 @@ export default function TenantMaintenanceReports() {
         {success && <div className="maintenance-alert success" role="status">{success}</div>}
         <form onSubmit={submitReport}>
           <div className="maintenance-grid">
+          {/* THÊM ĐOẠN CHỌN PHÒNG NGAY TẠI ĐÂY */}
+          <div className="maintenance-field full">
+            <label htmlFor="maintenance-room">Phòng cần báo hỏng *</label>
+            <select
+              id="maintenance-room"
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              required
+              disabled={roomsLoading || rooms.length === 0}
+            >
+              <option value="">
+                {roomsLoading
+                  ? 'Đang tải danh sách phòng…'
+                  : rooms.length === 0
+                    ? 'Không có phòng đang thuê hợp lệ'
+                    : 'Chọn phòng cần báo hỏng'}
+              </option>
+
+              {rooms.map((room) => (
+                <option key={room.id} value={room.id}>
+                  {room.buildingName} – Phòng {room.code}
+                </option>
+              ))}
+            </select>
+
+            <span className="maintenance-help">
+              Chọn đúng phòng xảy ra sự cố.
+            </span>
+          </div>
+
+          {/* CÁC TRƯỜNG CŨ GIỮ NGUYÊN Ở PHÍA DƯỚI */}
             <div className="maintenance-field">
               <label htmlFor="maintenance-device">Loại thiết bị *</label>
               <input id="maintenance-device" value={deviceType} onChange={(e) => setDeviceType(e.target.value)} maxLength={120} placeholder="Ví dụ: Bình nóng lạnh, điều hòa…" required />

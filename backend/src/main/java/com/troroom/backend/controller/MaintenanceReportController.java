@@ -33,8 +33,19 @@ public class MaintenanceReportController {
             @RequestParam String deviceType,
             @RequestParam String description,
             @RequestParam String urgency,
+            @RequestParam Long roomId,
             @RequestParam(name = "photos", required = false) List<MultipartFile> photos) {
-        return ResponseEntity.status(201).body(service.create(currentTenant(authentication), deviceType, description, urgency, photos));
+
+        return ResponseEntity.status(201).body(
+                service.create(
+                        currentTenant(authentication),
+                        roomId,
+                        deviceType,
+                        description,
+                        urgency,
+                        photos
+                )
+        );
     }
 
     @GetMapping

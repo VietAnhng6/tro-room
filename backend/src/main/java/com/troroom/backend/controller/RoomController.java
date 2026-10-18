@@ -371,7 +371,56 @@ public ResponseEntity<?> getRooms(
                     ))
                     .toList()
     );
-}
+        }
+        /**
+         * S4: Lấy danh sách phòng khách thuê đang có hợp đồng hiệu lực,
+         * dùng cho dropdown báo hỏng và bảo trì.
+         */
+        @GetMapping("/my-rented")
+        public ResponseEntity<?> getMyRentedRooms(
+                Authentication authentication
+        ) {
+        User tenant = (User) authentication.getPrincipal();
+
+        if (tenant.getRole() != User.Role.TENANT) {
+                return ResponseEntity.status(403)
+                        .body(Map.of(
+                                "message",
+                                "Chỉ khách thuê mới được xem danh sách phòng của mình"
+                        ));
+        }
+
+        LocalDate today = LocalDate.now();
+
+        List<RoomResponse> rooms =
+                rentalContractRepository
+                        .findByTenantOrderByStartDateDesc(tenant)
+                        .stream()
+                        .filter(c -> c.getStatus() == RentalContract.Status.ACTIVE)
+                        .filter(c -> c.getStartDate() != null
+                                && !c.getStartDate().isAfter(today))
+                        .filter(c -> c.getEndDate() != null
+                                && !c.getEndDate().isBefore(today))
+                        .filter(c -> !Boolean.TRUE.equals(c.getTerminated()))
+                        .filter(c -> c.getRoom() != null)
+                        .filter(c -> c.getRoom().getStatus() == Room.Status.RENTED)
+                        .map(RentalContract::getRoom)
+                        .distinct()
+                        .map(room -> new RoomResponse(
+                                room.getId(),
+                                room.getCode(),
+                                room.getFloor(),
+                                room.getArea(),
+                                room.getRent(),
+                                room.getMaxPeople(),
+                                room.getStatus(),
+                                room.getBuilding().getId(),
+                                room.getBuilding().getName()
+                        ))
+                        .toList();
+
+        return ResponseEntity.ok(rooms);
+        }
 
     /*
      * =========================================================
