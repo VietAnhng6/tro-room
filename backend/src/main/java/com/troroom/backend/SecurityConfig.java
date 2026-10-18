@@ -75,6 +75,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/buildings/**")
                 .access(permissionAuthorizationManager)
 
+                .requestMatchers(HttpMethod.GET, "/api/rooms/my-rented")
+                .hasRole("TENANT")
+
                 .requestMatchers("/api/rooms/**")
                 .access(permissionAuthorizationManager)
 

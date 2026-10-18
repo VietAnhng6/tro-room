@@ -46,8 +46,9 @@ public class MaintenanceReportService {
     }
 
     @Transactional
-    public MaintenanceReportResponse create(User tenant, String deviceType, String description,
-                                            String urgencyText, List<MultipartFile> uploadedPhotos) {
+    public MaintenanceReportResponse create(User tenant, Long roomId,
+                                        String deviceType, String description,
+                                        String urgencyText, List<MultipartFile> uploadedPhotos) {
         requireTenant(tenant);
         String normalizedDevice = requireText(deviceType, "Vui lòng nhập loại thiết bị.", 120);
         String normalizedDescription = requireText(description, "Vui lòng mô tả sự cố.", 3000);
@@ -59,15 +60,27 @@ public class MaintenanceReportService {
         }
 
         LocalDate today = LocalDate.now(ZONE);
-        RentalContract activeContract = contractRepository.findByTenantOrderByStartDateDesc(tenant).stream()
-                .filter(c -> c.getStatus() == RentalContract.Status.ACTIVE)
-                .filter(c -> c.getStartDate() != null && !c.getStartDate().isAfter(today))
-                .filter(c -> c.getEndDate() != null && !c.getEndDate().isBefore(today))
-                .filter(c -> !Boolean.TRUE.equals(c.getTerminated()))
-                .filter(c -> c.getRoom() != null && c.getRoom().getStatus() == Room.Status.RENTED)
-                .findFirst()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "Bạn chỉ có thể báo hỏng khi đang thuê phòng theo hợp đồng còn hiệu lực."));
+        if (roomId == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Vui lòng chọn phòng cần báo hỏng."
+            );
+        }
+        RentalContract activeContract = contractRepository
+        .findByTenantOrderByStartDateDesc(tenant)
+        .stream()
+        .filter(c -> c.getStatus() == RentalContract.Status.ACTIVE)
+        .filter(c -> c.getStartDate() != null && !c.getStartDate().isAfter(today))
+        .filter(c -> c.getEndDate() != null && !c.getEndDate().isBefore(today))
+        .filter(c -> !Boolean.TRUE.equals(c.getTerminated()))
+        .filter(c -> c.getRoom() != null)
+        .filter(c -> c.getRoom().getId().equals(roomId))
+        .filter(c -> c.getRoom().getStatus() == Room.Status.RENTED)
+        .findFirst()
+        .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "Bạn không có hợp đồng thuê còn hiệu lực với phòng đã chọn."
+        ));
 
         List<MultipartFile> photos = uploadedPhotos == null ? List.of() : uploadedPhotos.stream()
                 .filter(file -> file != null && !file.isEmpty()).toList();
