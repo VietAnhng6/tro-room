@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
-
+import { showError } from '../utils/notification'
 type Contract = {
   id: number
   contractCode?: string
@@ -190,8 +190,11 @@ export default function Checkout() {
       anchor.click()
       anchor.remove()
       window.setTimeout(() => URL.revokeObjectURL(url), 1000)
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Không tải được PDF')
+        } catch (err) {
+      void showError(
+        'Không tải được PDF',
+        err instanceof Error ? err.message : 'Không tải được PDF',
+      )
     }
   }
 

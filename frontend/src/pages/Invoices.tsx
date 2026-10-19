@@ -1,6 +1,12 @@
 
 import React, { useEffect, useState } from 'react'
-
+import Swal from 'sweetalert2'
+import {
+  showSuccess,
+  showError,
+  showWarning,
+  showConfirm,
+} from '../utils/notification'
 type Building = {
   id: number
   name: string
@@ -310,7 +316,10 @@ function Invoices() {
 
       setDetail(data as Invoice)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      await showError(
+      'Không thể tải chi tiết hóa đơn',
+      err instanceof Error ? err.message : 'Có lỗi xảy ra',
+    )
     } finally {
       setDetailLoading(false)
     }
@@ -338,7 +347,10 @@ function Invoices() {
       setEditingInvoice(invoice)
       setEditReason('')
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      await showError(
+      'Không thể mở hóa đơn',
+      err instanceof Error ? err.message : 'Có lỗi xảy ra',
+    )
     }
   }
 
@@ -347,12 +359,15 @@ function Invoices() {
     if (!editingInvoice || savingEdit) return
 
     if (!editReason.trim()) {
-      alert('Vui lòng nhập lý do chỉnh sửa')
+      void showWarning('Thiếu lý do chỉnh sửa', 'Vui lòng nhập lý do chỉnh sửa.')
       return
     }
 
     if (items.some(itemInvalid)) {
-      alert('Vui lòng kiểm tra tên khoản mục, đơn vị, số lượng, đơn giá và chỉ số điện/nước')
+    void showWarning(
+      'Thông tin chưa hợp lệ',
+      'Vui lòng kiểm tra tên khoản mục, đơn vị, số lượng, đơn giá và chỉ số điện/nước.',
+    )
       return
     }
 
@@ -391,20 +406,25 @@ function Invoices() {
       setEditReason('')
 
       await refreshInvoices()
-      alert('Đã lưu hóa đơn nháp')
+      await showSuccess('Đã lưu hóa đơn nháp')
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      await showError(
+      'Không thể lưu hóa đơn',
+      err instanceof Error ? err.message : 'Có lỗi xảy ra',
+    )
     } finally {
       setSavingEdit(false)
     }
   }
 
-  // Phát hành hóa đơn nháp
+    // Phát hành hóa đơn nháp
   const issueInvoice = async (invoice: Invoice) => {
     if (invoice.status !== 'DRAFT' || actionLoading) return
 
-    const confirmed = window.confirm(
-      `Phát hành hóa đơn ${invoice.invoiceCode}?`,
+    const confirmed = await showConfirm(
+      'Phát hành hóa đơn?',
+      `Bạn có chắc muốn phát hành hóa đơn ${invoice.invoiceCode}?`,
+      'Phát hành',
     )
 
     if (!confirmed) return
@@ -424,9 +444,12 @@ function Invoices() {
       }
 
       await refreshInvoices()
-      alert('Đã phát hành hóa đơn')
+      await showSuccess('Phát hành hóa đơn thành công')
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      await showError(
+        'Không thể phát hành hóa đơn',
+        err instanceof Error ? err.message : 'Có lỗi xảy ra',
+      )
     } finally {
       setActionLoading(false)
     }
@@ -436,24 +459,43 @@ function Invoices() {
   const cancelInvoice = async (invoice: Invoice) => {
     if (invoice.status !== 'ISSUED' || actionLoading) return
 
-    const reason = window.prompt(
-      `Nhập lý do hủy hóa đơn ${invoice.invoiceCode}:`,
-    )
+    const inputResult = await Swal.fire({
+      icon: 'warning',
+      title: 'Hủy hóa đơn',
+      text: `Nhập lý do hủy hóa đơn ${invoice.invoiceCode}.`,
+      input: 'textarea',
+      inputPlaceholder: 'Nhập lý do hủy hóa đơn...',
+      inputAttributes: {
+        maxlength: '500',
+        'aria-label': 'Lý do hủy hóa đơn',
+      },
+      showCancelButton: true,
+      confirmButtonText: 'Tiếp tục',
+      cancelButtonText: 'Đóng',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
+      reverseButtons: true,
+      inputValidator: (value) => {
+        if (!value?.trim()) {
+          return 'Lý do hủy không được để trống'
+        }
 
-    if (reason === null) return
+        if (value.trim().length > 500) {
+          return 'Lý do hủy không được vượt quá 500 ký tự'
+        }
 
-    if (!reason.trim()) {
-      alert('Lý do hủy không được để trống')
-      return
-    }
+        return null
+      },
+    })
 
-    if (reason.trim().length > 500) {
-      alert('Lý do hủy không được vượt quá 500 ký tự')
-      return
-    }
+    if (!inputResult.isConfirmed) return
 
-    const confirmed = window.confirm(
-      `Xác nhận hủy hóa đơn ${invoice.invoiceCode}?`,
+    const reason = String(inputResult.value ?? '').trim()
+
+    const confirmed = await showConfirm(
+      'Xác nhận hủy hóa đơn?',
+      `Bạn có chắc muốn hủy hóa đơn ${invoice.invoiceCode}? Thao tác này không thể tự hoàn tác.`,
+      'Hủy hóa đơn',
     )
 
     if (!confirmed) return
@@ -467,7 +509,7 @@ function Invoices() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${getToken()}`,
         },
-        body: JSON.stringify({ reason: reason.trim() }),
+        body: JSON.stringify({ reason }),
       })
 
       const data = await readResponse(res)
@@ -478,9 +520,12 @@ function Invoices() {
 
       await refreshInvoices()
       await openDetail(invoice.id)
-      alert('Đã hủy hóa đơn')
+      await showSuccess('Hủy hóa đơn thành công')
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      await showError(
+        'Không thể hủy hóa đơn',
+        err instanceof Error ? err.message : 'Có lỗi xảy ra',
+      )
     } finally {
       setActionLoading(false)
     }

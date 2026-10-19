@@ -1,4 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
+import {
+  showSuccess,
+  showError,
+  showWarning,
+  showConfirm,
+} from '../utils/notification'
 
 type Service = {
   id: number
@@ -91,7 +97,9 @@ function Services() {
       const data = await response.json()
       setServices(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      const message = err instanceof Error ? err.message : 'Có lỗi xảy ra'
+      setError(message)
+      await showError('Không thể tải danh sách dịch vụ', message)
     } finally {
       setLoading(false)
     }
@@ -146,17 +154,22 @@ function Services() {
 
   const saveService = async () => {
     if (!form.name.trim()) {
-      alert('Vui lòng nhập tên dịch vụ')
+      await showWarning('Thiếu tên dịch vụ', 'Vui lòng nhập tên dịch vụ.')
       return
     }
 
     if (!form.unit.trim()) {
-      alert('Vui lòng nhập đơn vị')
+      await showWarning('Thiếu đơn vị', 'Vui lòng nhập đơn vị.')
       return
     }
 
-    if (form.price === '' || Number(form.price) < 0) {
-      alert('Giá dịch vụ không hợp lệ')
+    const price = Number(form.price)
+    if (
+      form.price.trim() === '' ||
+      !Number.isFinite(price) ||
+      price < 0
+    ) {
+      await showWarning('Giá dịch vụ không hợp lệ', 'Vui lòng nhập giá bằng 0 hoặc lớn hơn.')
       return
     }
 
@@ -177,7 +190,7 @@ function Services() {
           name: form.name.trim(),
           calculationMethod: form.calculationMethod,
           unit: form.unit.trim(),
-          price: Number(form.price),
+          price,
           description: form.description.trim(),
         }),
       })
@@ -190,17 +203,27 @@ function Services() {
 
       setShowForm(false)
       await loadServices()
+      await showSuccess(
+        editing ? 'Cập nhật dịch vụ thành công' : 'Tạo dịch vụ thành công',
+      )
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      await showError(
+        'Không thể lưu dịch vụ',
+        err instanceof Error ? err.message : 'Có lỗi xảy ra',
+      )
     }
   }
 
   const toggleStatus = async (service: Service) => {
     const action = service.active ? 'ngừng' : 'kích hoạt'
 
-    if (!confirm(`Bạn có chắc muốn ${action} dịch vụ "${service.name}"?`)) {
-      return
-    }
+    const confirmed = await showConfirm(
+      `${service.active ? 'Ngừng' : 'Kích hoạt'} dịch vụ?`,
+      `Bạn có chắc muốn ${action} dịch vụ "${service.name}"?`,
+      service.active ? 'Ngừng dịch vụ' : 'Kích hoạt',
+    )
+
+    if (!confirmed) return
 
     try {
       const token = getToken()
@@ -216,7 +239,7 @@ function Services() {
           body: JSON.stringify({
             active: !service.active,
           }),
-        }
+        },
       )
 
       const data = await response.json()
@@ -226,8 +249,14 @@ function Services() {
       }
 
       await loadServices()
+      await showSuccess(
+        service.active ? 'Đã ngừng dịch vụ' : 'Đã kích hoạt dịch vụ',
+      )
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      await showError(
+        'Không thể cập nhật trạng thái',
+        err instanceof Error ? err.message : 'Có lỗi xảy ra',
+      )
     }
   }
 
@@ -243,13 +272,18 @@ function Services() {
   const updatePrice = async () => {
     if (!priceService) return
 
-    if (priceForm.price === '' || Number(priceForm.price) < 0) {
-      alert('Giá không hợp lệ')
+    const price = Number(priceForm.price)
+    if (
+      priceForm.price.trim() === '' ||
+      !Number.isFinite(price) ||
+      price < 0
+    ) {
+      await showWarning('Giá không hợp lệ', 'Vui lòng nhập giá bằng 0 hoặc lớn hơn.')
       return
     }
 
     if (!priceForm.effectiveFrom) {
-      alert('Vui lòng chọn ngày áp dụng')
+      await showWarning('Thiếu ngày áp dụng', 'Vui lòng chọn ngày áp dụng.')
       return
     }
 
@@ -265,10 +299,10 @@ function Services() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            price: Number(priceForm.price),
+            price,
             effectiveFrom: priceForm.effectiveFrom,
           }),
-        }
+        },
       )
 
       const data = await response.json()
@@ -279,8 +313,12 @@ function Services() {
 
       setShowPrice(false)
       await loadServices()
+      await showSuccess('Cập nhật giá thành công')
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      await showError(
+        'Không thể cập nhật giá',
+        err instanceof Error ? err.message : 'Có lỗi xảy ra',
+      )
     }
   }
 
@@ -294,7 +332,7 @@ function Services() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       )
 
       const data = await response.json()
@@ -307,7 +345,10 @@ function Services() {
       setHistoryService(service)
       setShowHistory(true)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      await showError(
+        'Không thể tải lịch sử giá',
+        err instanceof Error ? err.message : 'Có lỗi xảy ra',
+      )
     }
   }
 

@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react'
-
+import { showConfirm } from '../utils/notification'
 const API = '/api'
 
 type PaymentMethod = 'CASH' | 'TRANSFER'
@@ -309,7 +309,12 @@ export default function TenantPaymentReports() {
   }
 
   const cancelReport = async (reportId: number) => {
-    if (!window.confirm('M muốn hủy báo cáo thanh toán này chứ?')) return
+  const confirmed = await showConfirm(
+    'Hủy báo cáo thanh toán?',
+    'M muốn hủy báo cáo thanh toán này chứ?',
+    'Hủy báo cáo',
+  )
+  if (!confirmed) return
 
     setError('')
     setMessage('')

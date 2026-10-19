@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-
+import { showError, showWarning } from '../utils/notification'
 type Building = {
   id: number
   name: string
@@ -212,9 +212,9 @@ export default function Debts() {
   // Xuất file CSV (có chèn BOM \ufeff để Excel tiếng Việt không bị lỗi font)
   const handleExportCsv = () => {
     if (!debtData.items || debtData.items.length === 0) {
-      alert('Không có dữ liệu công nợ để xuất file.')
-      return
-    }
+    void showWarning('Không có dữ liệu', 'Không có dữ liệu công nợ để xuất file.')
+    return
+  }
 
     const headers = [
       'STT',
@@ -294,9 +294,9 @@ export default function Debts() {
 
     const amount = Number(payAmount)
     if (!amount || amount <= 0) {
-      alert('Vui lòng nhập số tiền hợp lệ (> 0)')
-      return
-    }
+  void showWarning('Số tiền không hợp lệ', 'Vui lòng nhập số tiền hợp lệ (> 0).')
+  return
+  }
 
     setSubmittingPayment(true)
     try {
@@ -319,7 +319,10 @@ export default function Debts() {
       setSelectedRoom(null)
       await loadDebts()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Lỗi khi thu tiền')
+      void showError(
+        'Thu tiền thất bại',
+        err instanceof Error ? err.message : 'Lỗi khi thu tiền',
+      )
     } finally {
       setSubmittingPayment(false)
     }

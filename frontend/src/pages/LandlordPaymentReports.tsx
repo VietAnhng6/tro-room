@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-
+import { showConfirm } from '../utils/notification'
 const API = '/api'
 
 interface PaymentReport {
@@ -58,9 +58,13 @@ export default function LandlordPaymentReports() {
   ) => {
     const actionLabel = action === 'confirm' ? 'xác nhận' : 'từ chối'
 
-    if (!window.confirm(`Bạn có chắc muốn ${actionLabel} báo cáo ${report.invoiceCode}?`)) {
-      return
-    }
+    const confirmed = await showConfirm(
+    `Bạn có chắc muốn ${actionLabel}?`,
+    `Bạn có chắc muốn ${actionLabel} báo cáo ${report.invoiceCode}?`,
+    action === 'confirm' ? 'Xác nhận' : 'Từ chối',
+  )
+
+if (!confirmed) return
 
     setBusyId(report.id)
     setError('')
