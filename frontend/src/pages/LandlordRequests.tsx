@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Pagination from '../components/Pagination'
-
+import {
+  showSuccess,
+  showError,
+  showWarning,
+} from '../utils/notification'
 export type RequestItem = {
   id: number
   requestCode: string
@@ -227,92 +231,101 @@ function LandlordRequests() {
     setScheduleConflictMsg('')
   }
 
-  const handleConfirmSchedule = async () => {
-    if (!schedulingReq || !appointmentTime) {
-      alert('Vui lòng chọn ngày giờ hẹn cụ thể!')
-      return
-    }
-
-    setIsScheduling(true)
-    setScheduleConflictMsg('')
-
-    try {
-      const res = await fetch(
-        `${API}/api/landlord/requests/${schedulingReq.id}/schedule`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            scheduledAt: appointmentTime,
-            force: scheduleForce,
-          }),
-        },
-      )
-
-      const data = await res.json().catch(() => ({}))
-
-      if (!res.ok) {
-        if (data.code === 'SCHEDULE_CONFLICT') {
-          setScheduleConflictMsg(
-            data.message ||
-              'Cảnh báo: Đã có lịch hẹn xem phòng khác cùng phòng trong khoảng 30 phút.',
-          )
-          return
-        }
-
-        throw new Error(data.message || 'Không thể lưu lịch hẹn')
-      }
-
-      setSuccessMsg(
-        `Đã xác nhận lịch hẹn cho yêu cầu ${schedulingReq.requestCode}!`,
-      )
-      setSchedulingReq(null)
-      await load()
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Có lỗi khi đặt lịch')
-    } finally {
-      setIsScheduling(false)
-    }
+const handleConfirmSchedule = async () => {
+  if (!schedulingReq || !appointmentTime) {
+    void showWarning('Thiếu thông tin', 'Vui lòng chọn ngày giờ hẹn cụ thể!')
+    return
   }
 
-  // S2-08: Duyệt yêu cầu thuê ngay
-  const handleApprove = async () => {
-    if (!approvingReq) return
+  setIsScheduling(true)
+  setScheduleConflictMsg('')
 
-    setIsApproving(true)
-
-    try {
-      const res = await fetch(
-        `${API}/api/landlord/requests/${approvingReq.id}/approve`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+  try {
+    const res = await fetch(
+      `${API}/api/landlord/requests/${schedulingReq.id}/schedule`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-      )
+        body: JSON.stringify({
+          scheduledAt: appointmentTime,
+          force: scheduleForce,
+        }),
+      },
+    )
 
-      const data = await res.json().catch(() => ({}))
+    const data = await res.json().catch(() => ({}))
 
-      if (!res.ok) {
-        throw new Error(data.message || 'Không thể duyệt yêu cầu thuê.')
+    if (!res.ok) {
+      if (data.code === 'SCHEDULE_CONFLICT') {
+        setScheduleConflictMsg(
+          data.message ||
+            'Cảnh báo: Đã có lịch hẹn xem phòng khác cùng phòng trong khoảng 30 phút.',
+        )
+        return
       }
 
-      setSuccessMsg(
-        `Đã duyệt yêu cầu ${approvingReq.requestCode}! Phòng đã chuyển sang trạng thái "Đã đặt cọc".`,
-      )
-      setApprovingReq(null)
-      await load()
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Lỗi khi duyệt yêu cầu')
-    } finally {
-      setIsApproving(false)
+      throw new Error(data.message || 'Không thể lưu lịch hẹn')
     }
+
+    void showSuccess(
+      'Đặt lịch thành công',
+      `Đã xác nhận lịch hẹn cho yêu cầu ${schedulingReq.requestCode}!`,
+    )
+    setSchedulingReq(null)
+    await load()
+  } catch (err) {
+    void showError(
+      'Không thể đặt lịch',
+      err instanceof Error ? err.message : 'Có lỗi khi đặt lịch',
+    )
+  } finally {
+    setIsScheduling(false)
   }
+}
+
+// S2-08: Duyệt yêu cầu thuê ngay
+const handleApprove = async () => {
+  if (!approvingReq) return
+
+  setIsApproving(true)
+
+  try {
+    const res = await fetch(
+      `${API}/api/landlord/requests/${approvingReq.id}/approve`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    )
+
+    const data = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+      throw new Error(data.message || 'Không thể duyệt yêu cầu thuê.')
+    }
+
+    void showSuccess(
+      'Duyệt yêu cầu thành công',
+      `Đã duyệt yêu cầu ${approvingReq.requestCode}! Phòng đã chuyển sang trạng thái "Đã đặt cọc".`,
+    )
+    setApprovingReq(null)
+    await load()
+  } catch (err) {
+    void showError(
+      'Không thể duyệt yêu cầu',
+      err instanceof Error ? err.message : 'Lỗi khi duyệt yêu cầu',
+    )
+  } finally {
+    setIsApproving(false)
+  }
+}
+
 
   // S3-01: Mở form lập hợp đồng
   const handleOpenContract = (req: RequestItem) => {
@@ -332,12 +345,12 @@ function LandlordRequests() {
     if (!contractReq) return
 
     if (!token) {
-      alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+      void showWarning('Phiên đăng nhập hết hạn', 'Vui lòng đăng nhập lại.')
       return
     }
 
     if (contractReq.type !== 'RENT_NOW' || contractReq.status !== 'ACCEPTED') {
-      alert('Chỉ có thể lập hợp đồng cho yêu cầu thuê ngay đã được duyệt.')
+      void showWarning('Không thể lập hợp đồng', 'Chỉ có thể lập hợp đồng cho yêu cầu thuê ngay đã được duyệt.')
       return
     }
 
@@ -352,7 +365,7 @@ function LandlordRequests() {
       !Number.isSafeInteger(deposit) ||
       deposit < 0
     ) {
-      alert('Tiền cọc phải là số nguyên không âm.')
+      void showWarning('Dữ liệu không hợp lệ', 'Tiền cọc phải là số nguyên không âm.')
       return
     }
 
@@ -360,12 +373,12 @@ function LandlordRequests() {
       !contractForm.startDate ||
       contractForm.startDate < getToday()
     ) {
-      alert('Ngày bắt đầu thuê không được ở quá khứ.')
+      void showWarning('Ngày không hợp lệ', 'Ngày bắt đầu thuê không được ở quá khứ.')
       return
     }
 
     if (!Number.isInteger(termMonths) || termMonths < 1) {
-      alert('Thời hạn thuê phải ít nhất 1 tháng.')
+      void showWarning('Thời hạn không hợp lệ', 'Thời hạn thuê phải ít nhất 1 tháng.')
       return
     }
 
@@ -374,7 +387,7 @@ function LandlordRequests() {
       billingCutoffDay < 1 ||
       billingCutoffDay > 28
     ) {
-      alert('Ngày chốt hóa đơn phải từ 1 đến 28.')
+      void showWarning('Ngày chốt không hợp lệ', 'Ngày chốt hóa đơn phải từ 1 đến 28.')
       return
     }
 
@@ -384,7 +397,7 @@ function LandlordRequests() {
       !Number.isSafeInteger(initialWater) ||
       initialWater < 0
     ) {
-      alert('Chỉ số điện và nước phải là số nguyên không âm.')
+      void showWarning('Chỉ số không hợp lệ', 'Chỉ số điện và nước phải là số nguyên không âm.')
       return
     }
 
@@ -419,15 +432,17 @@ function LandlordRequests() {
         )
       }
 
-      setSuccessMsg(
-        `Đã lập hợp đồng thành công cho yêu cầu ${contractReq.requestCode}.`,
-      )
+      void showSuccess(
+      'Lập hợp đồng thành công',
+      `Đã lập hợp đồng thành công cho yêu cầu ${contractReq.requestCode}.`,
+    )
       setContractReq(null)
       await load()
     } catch (err) {
-      alert(
-        err instanceof Error ? err.message : 'Có lỗi khi lập hợp đồng.',
-      )
+      void showError(
+      'Không thể lập hợp đồng',
+      err instanceof Error ? err.message : 'Có lỗi khi lập hợp đồng.',
+    )
     } finally {
       setIsCreatingContract(false)
     }
@@ -444,7 +459,7 @@ function LandlordRequests() {
     if (!rejectingReq) return
 
     if (rejectReason === 'OTHER' && !rejectNote.trim()) {
-      alert('Vui lòng nhập ghi chú lý do từ chối cụ thể.')
+      void showWarning('Thiếu lý do từ chối', 'Vui lòng nhập ghi chú lý do từ chối cụ thể.')
       return
     }
 
@@ -472,11 +487,17 @@ function LandlordRequests() {
         throw new Error(data.message || 'Không thể từ chối yêu cầu.')
       }
 
-      setSuccessMsg(`Đã từ chối yêu cầu ${rejectingReq.requestCode}.`)
+      void showSuccess(
+      'Đã từ chối yêu cầu',
+      `Đã từ chối yêu cầu ${rejectingReq.requestCode}.`,
+    )
       setRejectingReq(null)
       await load()
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Lỗi khi từ chối yêu cầu')
+      void showError(
+        'Không thể từ chối yêu cầu',
+        err instanceof Error ? err.message : 'Có lỗi khi từ chối yêu cầu.',
+      )
     } finally {
       setIsRejecting(false)
     }

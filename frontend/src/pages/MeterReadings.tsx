@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react'
-
+import { showWarning, showConfirm } from '../utils/notification'
 const API = ''
 
 const getToken = () => localStorage.getItem('accessToken')
@@ -175,19 +175,22 @@ function MeterReadings() {
 
   const saveRoom = async (room: Room, confirm = false) => {
     if (room.electricity === null || room.water === null) {
-      alert('Vui lòng nhập đủ chỉ số điện và nước.')
-      return
-    }
+  void showWarning('Thiếu chỉ số', 'Vui lòng nhập đủ chỉ số điện và nước.')
+  return
+}
 
     if (
-      !Number.isInteger(room.electricity) ||
-      !Number.isInteger(room.water) ||
-      room.electricity < room.prevElectricity ||
-      room.water < room.prevWater
-    ) {
-      alert('Chỉ số mới phải là số nguyên và không được thấp hơn chỉ số kỳ trước.')
-      return
-    }
+  !Number.isInteger(room.electricity) ||
+  !Number.isInteger(room.water) ||
+  room.electricity < room.prevElectricity ||
+  room.water < room.prevWater
+) {
+  void showWarning(
+    'Chỉ số không hợp lệ',
+    'Chỉ số mới phải là số nguyên và không được thấp hơn chỉ số kỳ trước.',
+  )
+  return
+}
 
     try {
       setSavingId(room.contractId)
@@ -222,15 +225,17 @@ function MeterReadings() {
           response.status === 409 && result.code === 'CONSUMPTION_WARNING'
 
         if (!confirm && isConsumptionWarning) {
-          const accepted = window.confirm(
-            `${warning}\n\nBạn có muốn xác nhận và lưu chỉ số này không?`
-          )
+  const accepted = await showConfirm(
+    'Cảnh báo tiêu thụ bất thường',
+    `${warning}\n\nBạn có muốn xác nhận và lưu chỉ số này không?`,
+    'Xác nhận và lưu',
+  )
 
-          if (accepted) {
-            await saveRoom(room, true)
-          }
-          return
-        }
+  if (accepted) {
+    await saveRoom(room, true)
+  }
+  return
+}
 
         throw new Error(warning)
       }

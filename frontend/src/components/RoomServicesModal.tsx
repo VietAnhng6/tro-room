@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-
+import { showConfirm } from '../utils/notification'
 export interface RoomServiceItem {
   id: number
   roomId: number
@@ -194,9 +194,13 @@ export const RoomServicesModal: React.FC<RoomServicesModalProps> = ({
 
   // Xóa dịch vụ riêng khỏi phòng
   const handleDeleteService = async (id: number, name: string) => {
-    if (!window.confirm(`Bạn có chắc muốn bỏ dịch vụ "${name}" khỏi phòng ${roomCode}?`)) {
-      return
-    }
+  const confirmed = await showConfirm(
+      'Xóa dịch vụ khỏi phòng?',
+      `Bạn có chắc muốn bỏ dịch vụ "${name}" khỏi phòng ${roomCode}?`,
+      'Xóa dịch vụ',
+    )
+
+    if (!confirmed) return
 
     setError('')
     setSuccessMsg('')

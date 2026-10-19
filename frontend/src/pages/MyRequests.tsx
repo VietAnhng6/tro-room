@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-
+import { showError } from '../utils/notification'
 export type RequestStatus =
   | 'OPEN'
   | 'SCHEDULED'
@@ -169,10 +169,13 @@ function MyRequests() {
       setCancellingRequest(null)
       await loadRequests()
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Không thể huỷ yêu cầu.')
-    } finally {
-      setIsCancelling(false)
-    }
+  void showError(
+    'Hủy yêu cầu thất bại',
+    err instanceof Error ? err.message : 'Không thể huỷ yêu cầu.',
+  )
+} finally {
+  setIsCancelling(false)
+}
   }
 
   // S2-08/S2-09: Xem lịch sử xử lý của yêu cầu

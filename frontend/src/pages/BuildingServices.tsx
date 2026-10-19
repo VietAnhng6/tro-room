@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
+import {
+  showSuccess,
+  showError,
+  showWarning,
+} from '../utils/notification'
 
 type Service = {
   id: number
@@ -115,7 +120,9 @@ function BuildingServices() {
       setServices(servicesData.filter((s) => s.active))
       setConfigs(configsData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      const message = err instanceof Error ? err.message : 'Có lỗi xảy ra'
+      setError(message)
+      await showError('Không thể tải dữ liệu', message)
     } finally {
       setLoading(false)
     }
@@ -162,12 +169,15 @@ function BuildingServices() {
 
     const price = Number(form.price)
     if (!form.price.trim() || Number.isNaN(price) || price <= 0) {
-      alert('Đơn giá phải lớn hơn 0')
+      await showWarning('Đơn giá không hợp lệ', 'Đơn giá phải lớn hơn 0.')
       return
     }
 
     if (!form.effectiveFrom) {
-      alert('Vui lòng chọn kỳ bắt đầu áp dụng')
+      await showWarning(
+        'Thiếu kỳ áp dụng',
+        'Vui lòng chọn kỳ bắt đầu áp dụng.',
+      )
       return
     }
 
@@ -187,7 +197,7 @@ function BuildingServices() {
             price,
             effectiveFrom: form.effectiveFrom,
           }),
-        }
+        },
       )
 
       const data = await response.json()
@@ -198,8 +208,12 @@ function BuildingServices() {
 
       setShowForm(false)
       await loadData()
+      await showSuccess('Đã lưu cấu hình', 'Cấu hình dịch vụ đã được cập nhật.')
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      await showError(
+        'Không thể lưu cấu hình',
+        err instanceof Error ? err.message : 'Có lỗi xảy ra',
+      )
     }
   }
 

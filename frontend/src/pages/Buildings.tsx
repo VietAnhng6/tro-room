@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-
+import { showConfirm } from '../utils/notification'
 type Building = {
   id: number
   name: string
@@ -276,13 +276,15 @@ function Buildings() {
   }
 
   const handleDeactivate = async (building: Building) => {
-    if (!window.confirm(
-      `Bạn có chắc muốn ngừng hoạt động "${building.name}"?`
-    )) {
-      return
-    }
+  const confirmed = await showConfirm(
+    'Ngừng hoạt động tòa nhà?',
+    `Bạn có chắc muốn ngừng hoạt động "${building.name}"?`,
+    'Ngừng hoạt động',
+  )
 
-    const accessToken = localStorage.getItem('accessToken')
+  if (!confirmed) return
+
+  const accessToken = localStorage.getItem('accessToken')
 
     if (!accessToken) {
       window.location.href = '/'
@@ -344,11 +346,13 @@ function Buildings() {
     }
   }
   const handleActivate = async (building: Building) => {
-  if (!window.confirm(
-    `Bạn có chắc muốn hoạt động lại "${building.name}"?`
-  )) {
-    return
-  }
+  const confirmed = await showConfirm(
+    'Hoạt động lại tòa nhà?',
+    `Bạn có chắc muốn hoạt động lại "${building.name}"?`,
+    'Hoạt động lại',
+  )
+
+  if (!confirmed) return
 
   const accessToken = localStorage.getItem('accessToken')
 

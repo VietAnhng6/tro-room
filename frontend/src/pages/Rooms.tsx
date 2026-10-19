@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import RoomServicesModal from '../components/RoomServicesModal'
 import CreateListingModal from '../components/CreateListingModal'
 import RoomOccupantsModal from '../components/RoomOccupantsModal'
-
+import {
+  showSuccess,
+  showError,
+  showWarning,
+} from '../utils/notification'
 type RoomStatus = 'EMPTY' | 'DEPOSITED' | 'RENTED' | 'STOPPED'
 
 type Building = {
@@ -315,7 +319,10 @@ function Rooms() {
       !form.maxPeople ||
       !form.buildingId
     ) {
-      alert('Vui lòng nhập đầy đủ thông tin phòng.')
+      void showWarning(
+      'Thiếu thông tin',
+      'Vui lòng nhập đầy đủ thông tin phòng.',
+    )
       return
     }
 
@@ -347,9 +354,12 @@ function Rooms() {
       }
 
       if (res.status === 403) {
-        alert('Bạn không có quyền thực hiện thao tác này.')
-        return
-      }
+      void showError(
+        'Không có quyền',
+        'Bạn không có quyền thực hiện thao tác này.',
+      )
+      return
+    }
 
       if (!res.ok) {
         const message = await res.text()
@@ -357,9 +367,15 @@ function Rooms() {
       }
 
       closeForm()
+      void showSuccess(
+        editingRoom ? 'Cập nhật phòng thành công' : 'Thêm phòng thành công',
+      )
       await loadRooms()
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Không thể lưu phòng.')
+        } catch (err) {
+      void showError(
+        'Không thể lưu phòng',
+        err instanceof Error ? err.message : 'Không thể lưu phòng.',
+      )
     }
   }
 
@@ -420,11 +436,23 @@ function Rooms() {
       setStatusModalStep(null)
       setStatusReason('')
       await loadRooms()
-      window.alert(data.message || 'Cập nhật trạng thái phòng thành công.')
+
+      void showSuccess(
+        'Cập nhật trạng thái thành công',
+        data.message || 'Cập nhật trạng thái phòng thành công.',
+      )
     } catch (err) {
-      setStatusModalError(err instanceof Error ? err.message : 'Không thể cập nhật trạng thái phòng.')
-      if (!statusModalRoom) window.alert(err instanceof Error ? err.message : 'Không thể cập nhật trạng thái phòng.')
-    }
+        const message =
+          err instanceof Error
+            ? err.message
+            : 'Không thể cập nhật trạng thái phòng.'
+
+        setStatusModalError(message)
+
+        if (!statusModalRoom) {
+          void showError('Không thể cập nhật trạng thái phòng', message)
+        }
+      }
   }
 
   function closeStatusModal() {
