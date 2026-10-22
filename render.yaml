@@ -1,0 +1,57 @@
+# =============================================================================
+# Render Blueprint — deploy tro-room-demo (frontend + backend chung 1 service)
+#
+# Cách dùng:
+#   1. Push repo này lên GitHub (nhánh main).
+#   2. Render Dashboard -> New -> Blueprint -> chọn repo tro-room-demo.
+#   3. Render tự tạo: 1 PostgreSQL + 1 Web Service (nginx phục vụ frontend,
+#      proxy /api sang Spring Boot). Một URL duy nhất cho cả frontend + backend.
+#
+# Lưu ý gói Free:
+#   - Web Service ngủ sau ~15 phút không request (lần đầu truy cập sẽ chậm).
+#   - PostgreSQL Free tự huỷ sau 90 ngày.
+# =============================================================================
+
+databases:
+  - name: tro-room-demo-db
+    plan: free
+    databaseName: tro_room_demo
+
+services:
+  - type: web
+    name: tro-room-demo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/public/listings/search
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: tro-room-demo-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: tro-room-demo-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: tro-room-demo-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      # Bật seed dữ liệu mẫu khi deploy demo
+      - key: SPRING_PROFILES_ACTIVE
+        value: staging
+      - key: DEMO_SEED_ENABLED
+        value: "true"
+      - key: DEMO_PASSWORD
+        value: Demo@12345
+      # URL frontend (chính là URL của service này) để tạo link trong email.
+      - key: APP_BASE_URL
+        value: https://tro-room-demo.onrender.com
+      # Email (Gmail App Password). Để trống thì không gửi được email.
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false

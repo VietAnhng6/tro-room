@@ -16,7 +16,15 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOriginPatterns(
-            List.of("http://localhost:*", "http://127.0.0.1:*", "http://localhost:5173", "http://localhost:5174", "http://localhost:3000")
+            List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:3000",
+                "https://tro-room-demo.onrender.com",
+                "https://frontend-lovat-six-84.vercel.app"
+            )
         );
 
         configuration.setAllowedMethods(

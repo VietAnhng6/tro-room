@@ -4,6 +4,7 @@ import com.troroom.backend.dto.InvoiceDtos.*;
 import com.troroom.backend.entity.*;
 import com.troroom.backend.repository.*;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -43,6 +44,9 @@ public class InvoiceService {
     private final MailService mailService;
     private final EmailDeliveryFailureRepository emailDeliveryFailureRepository;
     private final MaintenanceReportRepository maintenanceReportRepository;
+
+    @Value("${app.base-url:http://localhost:5173}")
+    private String baseUrl;
 
 
     public InvoiceService(
@@ -978,7 +982,7 @@ public class InvoiceService {
                 );
 
                 String invoiceLink =
-                        "http://localhost:5173/tenant/invoices";
+                        baseUrl + "/tenant/invoices";
 
                 Exception lastException = null;
                 int maxAttempts = 3;

@@ -4,6 +4,8 @@ package com.troroom.backend;
 import com.troroom.backend.security.JwtAuthenticationFilter;
 import com.troroom.backend.security.PermissionAuthorizationManager;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -46,6 +48,21 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(
                     SessionCreationPolicy.STATELESS
                 )
+            )
+
+            // Chưa đăng nhập -> 401 (để frontend tự chuyển về trang login),
+            // đã đăng nhập nhưng thiếu quyền -> 403.
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"error\":\"unauthorized\"}");
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"error\":\"forbidden\"}");
+                })
             )
 
             .authorizeHttpRequests(auth -> auth

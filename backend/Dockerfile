@@ -12,4 +12,8 @@ COPY --from=build /app/target/*.jar app.jar
 RUN mkdir -p /app/uploads
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# Render Blueprint cấp DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD qua env.
+# Runtime docker không cho dùng startCommand nên dựng JDBC URL ngay tại đây.
+# Khi không có DB_HOST (chạy local docker-compose) thì giữ nguyên SPRING_DATASOURCE_URL.
+ENTRYPOINT ["sh", "-c", "if [ -n \"$DB_HOST\" ]; then export SPRING_DATASOURCE_URL=\"jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require\"; export SPRING_DATASOURCE_USERNAME=\"${DB_USER}\"; fi; exec java -jar app.jar"]

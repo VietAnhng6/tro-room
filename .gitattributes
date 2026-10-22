@@ -1,0 +1,2 @@
+# Shell script phải dùng LF để chạy được trong Docker/Linux.
+*.sh text eol=lf

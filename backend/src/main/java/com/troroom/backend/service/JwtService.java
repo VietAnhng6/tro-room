@@ -17,10 +17,20 @@ public class JwtService {
     private static final long ACCESS_TOKEN_EXPIRATION = 30 * 60 * 1000; // 30 phút
 
     public JwtService(
-            @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}") String secret) {
-        String envSecret = System.getenv("JWT_SECRET");
-        String finalSecret = (envSecret != null && !envSecret.trim().isEmpty()) ? envSecret : secret;
-        this.secretKey = Keys.hmacShaKeyFor(finalSecret.getBytes(StandardCharsets.UTF_8));
+            @Value("${jwt.secret:}") String secret) {
+        if (secret == null || secret.trim().isEmpty()) {
+            throw new IllegalStateException(
+                    "JWT_SECRET chưa được cấu hình. "
+                    + "Vui lòng set biến môi trường JWT_SECRET."
+            );
+        }
+        if (secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException(
+                    "JWT_SECRET phải dài ít nhất 32 byte để dùng với HS256."
+            );
+        }
+        this.secretKey =
+                Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
     public SecretKey getSecretKey() {

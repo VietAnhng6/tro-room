@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 function Login() {
   const [identifier, setIdentifier] = useState('')
@@ -6,6 +6,22 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [remember, setRemember] = useState(false)
+
+  // Khôi phục tài khoản/mật khẩu đã ghi nhớ (nếu có)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('rememberedLogin')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed.identifier) setIdentifier(parsed.identifier)
+        if (parsed.password) setPassword(parsed.password)
+        setRemember(true)
+      }
+    } catch {
+      // bỏ qua nếu dữ liệu không hợp lệ
+    }
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,6 +67,20 @@ function Login() {
       localStorage.setItem('role', data.role)
       if (data.username) {
         localStorage.setItem('username', data.username)
+      }
+
+      // Ghi nhớ hoặc xoá thông tin đăng nhập
+      try {
+        if (remember) {
+          localStorage.setItem(
+            'rememberedLogin',
+            JSON.stringify({ identifier, password })
+          )
+        } else {
+          localStorage.removeItem('rememberedLogin')
+        }
+      } catch {
+        // bỏ qua nếu localStorage không khả dụng
       }
 
       setMessage('Đăng nhập thành công!')
@@ -207,6 +237,29 @@ function Login() {
                   )}
                 </button>
               </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', margin: '16px 0 6px' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  color: '#334155',
+                  fontWeight: 500,
+                  userSelect: 'none',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#2563eb' }}
+                />
+                Ghi nhớ đăng nhập
+              </label>
             </div>
 
             <button

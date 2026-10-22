@@ -7,6 +7,7 @@ import com.troroom.backend.entity.User;
 import com.troroom.backend.repository.EmailDeliveryFailureRepository;
 import com.troroom.backend.repository.InvoiceRepository;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,9 @@ public class InvoiceReminderService {
     private final InvoiceRepository invoiceRepository;
     private final MailService mailService;
     private final NotificationService notificationService;
+
+    @Value("${app.base-url:http://localhost:5173}")
+    private String baseUrl;
 
     public InvoiceReminderService(
             InvoiceRepository invoiceRepository,
@@ -133,7 +137,7 @@ public class InvoiceReminderService {
                         invoice.getRemainingAmount(),
                         invoice.getDueDate().toString(),
                         reminderText,
-                        "http://localhost:5173/tenant/invoices"
+                        baseUrl + "/tenant/invoices"
                 );
 
                 // Gửi thành công thì không ghi nhận lỗi.

@@ -14,11 +14,13 @@ public class DemoSeedRunner {
     @ConditionalOnProperty(name = "demo.seed.enabled", havingValue = "true")
     CommandLineRunner runDemoSeed(
             DemoSeedService baseSeed,
-            DemoInvoiceSeedService invoiceSeed
+            DemoInvoiceSeedService invoiceSeed,
+            DemoDataSeedService dataSeed
     ) {
         return args -> {
             baseSeed.seed();
             invoiceSeed.seed();
+            dataSeed.seed();
         };
     }
 }

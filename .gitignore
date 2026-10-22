@@ -23,4 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 *.zip
+.env
 .env.staging
+
+# Java build artifacts
+*.class
+target/
+

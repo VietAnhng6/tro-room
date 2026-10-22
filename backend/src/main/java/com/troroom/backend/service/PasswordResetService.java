@@ -4,6 +4,7 @@ import com.troroom.backend.entity.PasswordResetToken;
 import com.troroom.backend.entity.User;
 import com.troroom.backend.repository.PasswordResetTokenRepository;
 import com.troroom.backend.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -21,6 +22,9 @@ public class PasswordResetService {
     private final MailService mailService;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+
+    @Value("${app.base-url:http://localhost:5173}")
+    private String baseUrl;
    public PasswordResetService(
         UserRepository userRepository,
         PasswordResetTokenRepository tokenRepository,
@@ -77,7 +81,7 @@ public class PasswordResetService {
         tokenRepository.save(resetToken);
 
         String resetLink =
-                "http://localhost:5173/reset-password?token="
+                baseUrl + "/reset-password?token="
                         + token;
 
         mailService.sendResetPasswordMail(

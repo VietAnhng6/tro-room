@@ -89,19 +89,6 @@ public class PermissionAuthorizationManager
                 permission
         );
 
-    System.out.println(
-        "AUTH DEBUG -> URI: "
-        + context.getRequest().getRequestURI()
-        + " | METHOD: "
-        + context.getRequest().getMethod()
-        + " | ROLE: "
-        + user.getRole()
-        + " | PERMISSION: "
-        + permission
-        + " | ALLOWED: "
-        + allowed
-    );
-
     return new AuthorizationDecision(allowed);
     }
 
